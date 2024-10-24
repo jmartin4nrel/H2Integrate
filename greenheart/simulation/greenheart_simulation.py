@@ -24,6 +24,12 @@ from greenheart.simulation.technologies.steel.steel import (
     SteelFinanceModelOutputs,
     SteelCapacityModelOutputs,
 )
+from greenheart.simulation.technologies.iron.iron import (
+    run_iron_full_model,
+    IronCostModelOutputs,
+    IronFinanceModelOutputs,
+    IronCapacityModelOutputs,
+)
 
 # visualization imports
 import matplotlib.pyplot as plt
@@ -196,6 +202,9 @@ class GreenHeartSimulationOutput:
         steel_capacity (Optional[SteelCapacityModelOutputs]): steel capacity information
         steel_costs (Optional[SteelCostModelOutputs]): steel cost information
         steel_finance (Optional[SteelFinanceModelOutputs]): steel financial information
+        steel_capacity (Optional[SteelCapacityModelOutputs]): steel capacity information
+        steel_costs (Optional[SteelCostModelOutputs]): steel cost information
+        steel_finance (Optional[SteelFinanceModelOutputs]): steel financial information
         ammonia_capacity (Optional[AmmoniaCapacityModelOutputs]): ammonia capacity information
         ammonia_costs (Optional[AmmoniaCostModelOutputs]): ammonia cost information
         ammonia_finance (Optional[AmmoniaFinanceModelOutputs]): ammonia finance information
@@ -233,6 +242,10 @@ class GreenHeartSimulationOutput:
     steel_capacity: Optional[SteelCapacityModelOutputs] = field(default=None)
     steel_costs: Optional[SteelCostModelOutputs] = field(default=None)
     steel_finance: Optional[SteelFinanceModelOutputs] = field(default=None)
+
+    iron_capacity: Optional[IronCapacityModelOutputs] = field(default=None)
+    iron_costs: Optional[IronCostModelOutputs] = field(default=None)
+    iron_finance: Optional[IronFinanceModelOutputs] = field(default=None)
 
     ammonia_capacity: Optional[AmmoniaCapacityModelOutputs] = field(default=None)
     ammonia_costs: Optional[AmmoniaCostModelOutputs] = field(default=None)
@@ -923,6 +936,7 @@ def run_simulation(config: GreenHeartSimulationConfig):
         )
 
     steel_finance = None
+    iron_finance = None
     ammonia_finance = None
 
     if config.use_profast:
@@ -996,6 +1010,33 @@ def run_simulation(config: GreenHeartSimulationConfig):
 
             steel_capacity, steel_costs, steel_finance = run_steel_full_model(
                 steel_config,
+                save_plots=config.save_plots,
+                show_plots=config.show_plots,
+                output_dir=config.output_dir,
+                design_scenario_id=config.design_scenario["id"],
+            )
+
+        if "iron" in config.greenheart_config:
+            iron_config = copy.deepcopy(config.greenheart_config)
+            if config.verbose:
+                print("Running iron\n")
+
+            # use lcoh from the electrolyzer model if it is not already in the config
+            if "lcoh" not in iron_config["iron"]["finances"]:
+                iron_config["iron"]["finances"]["lcoh"] = lcoh
+
+            # use lcoh from the electrolyzer model if it is not already in the config
+            if "lcoh" not in iron_config["iron"]["costs"]:
+                iron_config["iron"]["costs"]["lcoh"] = lcoh
+
+            # use the hydrogen amount from the electrolyzer physics model if it is not already in the config
+            if "hydrogen_amount_kgpy" not in iron_config["iron"]["capacity"]:
+                iron_config["iron"]["capacity"][
+                    "hydrogen_amount_kgpy"
+                ] = hydrogen_amount_kgpy
+
+            iron_capacity, iron_costs, iron_finance = run_iron_full_model(
+                iron_config,
                 save_plots=config.save_plots,
                 show_plots=config.show_plots,
                 output_dir=config.output_dir,
@@ -1093,7 +1134,10 @@ def run_simulation(config: GreenHeartSimulationConfig):
     elif config.output_level == 6:
         return hopp_results, electrolyzer_physics_results, remaining_power_profile
     elif config.output_level == 7:
-        return lcoe, lcoh, steel_finance, ammonia_finance
+        if "iron" in config.greenheart_config:
+            return lcoe, lcoh, iron_finance, ammonia_finance
+        else:
+            return lcoe, lcoh, steel_finance, ammonia_finance
     elif config.output_level == 8:
         return GreenHeartSimulationOutput(
             config,
