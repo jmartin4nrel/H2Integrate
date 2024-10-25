@@ -48,13 +48,13 @@ King, J. and Hammond, S. "[Integrated Modeling, TEA, and Reference Design for Re
 
 ## Installing from Package Repositories
 
-1. GreenHEART is available as a PyPi package:
-
-    ```bash
-    pip install greenheart
-    ```
+```bash
+pip install greenheart
+```
 
 ## Installing from Source
+
+### Easiest approach (recommended)
 
 1. Using Git, navigate to a local target directory and clone repository:
 
@@ -68,7 +68,43 @@ King, J. and Hammond, S. "[Integrated Modeling, TEA, and Reference Design for Re
     cd GreenHEART
     ```
 
-3. Create a new virtual environment and change to it. Using Conda and naming it 'greenheart':
+3. Create a conda environment and install GreenHEART and all its dependencies
+
+    ```bash
+    conda env create -f environment.yml
+    ```
+
+An additional step can be added if additional dependencies are required, or you plan to use this
+environment for development work.
+
+- Pass `-e` for an editable developer install
+- Use one of the extra flags as needed:
+  - `examples`: allows you to use the Jupyter Notebooks
+  - `develop`: adds developer and documentation tools
+  - `all` simplifies adding all the dependencies
+
+This looks like the following for a developer installation:
+
+```bash
+pip install -e ".[all]"
+```
+
+### Customizable
+
+1. Using Git, navigate to a local target directory and clone repository:
+
+    ```bash
+    git clone https://github.com/NREL/GreenHEART.git
+    ```
+
+2. Navigate to `GreenHEART`
+
+    ```bash
+    cd GreenHEART
+    ```
+
+3. Create a new virtual environment and change to it. Using Conda Python 3.11 (choose your favorite
+   supported version) and naming it 'greenheart' (choose your desired name):
 
     ```bash
     conda create --name greenheart python=3.11 -y
