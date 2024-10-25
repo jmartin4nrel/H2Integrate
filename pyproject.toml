@@ -21,7 +21,6 @@ dependencies = [
     "floris",
     "future",
     "global_land_mask",
-    "humpday",
     "hybridbosse",
     "lcoe",
     "lxml",
