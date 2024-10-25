@@ -71,7 +71,7 @@ King, J. and Hammond, S. "[Integrated Modeling, TEA, and Reference Design for Re
 3. Create a new virtual environment and change to it. Using Conda and naming it 'greenheart':
 
     ```bash
-    conda create --name greenheart python=3.9 -y
+    conda create --name greenheart python=3.11 -y
     conda activate greenheart
     ```
 
