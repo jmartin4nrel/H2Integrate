@@ -48,13 +48,13 @@ King, J. and Hammond, S. "[Integrated Modeling, TEA, and Reference Design for Re
 
 ## Installing from Package Repositories
 
-1. GreenHEART is available as a PyPi package:
-
-    ```bash
-    pip install greenheart
-    ```
+```bash
+pip install greenheart
+```
 
 ## Installing from Source
+
+### Easiest approach (recommended)
 
 1. Using Git, navigate to a local target directory and clone repository:
 
@@ -68,7 +68,52 @@ King, J. and Hammond, S. "[Integrated Modeling, TEA, and Reference Design for Re
     cd GreenHEART
     ```
 
-3. Create a new virtual environment and change to it. Using Conda and naming it 'greenheart':
+3. Create a conda environment and install GreenHEART and all its dependencies
+
+    ```bash
+    conda env create -f environment.yml
+    ```
+
+4. Install Cbc.
+   1. If using a Unix machine (not Windows), install a final dependency
+
+        ```bash
+        conda install -y -c conda-forge coin-or-cbc=2.10.8
+        ```
+    
+    2. Windows users will have to manually install Cbc: https://github.com/coin-or/Cbc
+
+An additional step can be added if additional dependencies are required, or you plan to use this
+environment for development work.
+
+- Pass `-e` for an editable developer install
+- Use one of the extra flags as needed:
+  - `examples`: allows you to use the Jupyter Notebooks
+  - `develop`: adds developer and documentation tools
+  - `all` simplifies adding all the dependencies
+
+This looks like the following for a developer installation:
+
+```bash
+pip install -e ".[all]"
+```
+
+### Customizable
+
+1. Using Git, navigate to a local target directory and clone repository:
+
+    ```bash
+    git clone https://github.com/NREL/GreenHEART.git
+    ```
+
+2. Navigate to `GreenHEART`
+
+    ```bash
+    cd GreenHEART
+    ```
+
+3. Create a new virtual environment and change to it. Using Conda Python 3.11 (choose your favorite
+   supported version) and naming it 'greenheart' (choose your desired name):
 
     ```bash
     conda create --name greenheart python=3.11 -y
@@ -78,12 +123,18 @@ King, J. and Hammond, S. "[Integrated Modeling, TEA, and Reference Design for Re
 4. Install GreenHEART and its dependencies:
 
     ```bash
-    conda install -y -c conda-forge coin-or-cbc=2.10.8 glpk
+    conda install -y -c conda-forge glpk
     pip install electrolyzer@git+https://github.com/jaredthomas68/electrolyzer.git@smoothing
     pip install ProFAST@git+https://github.com/NREL/ProFAST.git
     ```
 
-    Note if you are on Windows, you will have to manually install Cbc: https://github.com/coin-or/Cbc.
+    Note: Unix users should install Cbc via:
+
+    ```bash
+    conda install -y -c conda-forge coin-or-cbc=2.10.8
+    ```
+
+    Windows users will have to manually install Cbc: https://github.com/coin-or/Cbc.
 
     - If you want to just use GreenHEART:
 
@@ -109,11 +160,11 @@ King, J. and Hammond, S. "[Integrated Modeling, TEA, and Reference Design for Re
       pip install -e ".[all]"
       ```
 
-5. The functions which download resource data require an NREL API key. Obtain a key from:
+1. The functions which download resource data require an NREL API key. Obtain a key from:
 
     [https://developer.nrel.gov/signup/](https://developer.nrel.gov/signup/)
 
-6. To set up the `NREL_API_KEY` and `NREL_API_EMAIL` required for resource downloads, you can create
+2. To set up the `NREL_API_KEY` and `NREL_API_EMAIL` required for resource downloads, you can create
    Environment Variables called `NREL_API_KEY` and `NREL_API_EMAIL`. Otherwise, you can keep the key
    in a new file called ".env" in the root directory of this project.
 
@@ -124,7 +175,7 @@ King, J. and Hammond, S. "[Integrated Modeling, TEA, and Reference Design for Re
     NREL_API_EMAIL=your.name@email.com
     ```
 
-7. Verify setup by running tests:
+3. Verify setup by running tests:
 
     ```bash
     pytest
@@ -163,4 +214,5 @@ forthcoming.
 
 ## Contributing
 
-Interested in improving GreenHEART? Please see the [Contributing](./CONTRIBUTING.md) section for more information.
+Interested in improving GreenHEART? Please see the [Contributor's Guide](./docs/CONTRIBUTING.md)
+section for more information.
