@@ -1,8 +1,6 @@
 import numpy as np
 import openmdao.api as om
 
-import electrolyzer.inputs.validation as val
-
 from shapely.geometry import Polygon, Point
 from hopp.simulation import HoppInterface
 from greenheart.simulation.greenheart_simulation import GreenHeartSimulationConfig, run_simulation
