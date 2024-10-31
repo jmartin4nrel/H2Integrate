@@ -1,0 +1,12 @@
+name: greenheart
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - glpk
+  - pip
+  - pip:
+    - electrolyzer@git+https://github.com/jaredthomas68/electrolyzer.git@smoothing
+    - ProFAST@git+https://github.com/NREL/ProFAST.git
+    - "."
