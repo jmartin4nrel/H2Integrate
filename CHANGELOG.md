@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## Unreleased [TBD]
+## v0.1.2 [1 November 2024]
 
 - Replaces the git ProFAST installation with a PyPI installation.
 - Removed dependence on external electrolyzer repo
