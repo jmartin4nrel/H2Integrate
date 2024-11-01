@@ -1,8 +1,10 @@
 # CHANGELOG
 
-## v0.1.3 [1 November 2024]
+## Unreleased [TBD]
 
 - Replaces the git ProFAST installation with a PyPI installation.
+- Removed dependence on external electrolyzer repo
+- Updated CI to use conda environments with reproducible environment artifacts
 
 ## v0.1.2 [28 October 2024]
 
