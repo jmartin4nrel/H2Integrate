@@ -6,44 +6,29 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash -el {0}
     strategy:
       matrix:
         python-version: ["3.9", "3.10", "3.11"]
 
     steps:
-      - uses: actions/checkout@v4
-      - name: Set up Miniconda Python ${{ matrix.python-version }}
-        uses: conda-incubator/setup-miniconda@v3
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
         with:
-          auto-update-conda: true
           python-version: ${{ matrix.python-version }}
-          channels: conda-forge
-          activate-environment: greenheart-test-${{ matrix.python-version }}
       - name: Install dependencies
         env:
           SKLEARN_ALLOW_DEPRECATED_SKLEARN_PACKAGE_INSTALL: True
         run: |
           sudo apt-get update && sudo apt-get install -y libglpk-dev glpk-utils coinor-cbc
           python -m pip install --upgrade pip
-          pip install electrolyzer@git+https://github.com/jaredthomas68/electrolyzer.git@smoothing
+          pip install ProFAST@git+https://github.com/NREL/ProFAST.git
           pip install ".[develop]"
       - name: Create env file
         run: |
           touch .env
       #     echo NREL_API_KEY=${{ secrets.NREL_API_KEY }} >> .env
       #     cat .env
-      - name: Save environment build details
-        run: |
-          mkdir ~/artifacts
-          conda env export --file ~/artifacts/environment.yml
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.python-version }}-environment
-          path: ~/artifacts/environment.yml
       - name: Run tests
         run: |
           PYTHONPATH=. pytest tests
