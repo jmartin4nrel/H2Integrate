@@ -1,0 +1,10 @@
+Name,Type,Coeff,Unit,2022
+Dollar Year,all,-,-,2022
+Raw Water,var opex,lin,$/t H2O,0.441167535
+Lime,var opex,lin,$/t lime,100
+Carbon,var opex,lin,$/t C,179.47
+Slag Disposal,var opex,lin,$/t slag,28
+Iron Ore Pellets,var opex,lin,$/t ore,207.66
+Hydrogen ,var opex,lin,$/t H2,7
+Natural Gas,var opex,lin,$/MMBtu,4
+Electricity,var opex,lin,$/MWh,48.92
