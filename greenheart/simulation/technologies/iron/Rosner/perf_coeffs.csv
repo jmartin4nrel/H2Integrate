@@ -1,0 +1,19 @@
+Name,Type,Coeff,Unit,h2_dri_eaf
+Iron Ore,feed,lin,mt ore / mt steel,1.62927
+Hydrogen,feed,lin,mt H2 / mt steel,0.06596
+Natural Gas,feed,lin,GJ-LHV NG / mt steel,0.71657
+Electricity,feed,lin,MWh / mt steel,0.5502
+Carbon (Coke),feed,lin,mt C / mt steel,0.0538
+Lime,feed,lin,mt lime / mt steel,0.01812
+Raw Water Withdrawal,feed,lin,mt H2O / mt steel,0.80367
+Carbon Dioxide (Methane as Fuel),emission,lin,mt CO2 / mt steel,0.03929
+Carbon Dioxide (Carbon),emission,lin,mt CO2 / mt steel,0.17466
+Slag,emission,lin,mt slag / mt steel,0.17433
+Surface Water Discharge,emission,lin,mt H2O discharged/mt H2O withdrawn,0.42113
+Steelmaking efficiency,efficiency,lin,%,60.07
+DRI Scrubber Electricity,feed,lin,kW / mtpy steel,0.000122575
+Cooling Tower & Water Circulation Electricity,feed,lin,kW / mtpy steel,0.000760857
+Oxygen Supply Electricity,feed,lin,kW / mtpy steel,0.010389687
+Electric Arc Furnace Electricity,feed,lin,kW / mtpy steel,0.041202278
+Ladle Refining Electricity,feed,lin,kW / mtpy steel,0.003218638
+Miscellaneous Balance of Plant Electricity,feed,lin,kW / mtpy steel,0.007113805

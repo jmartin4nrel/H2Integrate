@@ -1,0 +1,36 @@
+Name,Type,Coeff,Unit,h2_dri_eaf
+Dollar Year,all,-,-,2022
+EAF & Casting,capital,lin,$,352191.5237
+Shaft Furnace,capital,lin,$,489.68061
+Oxygen Supply,capital,lin,$,1715.21508
+H2 Pre-heating,capital,lin,$,45.69123
+Cooling Tower,capital,lin,$,2513.08314
+Piping,capital,lin,$,11815.72718
+Electrical & Instrumentation,capital,lin,$,7877.15146
+"Buildings, Storage, Water Service",capital,lin,$,1097.81876
+Other Miscellaneous Cost,capital,lin,$,7877.15146
+EAF & Casting,capital,exp,-,0.456
+Shaft Furnace,capital,exp,-,0.88741
+Oxygen Supply,capital,exp,-,0.64574
+H2 Pre-heating,capital,exp,-,0.86564
+Cooling Tower,capital,exp,-,0.63325
+Piping,capital,exp,-,0.59983
+Electrical & Instrumentation,capital,exp,-,0.59983
+"Buildings, Storage, Water Service",capital,exp,-,0.8
+Other Miscellaneous Cost,capital,exp,-,0.59983
+Preproduction,owner,lin,frac of TPC,0.02
+Spare Parts,owner,lin,frac of TPC,0.005
+"Initial Catalyst, Sorbent & Chemicals",owner,lin,frac of TPC,0
+Land,owner,lin,frac of TPC,0.775
+Other Owners's Costs,owner,lin,frac of TPC,0.15
+Processing Steps,fixed opex,lin,-,29
+% Skilled Labor,fixed opex,lin,%,35
+% Unskilled Labor,fixed opex,lin,%,65
+Skilled Labor Rate,fixed opex,lin,$/hr,40.85
+Unskilled Labor Rate,fixed opex,lin,$/hr,30
+Annual Operating Labor Cost,fixed opex,lin,hr/day/step/(kg/day),4.42732
+Annual Operating Labor Cost,fixed opex,exp,-,0.25242
+Maintenance Labor Cost,fixed opex,lin,frac of TPC,0.00863
+Administrative & Support Labor Cost,fixed opex,lin,frac of O&M labor,0.25
+Property Tax & Insurance,fixed opex,lin,frac of TPC,0.02
+Maintenance Materials,variable opex,lin,$/mtpy steel,7.72

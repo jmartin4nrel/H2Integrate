@@ -1,0 +1,17 @@
+performance:
+  Rosner:
+    compatible_tech: ['h2_dri','ng_dri']
+    model: 'greenheart.simulation.technologies.iron.Rosner.perf_model'
+    inputs: 'perf_inputs.csv'
+    coeffs: 'perf_coeffs.csv'
+cost:
+  Rosner:
+    compatible_tech: ['h2_dri','ng_dri']
+    model: 'greenheart.simulation.technologies.iron.Rosner.cost_model'
+    inputs: 'cost_inputs.csv'
+    coeffs: 'cost_coeffs.csv'
+  Peters:
+    compatible_tech: ['blast_furnace', 'ng_dri', 'h2_dri', 'moe', 'ahe', 'mse']
+    model: 'greenheart.simulation.technologies.iron.Peters.opex_model'
+    inputs: 'cost_inputs.csv'
+    coeffs: 'cost_coeffs.csv'

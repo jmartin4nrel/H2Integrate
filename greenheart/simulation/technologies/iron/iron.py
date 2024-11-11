@@ -6,6 +6,14 @@ import pandas as pd
 from attrs import define, Factory, field
 
 import os
+from pathlib import Path
+import importlib
+from hopp.utilities import load_yaml
+
+# Get model locations loaded up to refer to
+CD = Path(__file__).parent
+model_locs_fp = CD / 'model_locations.yaml'
+model_locs = load_yaml(model_locs_fp)
 
 @define
 class Feedstocks:
@@ -103,6 +111,7 @@ class IronCostModelConfig:
     co2_fuel_emissions: float = 0.03929
     co2_carbon_emissions: float = 0.17466
     surface_water_discharge: float = 0.42113
+    cost_model: Optional[dict] = field(default=None)
 
 
 @define
@@ -213,6 +222,7 @@ class IronCapacityModelConfig:
     feedstocks: Feedstocks
     hydrogen_amount_kgpy: Optional[float] = field(default=None)
     desired_iron_mtpy: Optional[float] = field(default=None)
+    performance_model: Optional[dict] = field(default=None)
 
 
     def __attrs_post_init__(self):
@@ -253,29 +263,48 @@ def run_size_iron_plant_capacity(config: IronCapacityModelConfig) -> IronCapacit
 
     """
 
-    if config.hydrogen_amount_kgpy:
-        iron_plant_capacity_mtpy = (config.hydrogen_amount_kgpy 
-            / 1000
-            / config.feedstocks.hydrogen_consumption 
-            * config.input_capacity_factor_estimate
-        )
-        hydrogen_amount_kgpy = config.hydrogen_amount_kgpy
+    # If performance model name is "placeholder", use the code that was copied over from Green Steel
+    if config.performance_model['name'] == 'placeholder':
 
-    if config.desired_iron_mtpy:
-        hydrogen_amount_kgpy = (config.desired_iron_mtpy 
-            * 1000
-            * config.feedstocks.hydrogen_consumption
-            / config.input_capacity_factor_estimate
-        )
-        iron_plant_capacity_mtpy = (config.desired_iron_mtpy 
-            / config.input_capacity_factor_estimate
-        )
+        if config.hydrogen_amount_kgpy:
+            iron_plant_capacity_mtpy = (config.hydrogen_amount_kgpy 
+                / 1000
+                / config.feedstocks.hydrogen_consumption 
+                * config.input_capacity_factor_estimate
+            )
+            hydrogen_amount_kgpy = config.hydrogen_amount_kgpy
 
-    return IronCapacityModelOutputs(
-        iron_plant_capacity_mtpy=iron_plant_capacity_mtpy,
-        hydrogen_amount_kgpy=hydrogen_amount_kgpy
-    )
+        if config.desired_iron_mtpy:
+            hydrogen_amount_kgpy = (config.desired_iron_mtpy 
+                * 1000
+                * config.feedstocks.hydrogen_consumption
+                / config.input_capacity_factor_estimate
+            )
+            iron_plant_capacity_mtpy = (config.desired_iron_mtpy 
+                / config.input_capacity_factor_estimate
+            )
 
+        return IronCapacityModelOutputs(
+            iron_plant_capacity_mtpy=iron_plant_capacity_mtpy,
+            hydrogen_amount_kgpy=hydrogen_amount_kgpy
+        )
+    # Otherwise, import model from filepaths - paths either from model_locs or config
+    else:
+        perf_model = config.performance_model['name']
+        if config.performance_model['model_fp'] == '':
+            config.performance_model['model_fp'] = model_locs['performance'][perf_model]['model']
+        if config.performance_model['inputs_fp'] == '':
+            config.performance_model['inputs_fp'] = model_locs['performance'][perf_model]['inputs']
+        if config.performance_model['coeffs_fp'] == '':
+            config.performance_model['coeffs_fp'] = model_locs['performance'][perf_model]['coeffs']
+        model = importlib.import_module(config.performance_model['model_fp'])
+        model_outputs = model.main(config)
+        # MODEL NOT ACTUALLY IMPLEMENTED - putting out placeholders
+        iron_plant_capacity_mtpy, hydrogen_amount_kgpy = model_outputs
+        return IronCapacityModelOutputs(
+            iron_plant_capacity_mtpy=iron_plant_capacity_mtpy,
+            hydrogen_amount_kgpy=hydrogen_amount_kgpy
+        )
 
 def run_iron_model(plant_capacity_mtpy: float, plant_capacity_factor: float) -> float:
     """
@@ -316,213 +345,266 @@ def run_iron_cost_model(config: IronCostModelConfig) -> IronCostModelOutputs:
         (EAF) casting, shaft furnace, oxygen supply, hydrogen preheating, cooling tower,
         and more, adjusted based on the Chemical Engineering Plant Cost Index (CEPCI).
     """
-    feedstocks = config.feedstocks
+    # If cost model name is "placeholder", use the code that was copied over from Green Steel
+    if config.cost_model['name'] == 'placeholder':
+        
+        feedstocks = config.feedstocks
 
     
-    model_year_CEPCI = 596.2
-    equation_year_CEPCI = 708.8
+        model_year_CEPCI = 596.2
+        equation_year_CEPCI = 708.8
 
-    capex_eaf_casting = (
-        model_year_CEPCI
-        / equation_year_CEPCI
-        * 352191.5237
-        * config.plant_capacity_mtpy**0.456
-    )
-    capex_shaft_furnace = (
-        model_year_CEPCI
-        / equation_year_CEPCI
-        * 489.68061
-        * config.plant_capacity_mtpy**0.88741
-    )
-    capex_oxygen_supply = (
-        model_year_CEPCI
-        / equation_year_CEPCI
-        * 1715.21508
-        * config.plant_capacity_mtpy**0.64574
-    )
-    if config.o2_heat_integration:
-        capex_h2_preheating = (
+        capex_eaf_casting = (
             model_year_CEPCI
             / equation_year_CEPCI
-            * (1 - 0.4)
-            * (45.69123 * config.plant_capacity_mtpy**0.86564)
-        )  # Optimistic ballpark estimate of 60% reduction in preheating
-        capex_cooling_tower = (
-            model_year_CEPCI
-            / equation_year_CEPCI
-            * (1 - 0.3)
-            * (2513.08314 * config.plant_capacity_mtpy**0.63325)
-        )  # Optimistic ballpark estimate of 30% reduction in cooling
-    else:
-        capex_h2_preheating = (
-            model_year_CEPCI
-            / equation_year_CEPCI
-            * 45.69123
-            * config.plant_capacity_mtpy**0.86564
+            * 352191.5237
+            * config.plant_capacity_mtpy**0.456
         )
-        capex_cooling_tower = (
+        capex_shaft_furnace = (
             model_year_CEPCI
             / equation_year_CEPCI
-            * 2513.08314
-            * config.plant_capacity_mtpy**0.63325
+            * 489.68061
+            * config.plant_capacity_mtpy**0.88741
         )
-    capex_piping = (
-        model_year_CEPCI
-        / equation_year_CEPCI
-        * 11815.72718
-        * config.plant_capacity_mtpy**0.59983
-    )
-    capex_elec_instr = (
-        model_year_CEPCI
-        / equation_year_CEPCI
-        * 7877.15146
-        * config.plant_capacity_mtpy**0.59983
-    )
-    capex_buildings_storage_water = (
-        model_year_CEPCI
-        / equation_year_CEPCI
-        * 1097.81876
-        * config.plant_capacity_mtpy**0.8
-    )
-    # capex_misc = (
-    #     model_year_CEPCI
-    #     / equation_year_CEPCI
-    #     * 7877.1546
-    #     * config.plant_capacity_mtpy**0.59983
-    # )
-    capex_misc = config.capex_misc
+        capex_oxygen_supply = (
+            model_year_CEPCI
+            / equation_year_CEPCI
+            * 1715.21508
+            * config.plant_capacity_mtpy**0.64574
+        )
+        if config.o2_heat_integration:
+            capex_h2_preheating = (
+                model_year_CEPCI
+                / equation_year_CEPCI
+                * (1 - 0.4)
+                * (45.69123 * config.plant_capacity_mtpy**0.86564)
+            )  # Optimistic ballpark estimate of 60% reduction in preheating
+            capex_cooling_tower = (
+                model_year_CEPCI
+                / equation_year_CEPCI
+                * (1 - 0.3)
+                * (2513.08314 * config.plant_capacity_mtpy**0.63325)
+            )  # Optimistic ballpark estimate of 30% reduction in cooling
+        else:
+            capex_h2_preheating = (
+                model_year_CEPCI
+                / equation_year_CEPCI
+                * 45.69123
+                * config.plant_capacity_mtpy**0.86564
+            )
+            capex_cooling_tower = (
+                model_year_CEPCI
+                / equation_year_CEPCI
+                * 2513.08314
+                * config.plant_capacity_mtpy**0.63325
+            )
+        capex_piping = (
+            model_year_CEPCI
+            / equation_year_CEPCI
+            * 11815.72718
+            * config.plant_capacity_mtpy**0.59983
+        )
+        capex_elec_instr = (
+            model_year_CEPCI
+            / equation_year_CEPCI
+            * 7877.15146
+            * config.plant_capacity_mtpy**0.59983
+        )
+        capex_buildings_storage_water = (
+            model_year_CEPCI
+            / equation_year_CEPCI
+            * 1097.81876
+            * config.plant_capacity_mtpy**0.8
+        )
+        # capex_misc = (
+        #     model_year_CEPCI
+        #     / equation_year_CEPCI
+        #     * 7877.1546
+        #     * config.plant_capacity_mtpy**0.59983
+        # )
+        capex_misc = config.capex_misc
 
-    total_plant_cost = (
-        capex_eaf_casting
-        + capex_shaft_furnace
-        + capex_oxygen_supply
-        + capex_h2_preheating
-        + capex_cooling_tower
-        + capex_piping
-        + capex_elec_instr
-        + capex_buildings_storage_water
-        + capex_misc
-    )
+        total_plant_cost = (
+            capex_eaf_casting
+            + capex_shaft_furnace
+            + capex_oxygen_supply
+            + capex_h2_preheating
+            + capex_cooling_tower
+            + capex_piping
+            + capex_elec_instr
+            + capex_buildings_storage_water
+            + capex_misc
+        )
 
-    # -------------------------------Fixed O&M Costs------------------------------
+        # -------------------------------Fixed O&M Costs------------------------------
 
-    labor_cost_annual_operation = (
-        69375996.9
-        * ((config.plant_capacity_mtpy / 365 * 1000) ** 0.25242)
-        / ((1162077 / 365 * 1000) ** 0.25242)
-    )
-    labor_cost_maintenance = 0.00863 * total_plant_cost
-    labor_cost_admin_support = 0.25 * (
-        labor_cost_annual_operation + labor_cost_maintenance
-    )
+        labor_cost_annual_operation = (
+            69375996.9
+            * ((config.plant_capacity_mtpy / 365 * 1000) ** 0.25242)
+            / ((1162077 / 365 * 1000) ** 0.25242)
+        )
+        labor_cost_maintenance = 0.00863 * total_plant_cost
+        labor_cost_admin_support = 0.25 * (
+            labor_cost_annual_operation + labor_cost_maintenance
+        )
 
-    property_tax_insurance = 0.02 * total_plant_cost
+        property_tax_insurance = 0.02 * total_plant_cost
 
-    total_fixed_operating_cost = (
-        labor_cost_annual_operation
-        + labor_cost_maintenance
-        + labor_cost_admin_support
-        + property_tax_insurance
-    )
-
-    # ---------------------- Owner's (Installation) Costs --------------------------
-    labor_cost_fivemonth = (
-        5
-        / 12
-        * (
+        total_fixed_operating_cost = (
             labor_cost_annual_operation
             + labor_cost_maintenance
             + labor_cost_admin_support
+            + property_tax_insurance
         )
-    )
 
-    maintenance_materials_onemonth = (
-        feedstocks.maintenance_materials_unitcost * config.plant_capacity_mtpy / 12
-    )
-    non_fuel_consumables_onemonth = (
-        config.plant_capacity_mtpy
-        * (
-            feedstocks.raw_water_consumption * feedstocks.raw_water_unitcost
-            + feedstocks.lime_consumption * feedstocks.lime_unitcost
-            + feedstocks.carbon_consumption * feedstocks.carbon_unitcost
-            + feedstocks.iron_ore_consumption * feedstocks.iron_ore_pellet_unitcost
+        # ---------------------- Owner's (Installation) Costs --------------------------
+        labor_cost_fivemonth = (
+            5
+            / 12
+            * (
+                labor_cost_annual_operation
+                + labor_cost_maintenance
+                + labor_cost_admin_support
+            )
         )
-        / 12
-    )
 
-    waste_disposal_onemonth = (
-        config.plant_capacity_mtpy
-        * feedstocks.slag_disposal_unitcost
-        * feedstocks.slag_production
-        / 12
-    )
-
-    monthly_energy_cost = (
-        config.plant_capacity_mtpy
-        * (
-            feedstocks.hydrogen_consumption * config.lcoh * 1000
-            + feedstocks.natural_gas_consumption
-            * feedstocks.natural_gas_prices[str(config.operational_year)]
-            + feedstocks.electricity_consumption * feedstocks.electricity_cost
+        maintenance_materials_onemonth = (
+            feedstocks.maintenance_materials_unitcost * config.plant_capacity_mtpy / 12
         )
-        / 12
-    )
-    two_percent_tpc = 0.02 * total_plant_cost
-
-    fuel_consumables_60day_supply_cost = (
-        config.plant_capacity_mtpy
-        * (
-            feedstocks.raw_water_consumption * feedstocks.raw_water_unitcost
-            + feedstocks.lime_consumption * feedstocks.lime_unitcost
-            + feedstocks.carbon_consumption * feedstocks.carbon_unitcost
-            + feedstocks.iron_ore_consumption * feedstocks.iron_ore_pellet_unitcost
+        non_fuel_consumables_onemonth = (
+            config.plant_capacity_mtpy
+            * (
+                feedstocks.raw_water_consumption * feedstocks.raw_water_unitcost
+                + feedstocks.lime_consumption * feedstocks.lime_unitcost
+                + feedstocks.carbon_consumption * feedstocks.carbon_unitcost
+                + feedstocks.iron_ore_consumption * feedstocks.iron_ore_pellet_unitcost
+            )
+            / 12
         )
-        / 365
-        * 60
-    )
 
-    spare_parts_cost = 0.005 * total_plant_cost
-    land_cost = 0.775 * config.plant_capacity_mtpy
-    misc_owners_costs = 0.15 * total_plant_cost
+        waste_disposal_onemonth = (
+            config.plant_capacity_mtpy
+            * feedstocks.slag_disposal_unitcost
+            * feedstocks.slag_production
+            / 12
+        )
 
-    installation_cost = (
-        labor_cost_fivemonth
-        + two_percent_tpc
-        + fuel_consumables_60day_supply_cost
-        + spare_parts_cost
-        + misc_owners_costs
-    )
+        monthly_energy_cost = (
+            config.plant_capacity_mtpy
+            * (
+                feedstocks.hydrogen_consumption * config.lcoh * 1000
+                + feedstocks.natural_gas_consumption
+                * feedstocks.natural_gas_prices[str(config.operational_year)]
+                + feedstocks.electricity_consumption * feedstocks.electricity_cost
+            )
+            / 12
+        )
+        two_percent_tpc = 0.02 * total_plant_cost
 
-    return IronCostModelOutputs(
-        # CapEx
-        capex_eaf_casting=capex_eaf_casting,
-        capex_shaft_furnace=capex_shaft_furnace,
-        capex_oxygen_supply=capex_oxygen_supply,
-        capex_h2_preheating=capex_h2_preheating,
-        capex_cooling_tower=capex_cooling_tower,
-        capex_piping=capex_piping,
-        capex_elec_instr=capex_elec_instr,
-        capex_buildings_storage_water=capex_buildings_storage_water,
-        capex_misc=capex_misc,
-        total_plant_cost=total_plant_cost,
-        # Fixed OpEx
-        labor_cost_annual_operation=labor_cost_annual_operation,
-        labor_cost_maintenance=labor_cost_maintenance,
-        labor_cost_admin_support=labor_cost_admin_support,
-        property_tax_insurance=property_tax_insurance,
-        total_fixed_operating_cost=total_fixed_operating_cost,
-        # Owner's Installation costs
-        labor_cost_fivemonth=labor_cost_fivemonth,
-        maintenance_materials_onemonth=maintenance_materials_onemonth,
-        non_fuel_consumables_onemonth=non_fuel_consumables_onemonth,
-        waste_disposal_onemonth=waste_disposal_onemonth,
-        monthly_energy_cost=monthly_energy_cost,
-        spare_parts_cost=spare_parts_cost,
-        land_cost=land_cost,
-        misc_owners_costs=misc_owners_costs,
-        installation_cost=installation_cost,
-    )
+        fuel_consumables_60day_supply_cost = (
+            config.plant_capacity_mtpy
+            * (
+                feedstocks.raw_water_consumption * feedstocks.raw_water_unitcost
+                + feedstocks.lime_consumption * feedstocks.lime_unitcost
+                + feedstocks.carbon_consumption * feedstocks.carbon_unitcost
+                + feedstocks.iron_ore_consumption * feedstocks.iron_ore_pellet_unitcost
+            )
+            / 365
+            * 60
+        )
 
+        spare_parts_cost = 0.005 * total_plant_cost
+        land_cost = 0.775 * config.plant_capacity_mtpy
+        misc_owners_costs = 0.15 * total_plant_cost
+
+        installation_cost = (
+            labor_cost_fivemonth
+            + two_percent_tpc
+            + fuel_consumables_60day_supply_cost
+            + spare_parts_cost
+            + misc_owners_costs
+        )
+
+        return IronCostModelOutputs(
+            # CapEx
+            capex_eaf_casting=capex_eaf_casting,
+            capex_shaft_furnace=capex_shaft_furnace,
+            capex_oxygen_supply=capex_oxygen_supply,
+            capex_h2_preheating=capex_h2_preheating,
+            capex_cooling_tower=capex_cooling_tower,
+            capex_piping=capex_piping,
+            capex_elec_instr=capex_elec_instr,
+            capex_buildings_storage_water=capex_buildings_storage_water,
+            capex_misc=capex_misc,
+            total_plant_cost=total_plant_cost,
+            # Fixed OpEx
+            labor_cost_annual_operation=labor_cost_annual_operation,
+            labor_cost_maintenance=labor_cost_maintenance,
+            labor_cost_admin_support=labor_cost_admin_support,
+            property_tax_insurance=property_tax_insurance,
+            total_fixed_operating_cost=total_fixed_operating_cost,
+            # Owner's Installation costs
+            labor_cost_fivemonth=labor_cost_fivemonth,
+            maintenance_materials_onemonth=maintenance_materials_onemonth,
+            non_fuel_consumables_onemonth=non_fuel_consumables_onemonth,
+            waste_disposal_onemonth=waste_disposal_onemonth,
+            monthly_energy_cost=monthly_energy_cost,
+            spare_parts_cost=spare_parts_cost,
+            land_cost=land_cost,
+            misc_owners_costs=misc_owners_costs,
+            installation_cost=installation_cost,
+        )
+    
+    # If cost model is NOT 'placeholder', import the new cost model
+    else:
+        cost_model = config.cost_model['name']
+        if config.cost_model['model_fp'] == '':
+            config.cost_model['model_fp'] = model_locs['cost'][cost_model]['model']
+        if config.cost_model['inputs_fp'] == '':
+            config.cost_model['inputs_fp'] = model_locs['cost'][cost_model]['inputs']
+        if config.cost_model['coeffs_fp'] == '':
+            config.cost_model['coeffs_fp'] = model_locs['cost'][cost_model]['coeffs']
+        model = importlib.import_module(config.cost_model['model_fp'])
+        model_outputs = model.main(config)
+        # MODEL NOT ACTUALLY IMPLEMENTED - putting out placeholders'
+
+        capex_eaf_casting,capex_shaft_furnace,capex_oxygen_supply,capex_h2_preheating,\
+            capex_cooling_tower,capex_piping,capex_elec_instr,capex_buildings_storage_water,\
+            capex_misc,total_plant_cost,labor_cost_annual_operation,labor_cost_maintenance,\
+            labor_cost_admin_support,property_tax_insurance,total_fixed_operating_cost,\
+            labor_cost_fivemonth,maintenance_materials_onemonth,non_fuel_consumables_onemonth,\
+            waste_disposal_onemonth,monthly_energy_cost,spare_parts_cost,land_cost,\
+            misc_owners_costs,installation_cost = model_outputs
+
+        return IronCostModelOutputs(
+            # CapEx
+            capex_eaf_casting=capex_eaf_casting,
+            capex_shaft_furnace=capex_shaft_furnace,
+            capex_oxygen_supply=capex_oxygen_supply,
+            capex_h2_preheating=capex_h2_preheating,
+            capex_cooling_tower=capex_cooling_tower,
+            capex_piping=capex_piping,
+            capex_elec_instr=capex_elec_instr,
+            capex_buildings_storage_water=capex_buildings_storage_water,
+            capex_misc=capex_misc,
+            total_plant_cost=total_plant_cost,
+            # Fixed OpEx
+            labor_cost_annual_operation=labor_cost_annual_operation,
+            labor_cost_maintenance=labor_cost_maintenance,
+            labor_cost_admin_support=labor_cost_admin_support,
+            property_tax_insurance=property_tax_insurance,
+            total_fixed_operating_cost=total_fixed_operating_cost,
+            # Owner's Installation costs
+            labor_cost_fivemonth=labor_cost_fivemonth,
+            maintenance_materials_onemonth=maintenance_materials_onemonth,
+            non_fuel_consumables_onemonth=non_fuel_consumables_onemonth,
+            waste_disposal_onemonth=waste_disposal_onemonth,
+            monthly_energy_cost=monthly_energy_cost,
+            spare_parts_cost=spare_parts_cost,
+            land_cost=land_cost,
+            misc_owners_costs=misc_owners_costs,
+            installation_cost=installation_cost,
+        )
 
 @define
 class IronFinanceModelConfig:
@@ -902,17 +984,17 @@ def run_iron_full_model(greenheart_config: dict, save_plots=False, show_plots=Fa
     """
     # this is likely to change as we refactor to use config dataclasses, but for now
     # we'll just copy the config and modify it as needed
-    config = copy.deepcopy(greenheart_config)
+    iron_config = copy.deepcopy(greenheart_config['iron'])
 
-    if config["iron"]["costs"]["lcoh"] != config["iron"]["finances"]["lcoh"]:
+    if iron_config["costs"]["lcoh"] != iron_config["finances"]["lcoh"]:
         raise(ValueError(
             "iron cost LCOH and iron finance LCOH are not equal. You must specify both values or neither. \
                 If neither is specified, LCOH will be calculated."
             )
         )
 
-    iron_costs = config["iron"]["costs"]
-    iron_capacity = config["iron"]["capacity"]
+    iron_costs = iron_config["costs"]
+    iron_capacity = iron_config["capacity"]
     feedstocks = Feedstocks(**iron_costs["feedstocks"])
 
     # run iron capacity model to get iron plant size
@@ -921,6 +1003,7 @@ def run_iron_full_model(greenheart_config: dict, save_plots=False, show_plots=Fa
         feedstocks=feedstocks,
         **iron_capacity
     )
+    capacity_config.performance_model = iron_config["performance_model"]
     iron_capacity = run_size_iron_plant_capacity(capacity_config)
 
     # run iron cost model
@@ -930,10 +1013,11 @@ def run_iron_full_model(greenheart_config: dict, save_plots=False, show_plots=Fa
         **iron_costs
     )
     iron_cost_config.plant_capacity_mtpy = iron_capacity.iron_plant_capacity_mtpy
+    iron_cost_config.cost_model = iron_config["cost_model"]
     iron_costs = run_iron_cost_model(iron_cost_config)
 
     # run iron finance model
-    iron_finance = config["iron"]["finances"]
+    iron_finance = iron_config["finances"]
     iron_finance["feedstocks"] = feedstocks
 
     iron_finance_config = IronFinanceModelConfig(
