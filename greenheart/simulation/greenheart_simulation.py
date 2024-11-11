@@ -31,6 +31,30 @@ from greenheart.simulation.technologies.iron.iron import (
     IronFinanceModelOutputs,
     IronCapacityModelOutputs,
 )
+from greenheart.simulation.technologies.iron.iron_ore import (
+    run_iron_ore_full_model,
+    IronOreCostModelOutputs,
+    IronOreFinanceModelOutputs,
+    IronOreCapacityModelOutputs,
+)
+from greenheart.simulation.technologies.iron.iron_pre import (
+    run_iron_pre_full_model,
+    IronPreCostModelOutputs,
+    IronPreFinanceModelOutputs,
+    IronPreCapacityModelOutputs,
+)
+from greenheart.simulation.technologies.iron.iron_win import (
+    run_iron_win_full_model,
+    IronWinCostModelOutputs,
+    IronWinFinanceModelOutputs,
+    IronWinCapacityModelOutputs,
+)
+from greenheart.simulation.technologies.iron.iron_post import (
+    run_iron_post_full_model,
+    IronPostCostModelOutputs,
+    IronPostFinanceModelOutputs,
+    IronPostCapacityModelOutputs,
+)
 
 # visualization imports
 import matplotlib.pyplot as plt
@@ -255,6 +279,22 @@ class GreenHeartSimulationOutput:
     iron_capacity: Optional[IronCapacityModelOutputs] = field(default=None)
     iron_costs: Optional[IronCostModelOutputs] = field(default=None)
     iron_finance: Optional[IronFinanceModelOutputs] = field(default=None)
+
+    iron_ore_capacity: Optional[IronOreCapacityModelOutputs] = field(default=None)
+    iron_ore_costs: Optional[IronOreCostModelOutputs] = field(default=None)
+    iron_ore_finance: Optional[IronOreFinanceModelOutputs] = field(default=None)
+
+    iron_pre_capacity: Optional[IronPreCapacityModelOutputs] = field(default=None)
+    iron_pre_costs: Optional[IronPreCostModelOutputs] = field(default=None)
+    iron_pre_finance: Optional[IronPreFinanceModelOutputs] = field(default=None)
+
+    iron_win_capacity: Optional[IronWinCapacityModelOutputs] = field(default=None)
+    iron_win_costs: Optional[IronWinCostModelOutputs] = field(default=None)
+    iron_win_finance: Optional[IronWinFinanceModelOutputs] = field(default=None)
+
+    iron_post_capacity: Optional[IronPostCapacityModelOutputs] = field(default=None)
+    iron_post_costs: Optional[IronPostCostModelOutputs] = field(default=None)
+    iron_post_finance: Optional[IronPostFinanceModelOutputs] = field(default=None)
 
     ammonia_capacity: Optional[AmmoniaCapacityModelOutputs] = field(default=None)
     ammonia_costs: Optional[AmmoniaCostModelOutputs] = field(default=None)
@@ -1129,6 +1169,39 @@ def run_simulation(config: GreenHeartSimulationConfig):
                 output_dir=config.output_dir,
                 design_scenario_id=config.design_scenario["id"],
             )
+            
+            #NOTE: assumes iron_config (greenheart_config) is updated with additional nesting layers for ore, pre, win, and post. update accordingly if changed
+            iron_ore_capacity, iron_ore_costs, iron_ore_finance = run_iron_ore_full_model(
+                iron_config,
+                save_plots=config.save_plots,
+                show_plots=config.show_plots,
+                output_dir=config.output_dir,
+                design_scenario_id=config.design_scenario["id"],
+            )
+
+            iron_pre_capacity, iron_pre_costs, iron_pre_finance = run_iron_pre_full_model(
+                iron_config,
+                save_plots=config.save_plots,
+                show_plots=config.show_plots,
+                output_dir=config.output_dir,
+                design_scenario_id=config.design_scenario["id"],
+            )
+
+            iron_win_capacity, iron_win_costs, iron_win_finance = run_iron_win_full_model(
+                iron_config,
+                save_plots=config.save_plots,
+                show_plots=config.show_plots,
+                output_dir=config.output_dir,
+                design_scenario_id=config.design_scenario["id"],
+            )
+
+            iron_post_capacity, iron_post_costs, iron_post_finance = run_iron_post_full_model(
+                iron_post_config,
+                save_plots=config.save_plots,
+                show_plots=config.show_plots,
+                output_dir=config.output_dir,
+                design_scenario_id=config.design_scenario["id"],
+            )
 
         else:
             steel_finance = {}
@@ -1222,7 +1295,7 @@ def run_simulation(config: GreenHeartSimulationConfig):
         return hopp_results, electrolyzer_physics_results, remaining_power_profile
     elif config.output_level == 7:
         if "iron" in config.greenheart_config:
-            return lcoe, lcoh, iron_finance, ammonia_finance
+            return lcoe, lcoh, iron_finance, iron_ore_finance, iron_pre_finance, iron_win_finance, iron_post_finance,  ammonia_finance
         else:
             return lcoe, lcoh, steel_finance, ammonia_finance
     elif config.output_level == 8:
