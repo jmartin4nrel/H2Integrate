@@ -1196,7 +1196,7 @@ def run_simulation(config: GreenHeartSimulationConfig):
             )
 
             iron_post_capacity, iron_post_costs, iron_post_finance = run_iron_post_full_model(
-                iron_post_config,
+                iron_config,
                 save_plots=config.save_plots,
                 show_plots=config.show_plots,
                 output_dir=config.output_dir,
@@ -1295,7 +1295,7 @@ def run_simulation(config: GreenHeartSimulationConfig):
         return hopp_results, electrolyzer_physics_results, remaining_power_profile
     elif config.output_level == 7:
         if "iron" in config.greenheart_config:
-            return lcoe, lcoh, iron_finance, iron_ore_finance, iron_pre_finance, iron_win_finance, iron_post_finance,  ammonia_finance
+            return lcoe, lcoh, iron_finance, ammonia_finance #, iron_ore_finance, iron_pre_finance, iron_win_finance, iron_post_finance, 
         else:
             return lcoe, lcoh, steel_finance, ammonia_finance
     elif config.output_level == 8:
