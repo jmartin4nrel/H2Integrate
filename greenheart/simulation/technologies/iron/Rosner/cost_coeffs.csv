@@ -26,8 +26,6 @@ Other Owners's Costs,owner,lin,frac of TPC,0.15
 Processing Steps,fixed opex,lin,-,29
 % Skilled Labor,fixed opex,lin,%,35
 % Unskilled Labor,fixed opex,lin,%,65
-Skilled Labor Rate,fixed opex,lin,$/hr,40.85
-Unskilled Labor Rate,fixed opex,lin,$/hr,30
 Annual Operating Labor Cost,fixed opex,lin,hr/day/step/(kg/day),4.42732
 Annual Operating Labor Cost,fixed opex,exp,-,0.25242
 Maintenance Labor Cost,fixed opex,lin,frac of TPC,0.00863

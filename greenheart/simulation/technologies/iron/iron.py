@@ -299,7 +299,6 @@ def run_size_iron_plant_capacity(config: IronCapacityModelConfig) -> IronCapacit
             config.performance_model['coeffs_fp'] = model_locs['performance'][perf_model]['coeffs']
         model = importlib.import_module(config.performance_model['model_fp'])
         model_outputs = model.main(config)
-        # MODEL NOT ACTUALLY IMPLEMENTED - putting out placeholders
         iron_plant_capacity_mtpy, hydrogen_amount_kgpy = model_outputs
         return IronCapacityModelOutputs(
             iron_plant_capacity_mtpy=iron_plant_capacity_mtpy,
@@ -416,13 +415,13 @@ def run_iron_cost_model(config: IronCostModelConfig) -> IronCostModelOutputs:
             * 1097.81876
             * config.plant_capacity_mtpy**0.8
         )
-        # capex_misc = (
-        #     model_year_CEPCI
-        #     / equation_year_CEPCI
-        #     * 7877.1546
-        #     * config.plant_capacity_mtpy**0.59983
-        # )
-        capex_misc = config.capex_misc
+        capex_misc = (
+            model_year_CEPCI
+            / equation_year_CEPCI
+            * 7877.15146
+            * config.plant_capacity_mtpy**0.59983
+        )
+        # capex_misc = config.capex_misc
 
         total_plant_cost = (
             capex_eaf_casting
