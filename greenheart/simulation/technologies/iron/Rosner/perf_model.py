@@ -10,8 +10,32 @@ from hopp.utilities import load_yaml
 CD = Path(__file__).parent
 
 def main(config):
-    input_df = pd.read_csv(CD/config.performance_model['inputs_fp'],index_col=[0,1,2])
-    coeff_df = pd.read_csv(CD/config.performance_model['coeffs_fp'],index_col=[0,1,2,3])
     
-    # PLACEHOLDER OUTPUTS
-    return 1,2
+    # If re-fitting the model, load an inputs dataframe, otherwise, load up the coeffs
+    if config.performance_model['refit_coeffs']:
+        input_df = pd.read_csv(CD/config.performance_model['inputs_fp'],index_col=[0,1,2])
+        raise NotImplementedError('Rosner performance model cannot be re-fit')
+    else:
+        coeff_df = pd.read_csv(CD/config.performance_model['coeffs_fp'],index_col=[0,1,2,3])   
+        tech_coeffs = coeff_df['h2_dri_eaf']
+    
+    # Calculate the hydrogen or iron capacity
+    if config.hydrogen_amount_kgpy:
+        iron_plant_capacity_mtpy = (config.hydrogen_amount_kgpy 
+            / 1000
+            / tech_coeffs.loc['Hydrogen'].values[0]
+            * config.input_capacity_factor_estimate
+        )
+        hydrogen_amount_kgpy = config.hydrogen_amount_kgpy
+
+    if config.desired_iron_mtpy:
+        hydrogen_amount_kgpy = (config.desired_iron_mtpy 
+            * 1000
+            * tech_coeffs.loc['Hydrogen'].values[0]
+            / config.input_capacity_factor_estimate
+        )
+        iron_plant_capacity_mtpy = (config.desired_iron_mtpy 
+            / config.input_capacity_factor_estimate
+        )
+
+    return iron_plant_capacity_mtpy, hydrogen_amount_kgpy
