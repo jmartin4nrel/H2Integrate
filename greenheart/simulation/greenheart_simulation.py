@@ -31,6 +31,30 @@ from greenheart.simulation.technologies.iron.iron import (
     IronFinanceModelOutputs,
     IronCapacityModelOutputs,
 )
+from greenheart.simulation.technologies.iron.iron_ore import (
+    run_iron_ore_full_model,
+    IronOreCostModelOutputs,
+    IronOreFinanceModelOutputs,
+    IronOreCapacityModelOutputs,
+)
+from greenheart.simulation.technologies.iron.iron_pre import (
+    run_iron_pre_full_model,
+    IronPreCostModelOutputs,
+    IronPreFinanceModelOutputs,
+    IronPreCapacityModelOutputs,
+)
+from greenheart.simulation.technologies.iron.iron_win import (
+    run_iron_win_full_model,
+    IronWinCostModelOutputs,
+    IronWinFinanceModelOutputs,
+    IronWinCapacityModelOutputs,
+)
+from greenheart.simulation.technologies.iron.iron_post import (
+    run_iron_post_full_model,
+    IronPostCostModelOutputs,
+    IronPostFinanceModelOutputs,
+    IronPostCapacityModelOutputs,
+)
 
 # visualization imports
 import matplotlib.pyplot as plt
@@ -104,6 +128,7 @@ class GreenHeartSimulationConfig:
     run_pre_iron: bool = field(default=True)
     save_pre_iron: bool = field(default=False)
     pre_iron_fn: Optional[str] = field(default=None)
+    iron_modular: bool = field(default=False)
 
     # these are set in the __attrs_post_init__ method
     hopp_config: dict = field(init=False)
@@ -255,6 +280,22 @@ class GreenHeartSimulationOutput:
     iron_capacity: Optional[IronCapacityModelOutputs] = field(default=None)
     iron_costs: Optional[IronCostModelOutputs] = field(default=None)
     iron_finance: Optional[IronFinanceModelOutputs] = field(default=None)
+
+    iron_ore_capacity: Optional[IronOreCapacityModelOutputs] = field(default=None)
+    iron_ore_costs: Optional[IronOreCostModelOutputs] = field(default=None)
+    iron_ore_finance: Optional[IronOreFinanceModelOutputs] = field(default=None)
+
+    iron_pre_capacity: Optional[IronPreCapacityModelOutputs] = field(default=None)
+    iron_pre_costs: Optional[IronPreCostModelOutputs] = field(default=None)
+    iron_pre_finance: Optional[IronPreFinanceModelOutputs] = field(default=None)
+
+    iron_win_capacity: Optional[IronWinCapacityModelOutputs] = field(default=None)
+    iron_win_costs: Optional[IronWinCostModelOutputs] = field(default=None)
+    iron_win_finance: Optional[IronWinFinanceModelOutputs] = field(default=None)
+
+    iron_post_capacity: Optional[IronPostCapacityModelOutputs] = field(default=None)
+    iron_post_costs: Optional[IronPostCostModelOutputs] = field(default=None)
+    iron_post_finance: Optional[IronPostFinanceModelOutputs] = field(default=None)
 
     ammonia_capacity: Optional[AmmoniaCapacityModelOutputs] = field(default=None)
     ammonia_costs: Optional[AmmoniaCostModelOutputs] = field(default=None)
@@ -1122,13 +1163,64 @@ def run_simulation(config: GreenHeartSimulationConfig):
                     "hydrogen_amount_kgpy"
                 ] = hydrogen_amount_kgpy
 
-            iron_capacity, iron_costs, iron_finance = run_iron_full_model(
-                iron_config,
-                save_plots=config.save_plots,
-                show_plots=config.show_plots,
-                output_dir=config.output_dir,
-                design_scenario_id=config.design_scenario["id"],
-            )
+            if not config.iron_modular:
+            
+                iron_capacity, iron_costs, iron_finance = run_iron_full_model(
+                    iron_config,
+                    save_plots=config.save_plots,
+                    show_plots=config.show_plots,
+                    output_dir=config.output_dir,
+                    design_scenario_id=config.design_scenario["id"],
+                )
+
+            else:
+
+                #NOTE: assumes iron_config (greenheart_config) is updated with additional nesting layers for ore, pre, win, and post. update accordingly if changed
+                # Capcacity-determining variable from iron_config: "iron_ore_mpty_run_of_mine" (raw ore coming directly out of the mine)
+                
+                iron_ore_capacity, iron_ore_costs, iron_ore_finance = run_iron_ore_full_model(
+                    iron_config,
+                    save_plots=config.save_plots,
+                    show_plots=config.show_plots,
+                    output_dir=config.output_dir,
+                    design_scenario_id=config.design_scenario["id"],
+                )
+
+                # Capcacity-determining variable from iron_config: "iron_ore_mpty_sold_from_mine" (finished ore lumps/pellets/fines sold from the mine)
+                # TODO: Change iron_mpty_sold_from_mine in iron_config to result from iron_ore_capacity
+
+                iron_pre_capacity, iron_pre_costs, iron_pre_finance = run_iron_pre_full_model(
+                    iron_config,
+                    save_plots=config.save_plots,
+                    show_plots=config.show_plots,
+                    output_dir=config.output_dir,
+                    design_scenario_id=config.design_scenario["id"],
+                )
+
+                # Capcacity-determining variable from iron_config: "iron_ore_mpty_into_winning" (preprocessed ore fed into furnaces/electrowinning)
+                # TODO: Change iron_ore_mpty_into_winning in iron_config to result from iron_pre_capacity
+
+                iron_win_capacity, iron_win_costs, iron_win_finance = run_iron_win_full_model(
+                    iron_config,
+                    save_plots=config.save_plots,
+                    show_plots=config.show_plots,
+                    output_dir=config.output_dir,
+                    design_scenario_id=config.design_scenario["id"],
+                )
+
+                # Capcacity-determining variable from iron_config: "iron_mpty_into_post" (reduced iron out of furnaces/electrowinnign for final upgrading)
+                # TODO: Change iron_mpty_into_post in iron_config to result from iron_win_capacity
+
+                iron_post_capacity, iron_post_costs, iron_post_finance = run_iron_post_full_model(
+                    iron_config,
+                    save_plots=config.save_plots,
+                    show_plots=config.show_plots,
+                    output_dir=config.output_dir,
+                    design_scenario_id=config.design_scenario["id"],
+                )
+
+                # Final end product: "iron_mpty"
+                # TODO: Change iron_mpty in iron_config to result from iron_post_capacity
 
         else:
             steel_finance = {}
@@ -1222,7 +1314,7 @@ def run_simulation(config: GreenHeartSimulationConfig):
         return hopp_results, electrolyzer_physics_results, remaining_power_profile
     elif config.output_level == 7:
         if "iron" in config.greenheart_config:
-            return lcoe, lcoh, iron_finance, ammonia_finance
+            return lcoe, lcoh, iron_finance, ammonia_finance #, iron_ore_finance, iron_pre_finance, iron_win_finance, iron_post_finance, 
         else:
             return lcoe, lcoh, steel_finance, ammonia_finance
     elif config.output_level == 8:
