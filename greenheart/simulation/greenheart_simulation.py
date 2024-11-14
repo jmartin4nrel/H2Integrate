@@ -1171,6 +1171,8 @@ def run_simulation(config: GreenHeartSimulationConfig):
             )
             
             #NOTE: assumes iron_config (greenheart_config) is updated with additional nesting layers for ore, pre, win, and post. update accordingly if changed
+            # Capcacity-determining variable from iron_config: "iron_ore_mpty_run_of_mine" (raw ore coming directly out of the mine)
+            
             iron_ore_capacity, iron_ore_costs, iron_ore_finance = run_iron_ore_full_model(
                 iron_config,
                 save_plots=config.save_plots,
@@ -1178,6 +1180,9 @@ def run_simulation(config: GreenHeartSimulationConfig):
                 output_dir=config.output_dir,
                 design_scenario_id=config.design_scenario["id"],
             )
+
+            # Capcacity-determining variable from iron_config: "iron_ore_mpty_sold_from_mine" (finished ore lumps/pellets/fines sold from the mine)
+            # TODO: Change iron_mpty_sold_from_mine in iron_config to result from iron_ore_capacity
 
             iron_pre_capacity, iron_pre_costs, iron_pre_finance = run_iron_pre_full_model(
                 iron_config,
@@ -1187,6 +1192,9 @@ def run_simulation(config: GreenHeartSimulationConfig):
                 design_scenario_id=config.design_scenario["id"],
             )
 
+            # Capcacity-determining variable from iron_config: "iron_ore_mpty_into_winning" (preprocessed ore fed into furnaces/electrowinning)
+            # TODO: Change iron_ore_mpty_into_winning in iron_config to result from iron_pre_capacity
+
             iron_win_capacity, iron_win_costs, iron_win_finance = run_iron_win_full_model(
                 iron_config,
                 save_plots=config.save_plots,
@@ -1195,6 +1203,9 @@ def run_simulation(config: GreenHeartSimulationConfig):
                 design_scenario_id=config.design_scenario["id"],
             )
 
+            # Capcacity-determining variable from iron_config: "iron_mpty_into_post" (reduced iron out of furnaces/electrowinnign for final upgrading)
+            # TODO: Change iron_mpty_into_post in iron_config to result from iron_win_capacity
+
             iron_post_capacity, iron_post_costs, iron_post_finance = run_iron_post_full_model(
                 iron_config,
                 save_plots=config.save_plots,
@@ -1202,6 +1213,10 @@ def run_simulation(config: GreenHeartSimulationConfig):
                 output_dir=config.output_dir,
                 design_scenario_id=config.design_scenario["id"],
             )
+
+            # Final end product: "iron_mpty"
+            # TODO: Change iron_mpty in iron_config to result from iron_post_capacity
+            # TODO: If we want to target a specific iron_mpty, we will need to use solver
 
         else:
             steel_finance = {}
