@@ -23,15 +23,16 @@ def main(config):
     top_down_df = pd.read_csv(CD/'../top_down_coeffs.csv',index_col=[0,1,2,3])
     top_down_year = top_down_df[str(config.operational_year)]
 
+    technology = config.technology
     # If re-fitting the model, load an inputs dataframe, otherwise, load up the coeffs
     if config.cost_model['refit_coeffs']:
         input_df = pd.read_csv(CD/config.cost_model['inputs_fp'],index_col=[0,1,2])
         raise NotImplementedError('Rosner cost model cannot be re-fit')
     else:
         coeff_df = pd.read_csv(CD/config.cost_model['coeffs_fp'],index_col=[0,1,2,3])
-        tech_coeffs = coeff_df['h2_dri_eaf'] #TODO: CHANGE THIS TO GET DIFFERENT TECHNOLOGIES
+        tech_coeffs = coeff_df[[technology]].reset_index()
         perf_coeff_df = pd.read_csv(CD/'perf_coeffs.csv',index_col=[0,1,2,3]) #TODO: decouple performance and cost models
-        perf_coeffs = perf_coeff_df['h2_dri_eaf']
+        perf_coeffs = perf_coeff_df[technology]
 
     # Import Peters opex model
     if config.cost_model['refit_coeffs']:
@@ -40,111 +41,46 @@ def main(config):
         coeff_df = pd.read_csv(CD/'../Peters'/model_locs['cost']['Peters']['coeffs'],index_col=[0,1,2,3])
         Peters_coeffs = coeff_df['A']
 
-    model_year_CEPCI = 596.2
-    equation_year_CEPCI = 708.8
+    model_year_CEPCI = 596.2 # Where is this value from? 
+    equation_year_CEPCI = 708.8 # Where is this value from? 
 
     # --------------- capital items ----------------
 
-    # TODO - integrate a dynamic list of capital items that gets passed out as dict of costs, rather than endless named variables
+    capital_costs = {}
 
-    capex_eaf_casting = (
-        model_year_CEPCI
-        / equation_year_CEPCI
-        * tech_coeffs.loc["EAF & Casting",:,'lin'].values[0]
-        * config.plant_capacity_mtpy**tech_coeffs.loc["EAF & Casting",:,'exp'].values[0]
-    )
-    capex_shaft_furnace = (
-        model_year_CEPCI
-        / equation_year_CEPCI
-        * tech_coeffs.loc["Shaft Furnace",:,'lin'].values[0]
-        * config.plant_capacity_mtpy**tech_coeffs.loc["Shaft Furnace",:,'exp'].values[0]
-    )
-    capex_oxygen_supply = (
-        model_year_CEPCI
-        / equation_year_CEPCI
-        * tech_coeffs.loc["Oxygen Supply",:,'lin'].values[0]
-        * config.plant_capacity_mtpy**tech_coeffs.loc["Oxygen Supply",:,'exp'].values[0]
-    )
-    if config.o2_heat_integration:
-        capex_h2_preheating = (
+    # Add unique capital items based on the "Name" column for technology
+    for item_name in tech_coeffs[tech_coeffs["Type"] == "capital"]["Name"].unique():
+        # Filter for this item and get the lin and exp coefficients
+        item_data = tech_coeffs[(tech_coeffs["Name"] == item_name) & (tech_coeffs["Type"] == "capital")]
+        lin_coeff = item_data[item_data["Coeff"] == "lin"][technology].values[0]
+        exp_coeff = item_data[item_data["Coeff"] == "exp"][technology].values[0]
+        
+        # Calculate the capital cost for the item
+        capital_costs[item_name] = (
             model_year_CEPCI
             / equation_year_CEPCI
-            * (1 - 0.4)
-            * tech_coeffs.loc["H2 Pre-heating",:,'lin'].values[0]
-            * config.plant_capacity_mtpy**tech_coeffs.loc["H2 Pre-heating",:,'exp'].values[0]
-        )  # Optimistic ballpark estimate of 60% reduction in preheating
-        capex_cooling_tower = (
-            model_year_CEPCI
-            / equation_year_CEPCI
-            * tech_coeffs.loc["Cooling Tower",:,'lin'].values[0]
-            * config.plant_capacity_mtpy**tech_coeffs.loc["Cooling Tower",:,'exp'].values[0]
-        )  # Optimistic ballpark estimate of 30% reduction in cooling
-    else:
-        capex_h2_preheating = (
-            model_year_CEPCI
-            / equation_year_CEPCI
-            * tech_coeffs.loc["H2 Pre-heating",:,'lin'].values[0]
-            * config.plant_capacity_mtpy**tech_coeffs.loc["H2 Pre-heating",:,'exp'].values[0]
+            * lin_coeff
+            * config.plant_capacity_mtpy**exp_coeff
         )
-        capex_cooling_tower = (
-            model_year_CEPCI
-            / equation_year_CEPCI
-            * tech_coeffs.loc["Cooling Tower",:,'lin'].values[0]
-            * config.plant_capacity_mtpy**tech_coeffs.loc["Cooling Tower",:,'exp'].values[0]
-        )
-    capex_piping = (
-        model_year_CEPCI
-        / equation_year_CEPCI
-        * tech_coeffs.loc["Piping",:,'lin'].values[0]
-        * config.plant_capacity_mtpy**tech_coeffs.loc["Piping",:,'exp'].values[0]
-    )
-    capex_elec_instr = (
-        model_year_CEPCI
-        / equation_year_CEPCI
-        * tech_coeffs.loc["Electrical & Instrumentation",:,'lin'].values[0]
-        * config.plant_capacity_mtpy**tech_coeffs.loc["Electrical & Instrumentation",:,'exp'].values[0]
-    )
-    capex_buildings_storage_water = (
-        model_year_CEPCI
-        / equation_year_CEPCI
-        * tech_coeffs.loc["Buildings, Storage, Water Service",:,'lin'].values[0]
-        * config.plant_capacity_mtpy**tech_coeffs.loc["Buildings, Storage, Water Service",:,'exp'].values[0]
-    )
-    capex_misc = (
-        model_year_CEPCI
-        / equation_year_CEPCI
-        * tech_coeffs.loc["Other Miscellaneous Cost",:,'lin'].values[0]
-        * config.plant_capacity_mtpy**tech_coeffs.loc["Other Miscellaneous Cost",:,'exp'].values[0]
-    )
 
-    total_plant_cost = (
-        capex_eaf_casting
-        + capex_shaft_furnace
-        + capex_oxygen_supply
-        + capex_h2_preheating
-        + capex_cooling_tower
-        + capex_piping
-        + capex_elec_instr
-        + capex_buildings_storage_water
-        + capex_misc
-    )
+    total_plant_cost = sum(capital_costs.values())
 
     # -------------------------------Fixed O&M Costs------------------------------
 
     # Peters model - employee-hours/day/process step * # of process steps
     labor_cost_annual_operation = ( 365
-        * (tech_coeffs.loc["% Skilled Labor"].values[0]/100 * top_down_year.loc["Skilled Labor Cost"].values[0]
-        + tech_coeffs.loc["% Unskilled Labor"].values[0]/100 * top_down_year.loc["Unskilled Labor Cost"].values[0])
-        * tech_coeffs.loc["Processing Steps"].values[0]
+        * (tech_coeffs.loc[tech_coeffs["Name"] == "% Skilled Labor", technology].values[0]/100 * top_down_year.loc["Skilled Labor Cost"].values[0]
+        + tech_coeffs.loc[tech_coeffs["Name"] == "% Unskilled Labor", technology].values[0]/100 * top_down_year.loc["Unskilled Labor Cost"].values[0])
+        * tech_coeffs.loc[tech_coeffs["Name"] == "Processing Steps", technology].values[0]
         * Peters_coeffs.loc["Annual Operating Labor Cost",:,'lin'].values[0]
         * (config.plant_capacity_mtpy / 365 * 1000) ** Peters_coeffs.loc["Annual Operating Labor Cost",:,'exp'].values[0]
     ) * 63325349.24631249 / 63322395.97940371
-    labor_cost_maintenance = tech_coeffs.loc["Maintenance Labor Cost"].values[0] * total_plant_cost
-    labor_cost_admin_support = tech_coeffs.loc["Administrative & Support Labor Cost"].values[0] * (
+    labor_cost_maintenance = tech_coeffs.loc[tech_coeffs["Name"] == "Maintenance Labor Cost", technology].values[0]  * total_plant_cost
+    labor_cost_admin_support = tech_coeffs.loc[tech_coeffs["Name"] == "Administrative & Support Labor Cost", technology].values[0] * (
         labor_cost_annual_operation + labor_cost_maintenance
     )
 
-    property_tax_insurance = tech_coeffs.loc["Property Tax & Insurance"].values[0] * total_plant_cost
+    property_tax_insurance = tech_coeffs.loc[tech_coeffs["Name"] == "Property Tax & Insurance", technology].values[0] * total_plant_cost
 
     total_fixed_operating_cost = (
         labor_cost_annual_operation
@@ -165,7 +101,8 @@ def main(config):
     )
 
     maintenance_materials_onemonth = (
-        tech_coeffs.loc["Maintenance Materials"].values[0] * config.plant_capacity_mtpy / 12
+        tech_coeffs.loc[tech_coeffs["Name"] == "Maintenance Materials", technology].values[0]
+        * config.plant_capacity_mtpy / 12
     )
     non_fuel_consumables_onemonth = (
         config.plant_capacity_mtpy
@@ -174,6 +111,7 @@ def main(config):
             + perf_coeffs.loc['Lime'].values[0] * top_down_year.loc['Lime'].values[0]
             + perf_coeffs.loc['Carbon (Coke)'].values[0] * top_down_year.loc['Carbon'].values[0]
             + perf_coeffs.loc['Iron Ore'].values[0] * top_down_year.loc['Iron Ore Pellets'].values[0]
+            + perf_coeffs.loc['Reformer Catalyst'].values[0] * top_down_year.loc['Reformer Catalyst'].values[0]
         )
         / 12
     )
@@ -194,13 +132,13 @@ def main(config):
         )
         / 12
     )
-    preproduction_cost = tech_coeffs.loc["Preproduction"].values[0] * total_plant_cost
+    preproduction_cost = tech_coeffs.loc[tech_coeffs["Name"] == "Preproduction", technology].values[0] * total_plant_cost
 
     fuel_consumables_60day_supply_cost = non_fuel_consumables_onemonth * 12 / 365 * 60
 
-    spare_parts_cost = tech_coeffs.loc["Spare Parts"].values[0] * total_plant_cost
-    land_cost = tech_coeffs.loc["Land"].values[0] * config.plant_capacity_mtpy
-    misc_owners_costs = tech_coeffs.loc["Other Owners's Costs"].values[0] * total_plant_cost
+    spare_parts_cost = tech_coeffs.loc[tech_coeffs["Name"] == "Spare Parts", technology].values[0] * total_plant_cost
+    land_cost = tech_coeffs.loc[tech_coeffs["Name"] == "Land", technology].values[0] * config.plant_capacity_mtpy
+    misc_owners_costs = tech_coeffs.loc[tech_coeffs["Name"] == "Other Owners's Costs", technology].values[0] * total_plant_cost
 
     installation_cost = (
         labor_cost_fivemonth
@@ -210,9 +148,7 @@ def main(config):
         + misc_owners_costs
     )
 
-    return capex_eaf_casting,capex_shaft_furnace,capex_oxygen_supply,capex_h2_preheating,\
-        capex_cooling_tower,capex_piping,capex_elec_instr,capex_buildings_storage_water,\
-        capex_misc,total_plant_cost,labor_cost_annual_operation,labor_cost_maintenance,\
+    return capital_costs,total_plant_cost,labor_cost_annual_operation,labor_cost_maintenance,\
         labor_cost_admin_support,property_tax_insurance,total_fixed_operating_cost,\
         labor_cost_fivemonth,maintenance_materials_onemonth,non_fuel_consumables_onemonth,\
         waste_disposal_onemonth,monthly_energy_cost,spare_parts_cost,land_cost,\
