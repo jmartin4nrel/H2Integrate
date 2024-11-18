@@ -30,7 +30,7 @@ def main(config):
         raise NotImplementedError('Rosner cost model cannot be re-fit')
     else:
         coeff_df = pd.read_csv(CD/config.cost_model['coeffs_fp'],index_col=[0,1,2,3])
-        tech_coeffs = coeff_df[[technology]].reset_index() #TODO: CHANGE THIS TO GET DIFFERENT TECHNOLOGIES
+        tech_coeffs = coeff_df[[technology]].reset_index()
         perf_coeff_df = pd.read_csv(CD/'perf_coeffs.csv',index_col=[0,1,2,3]) #TODO: decouple performance and cost models
         perf_coeffs = perf_coeff_df[technology]
 
@@ -62,7 +62,6 @@ def main(config):
             * lin_coeff
             * config.plant_capacity_mtpy**exp_coeff
         )
-    print(capital_costs)
 
     total_plant_cost = sum(capital_costs.values())
 

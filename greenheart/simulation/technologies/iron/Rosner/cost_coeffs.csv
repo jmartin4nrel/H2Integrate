@@ -1,16 +1,16 @@
 Name,Type,Coeff,Unit,h2_dri_eaf,h2_dri,ng_dri_eaf
 Dollar Year,all,-,-,2022,2022,2022
-EAF & Casting,capital,lin,$,352191.5237,0,"348,441.82"
-Shaft Furnace,capital,lin,$,489.68061,498.40116,"12,706.36"
-Reformer,capital,lin,$,0,0,"12,585.82"
+EAF & Casting,capital,lin,$,352191.5237,0,348441.82
+Shaft Furnace,capital,lin,$,489.68061,498.40116,12706.36
+Reformer,capital,lin,$,0,0,12585.82
 Recycle Compressor,capital,lin,$,0,0,956.77
-Oxygen Supply,capital,lin,$,1715.21508,"1,364.56","1,204.99"
+Oxygen Supply,capital,lin,$,1715.21508,1364.56,1204.99
 H2 Pre-heating,capital,lin,$,45.69123,45.69123,0
-Cooling Tower,capital,lin,$,2513.08314,2349.2,"1,790.40"
+Cooling Tower,capital,lin,$,2513.08314,2349.2,1790.40
 Piping,capital,lin,$,11815.72718,172.83401,25652
-Electrical & Instrumentation,capital,lin,$,7877.15146,115.22,"17,101.17"
-"Buildings, Storage, Water Service",capital,lin,$,1097.81876,630.5313,"1,077.40"
-Other Miscellaneous Cost,capital,lin,$,7877.15146,115.22,"17,101.17"
+Electrical & Instrumentation,capital,lin,$,7877.15146,115.22,17101.17
+"Buildings, Storage, Water Service",capital,lin,$,1097.81876,630.5313,1077.40
+Other Miscellaneous Cost,capital,lin,$,7877.15146,115.22,17101.17
 EAF & Casting,capital,exp,-,0.456,0,0.456
 Shaft Furnace,capital,exp,-,0.88741,0.88627,0.65408
 Reformer,capital,exp,-,0,0,0.65045
