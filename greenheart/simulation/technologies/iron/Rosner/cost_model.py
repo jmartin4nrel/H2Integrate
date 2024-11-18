@@ -111,6 +111,7 @@ def main(config):
             + perf_coeffs.loc['Lime'].values[0] * top_down_year.loc['Lime'].values[0]
             + perf_coeffs.loc['Carbon (Coke)'].values[0] * top_down_year.loc['Carbon'].values[0]
             + perf_coeffs.loc['Iron Ore'].values[0] * top_down_year.loc['Iron Ore Pellets'].values[0]
+            + perf_coeffs.loc['Reformer Catalyst'].values[0] * top_down_year.loc['Reformer Catalyst'].values[0]
         )
         / 12
     )
