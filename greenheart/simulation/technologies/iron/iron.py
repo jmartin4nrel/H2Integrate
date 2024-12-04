@@ -102,6 +102,7 @@ class IronCostModelConfig:
             Surface water discharge per metric tonne of iron production.
     """
 
+    technology: str
     operational_year: int
     plant_capacity_mtpy: float
     lcoh: float
@@ -120,6 +121,7 @@ class IronCosts:
     Base dataclass for calculated iron costs.
 
     Attributes:
+        capital_costs (dict): Dictionary with all of the capital expenditures for the iron technology.
         capex_eaf_casting (float):
             Capital expenditure for electric arc furnace and casting.
         capex_shaft_furnace (float): Capital expenditure for shaft furnace.
@@ -144,16 +146,16 @@ class IronCosts:
         These represent the minimum set of required cost data for
         `run_iron_finance_model`, as well as base data for `IronCostModelOutputs`.
     """
-
-    capex_eaf_casting: float
-    capex_shaft_furnace: float
-    capex_oxygen_supply: float
-    capex_h2_preheating: float
-    capex_cooling_tower: float
-    capex_piping: float
-    capex_elec_instr: float
-    capex_buildings_storage_water: float
-    capex_misc: float
+    capital_costs: dict
+    # capex_eaf_casting: float
+    # capex_shaft_furnace: float
+    # capex_oxygen_supply: float
+    # capex_h2_preheating: float
+    # capex_cooling_tower: float
+    # capex_piping: float
+    # capex_elec_instr: float
+    # capex_buildings_storage_water: float
+    # capex_misc: float
     labor_cost_annual_operation: float
     labor_cost_maintenance: float
     labor_cost_admin_support: float
@@ -565,11 +567,8 @@ def run_iron_cost_model(config: IronCostModelConfig) -> IronCostModelOutputs:
             config.cost_model['coeffs_fp'] = model_locs['cost'][cost_model]['coeffs']
         model = importlib.import_module(config.cost_model['model_fp'])
         model_outputs = model.main(config)
-        # MODEL NOT ACTUALLY IMPLEMENTED - putting out placeholders'
 
-        capex_eaf_casting,capex_shaft_furnace,capex_oxygen_supply,capex_h2_preheating,\
-            capex_cooling_tower,capex_piping,capex_elec_instr,capex_buildings_storage_water,\
-            capex_misc,total_plant_cost,labor_cost_annual_operation,labor_cost_maintenance,\
+        capital_costs,total_plant_cost,labor_cost_annual_operation,labor_cost_maintenance,\
             labor_cost_admin_support,property_tax_insurance,total_fixed_operating_cost,\
             labor_cost_fivemonth,maintenance_materials_onemonth,non_fuel_consumables_onemonth,\
             waste_disposal_onemonth,monthly_energy_cost,spare_parts_cost,land_cost,\
@@ -577,15 +576,7 @@ def run_iron_cost_model(config: IronCostModelConfig) -> IronCostModelOutputs:
 
         return IronCostModelOutputs(
             # CapEx
-            capex_eaf_casting=capex_eaf_casting,
-            capex_shaft_furnace=capex_shaft_furnace,
-            capex_oxygen_supply=capex_oxygen_supply,
-            capex_h2_preheating=capex_h2_preheating,
-            capex_cooling_tower=capex_cooling_tower,
-            capex_piping=capex_piping,
-            capex_elec_instr=capex_elec_instr,
-            capex_buildings_storage_water=capex_buildings_storage_water,
-            capex_misc=capex_misc,
+            capital_costs= capital_costs,
             total_plant_cost=total_plant_cost,
             # Fixed OpEx
             labor_cost_annual_operation=labor_cost_annual_operation,
@@ -758,69 +749,15 @@ def run_iron_finance_model(
     pf.set_params("cash onhand", 1)
 
     # ----------------------------------- Add capital items to ProFAST ----------------
-    pf.add_capital_item(
-        name="EAF & Casting",
-        cost=costs.capex_eaf_casting,
-        depr_type="MACRS",
-        depr_period=7,
-        refurb=[0],
-    )
-    pf.add_capital_item(
-        name="Shaft Furnace",
-        cost=costs.capex_shaft_furnace,
-        depr_type="MACRS",
-        depr_period=7,
-        refurb=[0],
-    )
-    pf.add_capital_item(
-        name="Oxygen Supply",
-        cost=costs.capex_oxygen_supply,
-        depr_type="MACRS",
-        depr_period=7,
-        refurb=[0],
-    )
-    pf.add_capital_item(
-        name="H2 Pre-heating",
-        cost=costs.capex_h2_preheating,
-        depr_type="MACRS",
-        depr_period=7,
-        refurb=[0],
-    )
-    pf.add_capital_item(
-        name="Cooling Tower",
-        cost=costs.capex_cooling_tower,
-        depr_type="MACRS",
-        depr_period=7,
-        refurb=[0],
-    )
-    pf.add_capital_item(
-        name="Piping",
-        cost=costs.capex_piping,
-        depr_type="MACRS",
-        depr_period=7,
-        refurb=[0],
-    )
-    pf.add_capital_item(
-        name="Electrical & Instrumentation",
-        cost=costs.capex_elec_instr,
-        depr_type="MACRS",
-        depr_period=7,
-        refurb=[0],
-    )
-    pf.add_capital_item(
-        name="Buildings, Storage, Water Service",
-        cost=costs.capex_buildings_storage_water,
-        depr_type="MACRS",
-        depr_period=7,
-        refurb=[0],
-    )
-    pf.add_capital_item(
-        name="Other Miscellaneous Costs",
-        cost=costs.capex_misc,
-        depr_type="MACRS",
-        depr_period=7,
-        refurb=[0],
-    )
+    # apply all params passed through from config
+    for param, val in costs.capital_costs.items():
+        pf.add_capital_item(
+            name= param,
+            cost= val,
+            depr_type="MACRS",
+            depr_period=7,
+            refurb=[0], 
+        )
 
     # -------------------------------------- Add fixed costs--------------------------------
     pf.add_fixed_cost(
@@ -1008,6 +945,7 @@ def run_iron_full_model(greenheart_config: dict, save_plots=False, show_plots=Fa
     # run iron cost model
     iron_costs["feedstocks"] = feedstocks
     iron_cost_config = IronCostModelConfig(
+        technology=iron_config['technology'],
         plant_capacity_mtpy=iron_capacity.iron_plant_capacity_mtpy,
         **iron_costs
     )
