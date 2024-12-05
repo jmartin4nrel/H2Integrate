@@ -5,8 +5,11 @@ doi.org/10.1039/d3ee01077e
 '''
 
 import pandas as pd
+import numpy as np
 from pathlib import Path
+from scipy.optimize import curve_fit
 from hopp.utilities import load_yaml
+from greenheart.simulation.technologies.iron.power_fit import power_fit
 CD = Path(__file__).parent
 
 # Get model locations loaded up to refer to
@@ -26,7 +29,47 @@ def main(config):
     technology = config.technology
     # If re-fitting the model, load an inputs dataframe, otherwise, load up the coeffs
     if config.cost_model['refit_coeffs']:
-        input_df = pd.read_csv(CD/config.cost_model['inputs_fp'],index_col=[0,1,2])
+        input_df = pd.read_csv(CD/config.cost_model['inputs_fp'])
+        tech_df = input_df[input_df['Tech'].str.contains(technology, case=False, na=False)]
+
+        # remove_rows = ["Capacity Factor", "Pig Iron", "Liquid Steel"]
+        # pattern = '|'.join(remove_rows)
+        # tech_df = tech_df[~tech_df['Name'].str.contains(pattern, case=False, na=False)]
+        print("TECHNOLOGY",technology)
+
+        keys = tech_df.iloc[:, 1]  # Extract name
+        values = tech_df.iloc[:, 4:19]  # Extract values for cost re-fitting
+
+        # Create dictionary with keys for name and arrays of values
+        array_dict = {
+            key: np.array(row) for key, row in zip(keys, values.itertuples(index=False, name=None))
+        }
+
+        x = np.log(array_dict["Steel Slab"])
+        # Dictionary to store the fitted parameters
+        params_dict = {}
+        for key in array_dict:
+            y = np.log(array_dict[key])
+            # Fit the curve
+            coeffs = np.polyfit(x,y,1)
+
+            # Extract coefficients
+            a = np.exp(coeffs[1])
+            b = coeffs[0]
+
+            # Ensure all values are real
+            a = 0 if np.isnan(a) else a
+            b = 0 if np.isnan(b) else b
+            
+            # Store the parameters in the dictionary
+            params_dict[key] = {"lin": a, "exp": b}
+
+        # Display the resulting dictionary
+        for key, values in params_dict.items():
+            print(f"Key: {key}, a: {values['lin']:.3f}, b: {values['exp']:.3f}")
+
+        power_fit()
+
         raise NotImplementedError('Rosner cost model cannot be re-fit')
     else:
         coeff_df = pd.read_csv(CD/config.cost_model['coeffs_fp'],index_col=[0,1,2,3])
