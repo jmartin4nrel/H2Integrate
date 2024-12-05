@@ -27,15 +27,20 @@ def main(config):
     top_down_year = top_down_df[str(config.operational_year)]
 
     technology = config.technology
+
+    model_year_CEPCI = 596.2 # Where is this value from? 
+    equation_year_CEPCI = 708.8 # Where is this value from? 
+
+    # --------------- capital items ----------------
+    capital_costs = {}
     # If re-fitting the model, load an inputs dataframe, otherwise, load up the coeffs
     if config.cost_model['refit_coeffs']:
         input_df = pd.read_csv(CD/config.cost_model['inputs_fp'])
         tech_df = input_df[input_df['Tech'].str.contains(technology, case=False, na=False)]
 
-        # remove_rows = ["Capacity Factor", "Pig Iron", "Liquid Steel"]
-        # pattern = '|'.join(remove_rows)
-        # tech_df = tech_df[~tech_df['Name'].str.contains(pattern, case=False, na=False)]
-        print("TECHNOLOGY",technology)
+        remove_rows = ["Capacity Factor", "Pig Iron", "Liquid Steel"]
+        pattern = '|'.join(remove_rows)
+        tech_df = tech_df[~tech_df['Name'].str.contains(pattern, case=False, na=False)]
 
         keys = tech_df.iloc[:, 1]  # Extract name
         values = tech_df.iloc[:, 4:19]  # Extract values for cost re-fitting
@@ -46,6 +51,7 @@ def main(config):
         }
 
         x = np.log(array_dict["Steel Slab"])
+        del array_dict["Steel Slab"]
         # Dictionary to store the fitted parameters
         params_dict = {}
         for key in array_dict:
@@ -68,14 +74,43 @@ def main(config):
         for key, values in params_dict.items():
             print(f"Key: {key}, a: {values['lin']:.3f}, b: {values['exp']:.3f}")
 
-        power_fit()
+        # Add unique capital items based on the "Name" column for technology
+        for key in params_dict:
+            # Filter for this item and get the lin and exp coefficients
+            lin_coeff = values['lin']
+            exp_coeff = values['exp']
+            
+            # Calculate the capital cost for the item
+            capital_costs[key] = (
+                model_year_CEPCI
+                / equation_year_CEPCI
+                * lin_coeff
+                * config.plant_capacity_mtpy**exp_coeff
+            )
 
-        raise NotImplementedError('Rosner cost model cannot be re-fit')
+        # raise NotImplementedError('Rosner cost model cannot be re-fit')
     else:
         coeff_df = pd.read_csv(CD/config.cost_model['coeffs_fp'],index_col=[0,1,2,3])
         tech_coeffs = coeff_df[[technology]].reset_index()
         perf_coeff_df = pd.read_csv(CD/'perf_coeffs.csv',index_col=[0,1,2,3]) #TODO: decouple performance and cost models
         perf_coeffs = perf_coeff_df[technology]
+
+        # Add unique capital items based on the "Name" column for technology
+        for item_name in tech_coeffs[tech_coeffs["Type"] == "capital"]["Name"].unique():
+            # Filter for this item and get the lin and exp coefficients
+            item_data = tech_coeffs[(tech_coeffs["Name"] == item_name) & (tech_coeffs["Type"] == "capital")]
+            lin_coeff = item_data[item_data["Coeff"] == "lin"][technology].values[0]
+            exp_coeff = item_data[item_data["Coeff"] == "exp"][technology].values[0]
+            
+            # Calculate the capital cost for the item
+            capital_costs[item_name] = (
+                model_year_CEPCI
+                / equation_year_CEPCI
+                * lin_coeff
+                * config.plant_capacity_mtpy**exp_coeff
+            )
+
+    total_plant_cost = sum(capital_costs.values())
 
     # Import Peters opex model
     if config.cost_model['refit_coeffs']:
@@ -84,29 +119,6 @@ def main(config):
         coeff_df = pd.read_csv(CD/'../Peters'/model_locs['cost']['Peters']['coeffs'],index_col=[0,1,2,3])
         Peters_coeffs = coeff_df['A']
 
-    model_year_CEPCI = 596.2 # Where is this value from? 
-    equation_year_CEPCI = 708.8 # Where is this value from? 
-
-    # --------------- capital items ----------------
-
-    capital_costs = {}
-
-    # Add unique capital items based on the "Name" column for technology
-    for item_name in tech_coeffs[tech_coeffs["Type"] == "capital"]["Name"].unique():
-        # Filter for this item and get the lin and exp coefficients
-        item_data = tech_coeffs[(tech_coeffs["Name"] == item_name) & (tech_coeffs["Type"] == "capital")]
-        lin_coeff = item_data[item_data["Coeff"] == "lin"][technology].values[0]
-        exp_coeff = item_data[item_data["Coeff"] == "exp"][technology].values[0]
-        
-        # Calculate the capital cost for the item
-        capital_costs[item_name] = (
-            model_year_CEPCI
-            / equation_year_CEPCI
-            * lin_coeff
-            * config.plant_capacity_mtpy**exp_coeff
-        )
-
-    total_plant_cost = sum(capital_costs.values())
 
     # -------------------------------Fixed O&M Costs------------------------------
 
