@@ -7,9 +7,7 @@ doi.org/10.1039/d3ee01077e
 import pandas as pd
 import numpy as np
 from pathlib import Path
-from scipy.optimize import curve_fit
 from hopp.utilities import load_yaml
-from greenheart.simulation.technologies.iron.power_fit import power_fit
 CD = Path(__file__).parent
 
 # Get model locations loaded up to refer to
@@ -70,12 +68,8 @@ def main(config):
             # Store the parameters in the dictionary
             params_dict[key] = {"lin": a, "exp": b}
 
-        # Display the resulting dictionary
-        for key, values in params_dict.items():
-            print(f"Key: {key}, a: {values['lin']:.3f}, b: {values['exp']:.3f}")
-
         # Add unique capital items based on the "Name" column for technology
-        for key in params_dict:
+        for key,values in params_dict.items():
             # Filter for this item and get the lin and exp coefficients
             lin_coeff = values['lin']
             exp_coeff = values['exp']
@@ -88,7 +82,12 @@ def main(config):
                 * config.plant_capacity_mtpy**exp_coeff
             )
 
-        # raise NotImplementedError('Rosner cost model cannot be re-fit')
+        # Read in cost coeffs for non-capital costs
+        coeff_df = pd.read_csv(CD/config.cost_model['coeffs_fp'],index_col=[0,1,2,3])
+        tech_coeffs = coeff_df[[technology]].reset_index()
+        perf_coeff_df = pd.read_csv(CD/'perf_coeffs.csv',index_col=[0,1,2,3]) #TODO: decouple performance and cost models
+        perf_coeffs = perf_coeff_df[technology]
+
     else:
         coeff_df = pd.read_csv(CD/config.cost_model['coeffs_fp'],index_col=[0,1,2,3])
         tech_coeffs = coeff_df[[technology]].reset_index()
@@ -114,10 +113,30 @@ def main(config):
 
     # Import Peters opex model
     if config.cost_model['refit_coeffs']:
-        input_df = pd.read_csv(CD/'../Peters'/model_locs['cost']['Peters']['inputs'],index_col=[0,1,2])
+        input_df = pd.read_csv(CD/'../Peters'/model_locs['cost']['Peters']['inputs'])
+        keys = input_df.iloc[:, 0]  # Extract name
+        values = input_df.iloc[:, 3:16]  # Extract values for cost re-fitting
+
+        # Create dictionary with keys for name and arrays of values
+        array_dict = {
+            key: np.array(row) for key, row in zip(keys, values.itertuples(index=False, name=None))
+        }
+
+        x = np.log(array_dict["Plant Size"])
+        y = np.log(array_dict["Operating Labor"])
+
+        # Fit the curve
+        coeffs = np.polyfit(x,y,1)
+
+        # Extract coefficients
+        Peters_coeffs_lin = np.exp(coeffs[1])
+        Peters_coeffs_exp = coeffs[0]
+
     else:
         coeff_df = pd.read_csv(CD/'../Peters'/model_locs['cost']['Peters']['coeffs'],index_col=[0,1,2,3])
         Peters_coeffs = coeff_df['A']
+        Peters_coeffs_lin = Peters_coeffs.loc["Annual Operating Labor Cost",:,'lin'].values[0]
+        Peters_coeffs_exp = Peters_coeffs.loc["Annual Operating Labor Cost",:,'exp'].values[0]
 
 
     # -------------------------------Fixed O&M Costs------------------------------
@@ -127,9 +146,9 @@ def main(config):
         * (tech_coeffs.loc[tech_coeffs["Name"] == "% Skilled Labor", technology].values[0]/100 * top_down_year.loc["Skilled Labor Cost"].values[0]
         + tech_coeffs.loc[tech_coeffs["Name"] == "% Unskilled Labor", technology].values[0]/100 * top_down_year.loc["Unskilled Labor Cost"].values[0])
         * tech_coeffs.loc[tech_coeffs["Name"] == "Processing Steps", technology].values[0]
-        * Peters_coeffs.loc["Annual Operating Labor Cost",:,'lin'].values[0]
-        * (config.plant_capacity_mtpy / 365 * 1000) ** Peters_coeffs.loc["Annual Operating Labor Cost",:,'exp'].values[0]
-    ) * 63325349.24631249 / 63322395.97940371
+        * Peters_coeffs_lin
+        * (config.plant_capacity_mtpy / 365 * 1000) ** Peters_coeffs_exp
+    )
     labor_cost_maintenance = tech_coeffs.loc[tech_coeffs["Name"] == "Maintenance Labor Cost", technology].values[0]  * total_plant_cost
     labor_cost_admin_support = tech_coeffs.loc[tech_coeffs["Name"] == "Administrative & Support Labor Cost", technology].values[0] * (
         labor_cost_annual_operation + labor_cost_maintenance
