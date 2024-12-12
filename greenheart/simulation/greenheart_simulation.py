@@ -97,11 +97,11 @@ class GreenHeartSimulationConfig:
         plant_design_scenario (int): plant design scenario
         output_level (int): output level
         grid_connection (Optional[bool]): flag for grid connection
-        run_pre_iron (bool): flag for whether to run any of GreenHEART besides the
+        run_pre_profast (bool): flag for whether to run any of GreenHEART besides the
                                 iron model or just load pickles of everything else
-        pre_iron_save (bool): flag for whether to save eveything besides the iron
+        pre_profast_save (bool): flag for whether to save eveything besides the iron
                                 model to pickles for future runs of just the iron model
-        pre_iron_fn (Optional[str]): filename for where to save the above pickles
+        pre_profast_fn (Optional[str]): filename for where to save the above pickles
     """
 
     filename_hopp_config: str
@@ -125,9 +125,9 @@ class GreenHeartSimulationConfig:
     plant_design_scenario: int = field(default=1)
     output_level: int = field(default=8)
     grid_connection: Optional[bool] = field(default=None)
-    run_pre_iron: bool = field(default=True)
-    save_pre_iron: bool = field(default=False)
-    pre_iron_fn: Optional[str] = field(default=None)
+    run_pre_profast: bool = field(default=True)
+    save_pre_profast: bool = field(default=False)
+    pre_profast_fn: Optional[str] = field(default=None)
     iron_modular: bool = field(default=False)
 
     # these are set in the __attrs_post_init__ method
@@ -308,7 +308,7 @@ def setup_greenheart_simulation(config: GreenHeartSimulationConfig):
 
     # Only do the full setup (other than initialization) if running all of GreenHEART
     # If only running iron model, just load after initializing
-    if config.run_pre_iron:
+    if config.run_pre_profast:
         
         # run orbit for wind plant construction and other costs
         ## TODO get correct weather (wind, wave) inputs for ORBIT input (possibly via ERA5)
@@ -591,7 +591,7 @@ def setup_greenheart_simulation(config: GreenHeartSimulationConfig):
             save_plots=config.save_plots,
         )
 
-        if config.save_pre_iron:
+        if config.save_pre_profast:
 
             # Identify the site resource
             lat = config.hopp_config["site"]["data"]["lat"]
@@ -602,7 +602,7 @@ def setup_greenheart_simulation(config: GreenHeartSimulationConfig):
             # Write outputs needed for future runs in .pkls
             pkl_fn = site_res_id+".pkl"
             output_names = ["config","wind_cost_results"]
-            paths = [config.pre_iron_fn+'/'+i+'/' for i in output_names]
+            paths = [config.pre_profast_fn+'/'+i+'/' for i in output_names]
             for i, path in enumerate(paths):
                 if not os.path.exists(path):
                     os.makedirs(path)
@@ -611,8 +611,8 @@ def setup_greenheart_simulation(config: GreenHeartSimulationConfig):
 
     else:
 
-        # Preserve iron from new instance of config
-        iron_config = copy.deepcopy(config.greenheart_config['iron'])
+        # # Preserve iron from new instance of config
+        # iron_config = copy.deepcopy(config.greenheart_config['iron'])
         
         # Identify the site resource
         lat = config.hopp_config["site"]["data"]["lat"]
@@ -623,16 +623,16 @@ def setup_greenheart_simulation(config: GreenHeartSimulationConfig):
         # Read in outputs from previously-saved .pkls        
         pkl_fn = site_res_id+".pkl"
         output_names = ["config","wind_cost_results"]
-        paths = [config.pre_iron_fn+'/'+i+'/' for i in output_names]
+        paths = [config.pre_profast_fn+'/'+i+'/' for i in output_names]
         outputs = []
         for i, path in enumerate(paths):
             reader = open(path+pkl_fn, 'rb')
             outputs.append(pickle.load(reader))
         config, wind_cost_results = outputs # Need to keep the same as output_names
 
-        # Flip run_pre_iron back to False (was True when saved)
-        config.run_pre_iron = False
-        config.greenheart_config['iron'] = iron_config
+        # Flip run_pre_profast back to False (was True when saved)
+        config.run_pre_profast = False
+        # config.greenheart_config['iron'] = iron_config
         
         # HOPP Interface is expected as an output, but not needed 
         hi = None
@@ -646,7 +646,7 @@ def run_simulation(config: GreenHeartSimulationConfig):
 
     # Only run the "pre-iron" steps if needed
     # Otherwise, load their outputs from pickles
-    if config.run_pre_iron:
+    if config.run_pre_profast:
     
         # run HOPP model
         # hopp_results = he_hopp.run_hopp(hopp_site, hopp_technologies, hopp_scenario, hopp_h2_args, verbose=verbose)
@@ -1047,7 +1047,7 @@ def run_simulation(config: GreenHeartSimulationConfig):
 
     if config.use_profast:
         
-        if config.run_pre_iron:
+        if config.run_pre_profast:
         
             lcoe, pf_lcoe = he_fin.run_profast_lcoe(
                 config.greenheart_config,
@@ -1094,7 +1094,7 @@ def run_simulation(config: GreenHeartSimulationConfig):
                 output_dir=config.output_dir,
             )
 
-            if config.save_pre_iron:
+            if config.save_pre_profast:
 
                 # Identify the site resource
                 lat = config.hopp_config["site"]["data"]["lat"]
@@ -1105,7 +1105,7 @@ def run_simulation(config: GreenHeartSimulationConfig):
                 # Write outputs needed for future runs in .pkls
                 pkl_fn = site_res_id+".pkl"
                 output_names = ["lcoe","lcoh","electrolyzer_physics_results"]
-                paths = [config.pre_iron_fn+'/'+i+'/' for i in output_names]
+                paths = [config.pre_profast_fn+'/'+i+'/' for i in output_names]
                 for i, path in enumerate(paths):
                     if not os.path.exists(path):
                         os.makedirs(path)
@@ -1123,7 +1123,7 @@ def run_simulation(config: GreenHeartSimulationConfig):
             # Read in outputs from previously-saved .pkls        
             pkl_fn = site_res_id+".pkl"
             output_names = ["lcoe","lcoh","electrolyzer_physics_results"]
-            paths = [config.pre_iron_fn+'/'+i+'/' for i in output_names]
+            paths = [config.pre_profast_fn+'/'+i+'/' for i in output_names]
             outputs = []
             for i, path in enumerate(paths):
                 reader = open(path+pkl_fn, 'rb')
