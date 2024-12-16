@@ -593,24 +593,49 @@ def setup_greenheart_simulation(config: GreenHeartSimulationConfig):
 
         if config.save_pre_iron:
 
-            config_writer = open(config.pre_iron_fn+"_config.pkl", 'wb')
-            pickle.dump(config, config_writer)
-            wind_cost_writer = open(config.pre_iron_fn+"_wind_cost_results.pkl", 'wb')
-            pickle.dump(wind_cost_results, wind_cost_writer) 
+            # Identify the site resource
+            lat = config.hopp_config["site"]["data"]["lat"]
+            lon = config.hopp_config["site"]["data"]["lon"]
+            year = config.hopp_config['site']['data']['year']
+            site_res_id = "{:.3f}_{:.3f}_{:d}".format(lat,lon,year)
+                    
+            # Write outputs needed for future runs in .pkls
+            pkl_fn = site_res_id+".pkl"
+            output_names = ["config","wind_cost_results"]
+            paths = [config.pre_iron_fn+'/'+i+'/' for i in output_names]
+            for i, path in enumerate(paths):
+                if not os.path.exists(path):
+                    os.makedirs(path)
+                writer = open(path+pkl_fn, 'wb')
+                exec("pickle.dump("+output_names[i]+", writer)")
 
     else:
 
         # Preserve iron from new instance of config
         iron_config = copy.deepcopy(config.greenheart_config['iron'])
         
-        config_reader = open(config.pre_iron_fn+"_config.pkl", 'rb')
-        config = pickle.load(config_reader)
+        # Identify the site resource
+        lat = config.hopp_config["site"]["data"]["lat"]
+        lon = config.hopp_config["site"]["data"]["lon"]
+        year = config.hopp_config['site']['data']['year']
+        site_res_id = "{:.3f}_{:.3f}_{:d}".format(lat,lon,year)
+
+        # Read in outputs from previously-saved .pkls        
+        pkl_fn = site_res_id+".pkl"
+        output_names = ["config","wind_cost_results"]
+        paths = [config.pre_iron_fn+'/'+i+'/' for i in output_names]
+        outputs = []
+        for i, path in enumerate(paths):
+            reader = open(path+pkl_fn, 'rb')
+            outputs.append(pickle.load(reader))
+        config, wind_cost_results = outputs # Need to keep the same as output_names
+
         # Flip run_pre_iron back to False (was True when saved)
         config.run_pre_iron = False
         config.greenheart_config['iron'] = iron_config
+        
+        # HOPP Interface is expected as an output, but not needed 
         hi = None
-        wind_cost_reader = open(config.pre_iron_fn+"_wind_cost_results.pkl", 'rb')
-        wind_cost_results = pickle.load(wind_cost_reader)
 
     return config, hi, wind_cost_results
 
@@ -1071,48 +1096,40 @@ def run_simulation(config: GreenHeartSimulationConfig):
 
             if config.save_pre_iron:
 
-                # config_writer = open(config.pre_iron_fn+"_config.pkl", 'wb')
-                # pickle.dump(config, config_writer)
-                lcoe_writer = open(config.pre_iron_fn+"_lcoe.pkl", 'wb')
-                pickle.dump(lcoe, lcoe_writer)
-                lcoh_writer = open(config.pre_iron_fn+"_lcoh.pkl", 'wb')
-                pickle.dump(lcoh, lcoh_writer)
-                # wind_cost_writer = open(config.pre_iron_fn+"_wind_cost_results.pkl", 'wb')
-                # pickle.dump(wind_cost_results, wind_cost_writer)
-                # capex_breakdown_writer = open(config.pre_iron_fn+"_capex_breakdown.pkl", 'wb')
-                # pickle.dump(capex_breakdown, capex_breakdown_writer)
-                # opex_breakdown_annual_writer = open(config.pre_iron_fn+"_opex_breakdown_annual.pkl", 'wb')
-                # pickle.dump(opex_breakdown_annual, opex_breakdown_annual_writer)
-                electrolyzer_physics_results_writer = open(config.pre_iron_fn+"_electrolyzer_physics_results.pkl", 'wb')
-                pickle.dump(electrolyzer_physics_results, electrolyzer_physics_results_writer)
-                # total_accessory_power_renewable_kw_writer = open(config.pre_iron_fn+"_total_accessory_power_renewable_kw.pkl", 'wb')
-                # pickle.dump(total_accessory_power_renewable_kw, total_accessory_power_renewable_kw_writer)
-                # total_accessory_power_grid_kw_writer = open(config.pre_iron_fn+"_total_accessory_power_grid_kw.pkl", 'wb')
-                # pickle.dump(total_accessory_power_grid_kw, total_accessory_power_grid_kw_writer)
+                # Identify the site resource
+                lat = config.hopp_config["site"]["data"]["lat"]
+                lon = config.hopp_config["site"]["data"]["lon"]
+                year = config.hopp_config['site']['data']['year']
+                site_res_id = "{:.3f}_{:.3f}_{:d}".format(lat,lon,year)
+                
+                # Write outputs needed for future runs in .pkls
+                pkl_fn = site_res_id+".pkl"
+                output_names = ["lcoe","lcoh","electrolyzer_physics_results"]
+                paths = [config.pre_iron_fn+'/'+i+'/' for i in output_names]
+                for i, path in enumerate(paths):
+                    if not os.path.exists(path):
+                        os.makedirs(path)
+                    writer = open(path+pkl_fn, 'wb')
+                    exec("pickle.dump("+output_names[i]+", writer)")
                 
         else:
 
-            # config_reader = open(config.pre_iron_fn+"_config.pkl", 'rb')
-            # config = pickle.load(config_reader)
-            # # Flip run_pre_iron back to False (was True when saved)
-            # config.run_pre_iron = False
-            lcoe_reader = open(config.pre_iron_fn+"_lcoe.pkl", 'rb')
-            lcoe = pickle.load(lcoe_reader)
-            lcoh_reader = open(config.pre_iron_fn+"_lcoh.pkl", 'rb')
-            lcoh = pickle.load(lcoh_reader)
-            # wind_cost_reader = open(config.pre_iron_fn+"_wind_cost_results.pkl", 'rb')
-            # wind_cost_results = pickle.load(wind_cost_reader)
-            # capex_breakdown_reader = open(config.pre_iron_fn+"_capex_breakdown.pkl", 'rb')
-            # capex_breakdown = pickle.load(capex_breakdown_reader)
-            # opex_breakdown_annual_reader = open(config.pre_iron_fn+"_opex_breakdown_annual.pkl", 'rb')
-            # opex_breakdown_annual = pickle.load(opex_breakdown_annual_reader)
-            electrolyzer_physics_results_reader = open(config.pre_iron_fn+"_electrolyzer_physics_results.pkl", 'rb')
-            electrolyzer_physics_results = pickle.load(electrolyzer_physics_results_reader)
-            # total_accessory_power_renewable_kw_reader = open(config.pre_iron_fn+"_total_accessory_power_renewable_kw.pkl", 'rb')
-            # total_accessory_power_renewable_kw = pickle.load(total_accessory_power_renewable_kw_reader)
-            # total_accessory_power_grid_kw_reader = open(config.pre_iron_fn+"_total_accessory_power_grid_kw.pkl", 'rb')
-            # total_accessory_power_grid_kw = pickle.load(total_accessory_power_grid_kw_reader)
-        
+            # Identify the site resource
+            lat = config.hopp_config["site"]["data"]["lat"]
+            lon = config.hopp_config["site"]["data"]["lon"]
+            year = config.hopp_config['site']['data']['year']
+            site_res_id = "{:.3f}_{:.3f}_{:d}".format(lat,lon,year)
+
+            # Read in outputs from previously-saved .pkls        
+            pkl_fn = site_res_id+".pkl"
+            output_names = ["lcoe","lcoh","electrolyzer_physics_results"]
+            paths = [config.pre_iron_fn+'/'+i+'/' for i in output_names]
+            outputs = []
+            for i, path in enumerate(paths):
+                reader = open(path+pkl_fn, 'rb')
+                outputs.append(pickle.load(reader))
+            lcoe, lcoh , electrolyzer_physics_results = outputs # Need to keep the same as output_names
+
         hydrogen_amount_kgpy = electrolyzer_physics_results["H2_Results"][
                 "Life: Annual H2 production [kg/year]"
             ]
