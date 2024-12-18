@@ -154,6 +154,15 @@ cd tests/greenheart/
 mpirun -n 2 pytest test_openmdao_mpi.py
 ```
 
+## ArcGIS mapping for Energy Justice tool
+
+To install the ArcGIS mapping module for Energy Justice tool:
+```bash
+conda install -c esri arcgis=2.3
+```
+This requires an ArcGIS API key, obtained by registering an ArcGIS Online account at: https://www.arcgis.com/index.html
+Once an ArcGIS API key is obtained, create an environment variable 'ARCGIS_API_KEY' following the same method used for the NREL API KEY in step 6 in "Intalling from Source" above.
+
 ## Getting Started
 
 The [Examples](./examples/) contain Jupyter notebooks and sample YAML files for common usage
