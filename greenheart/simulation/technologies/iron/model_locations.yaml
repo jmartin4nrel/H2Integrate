@@ -10,6 +10,11 @@ cost:
     model: 'greenheart.simulation.technologies.iron.Rosner.cost_model'
     inputs: 'cost_inputs.csv'
     coeffs: 'cost_coeffs.csv'
+  Stinn:
+    compatible_tech: ['blast_furnace', 'ng_dri', 'h2_dri', 'moe', 'ahe', 'mse']
+    model: 'greenheart.simulation.technologies.iron.Stinn.cost_model'
+    inputs: 'cost_inputs.csv'
+    coeffs: 'cost_coeffs.csv'
   Peters:
     compatible_tech: ['blast_furnace', 'ng_dri', 'h2_dri', 'moe', 'ahe', 'mse']
     model: 'greenheart.simulation.technologies.iron.Peters.opex_model'
