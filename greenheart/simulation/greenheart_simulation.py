@@ -102,6 +102,7 @@ class GreenHeartSimulationConfig:
         pre_iron_save (bool): flag for whether to save eveything besides the iron
                                 model to pickles for future runs of just the iron model
         pre_iron_fn (Optional[str]): filename for where to save the above pickles
+        iron_out_fn (Optional[str]): filename for where to save final results
     """
 
     filename_hopp_config: str
@@ -128,6 +129,7 @@ class GreenHeartSimulationConfig:
     run_pre_iron: bool = field(default=True)
     save_pre_iron: bool = field(default=False)
     pre_iron_fn: Optional[str] = field(default=None)
+    iron_out_fn: Optional[str] = field(default=None)
     iron_modular: bool = field(default=False)
 
     # these are set in the __attrs_post_init__ method
@@ -1189,6 +1191,14 @@ def run_simulation(config: GreenHeartSimulationConfig):
                     output_dir=config.output_dir,
                     design_scenario_id=config.design_scenario["id"],
                 )
+
+                output_names = ["iron_capacity","iron_costs","iron_finance"]
+                paths = [config.iron_out_fn+'/'+i+'/' for i in output_names]
+                for i, path in enumerate(paths):
+                    if not os.path.exists(path):
+                        os.makedirs(path)
+                    writer = open(path+pkl_fn, 'wb')
+                    exec("pickle.dump("+output_names[i]+", writer)")
 
             else:
 

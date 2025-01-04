@@ -154,10 +154,11 @@ cd tests/greenheart/
 mpirun -n 2 pytest test_openmdao_mpi.py
 ```
 
-## ArcGIS mapping tool
+## Mapping tools
 
-To install the ArcGIS mapping module:
+To install the mapping modules:
 ```bash
+conda install geopandas
 conda install -c esri arcgis=2.3
 ```
 This requires an ArcGIS API key, obtained by registering an ArcGIS Online account at: https://www.arcgis.com/index.html
