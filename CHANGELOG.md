@@ -11,6 +11,7 @@
 - Requires HOPP 3.1.1 or higher
 - Updates tests to be compatible with HOPP 3.1.1 with ProFAST integration
 - Removes support for python 3.9
+- Add steel feedstock transport costs (lime, carbon, and iron ore pellets)
 
 ## v0.1.3 [1 November 2024]
 

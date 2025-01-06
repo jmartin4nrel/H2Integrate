@@ -389,5 +389,4 @@ def test_simulation_wind_onshore_steel_ammonia_ss_h2storage(subtests):
     # TODO base this test value on something
     with subtests.test("ammonia_finance"):
         lcoa_expected = 1.0679224700416565
-
         assert ammonia_finance.sol.get("price") == approx(lcoa_expected, rel=rtol)
