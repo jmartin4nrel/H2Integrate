@@ -17,13 +17,22 @@ class Feedstocks:
     Attributes:
         natural_gas_prices (Dict[str, float]):
             Natural gas costs, indexed by year ($/GJ).
-        excess_oxygen (float): Excess oxygen produced (kgO2), default = 395.
-        lime_unitcost (float): Cost per metric tonne of lime ($/metric tonne).
-        carbon_unitcost (float): Cost per metric tonne of carbon ($/metric tonne).
+        excess_oxygen (float):
+            Excess oxygen produced (kgO2), default = 395.
+        lime_unitcost (float):
+            Cost per metric tonne of lime ($/metric tonne).
+        lime_transport_cost (float):
+            Cost to transport lime per metric tonne of lime ($/metric tonne).
+        carbon_unitcost (float):
+            Cost per metric tonne of carbon ($/metric tonne).
+        carbon_transport_cost (float):
+            Cost to transport carbon per metric tonne of carbon ($/metric tonne).
         electricity_cost (float):
             Electricity cost per metric tonne of steel production ($/metric tonne).
         iron_ore_pellet_unitcost (float):
             Cost per metric tonne of iron ore ($/metric tonne).
+        iron_ore_pellet_transport_cost (float):
+            Cost to transport iron ore per metric tonne of iron ore ($/metric tonne).
         oxygen_market_price (float):
             Market price per kg of oxygen ($/kgO2).
         raw_water_unitcost (float):
@@ -54,9 +63,12 @@ class Feedstocks:
     natural_gas_prices: dict[str, float]
     excess_oxygen: float = 395
     lime_unitcost: float = 122.1
+    lime_transport_cost: float = 0.0  # USD/tonne lime
     carbon_unitcost: float = 236.97
+    carbon_transport_cost: float = 0.0  # USD/tonne carbon
     electricity_cost: float = 48.92
     iron_ore_pellet_unitcost: float = 207.35
+    iron_ore_pellet_transport_cost: float = 0.0  # USD/tonne iron
     oxygen_market_price: float = 0.03
     raw_water_unitcost: float = 0.59289
     iron_ore_consumption: float = 1.62927
@@ -418,9 +430,12 @@ def run_steel_cost_model(config: SteelCostModelConfig) -> SteelCostModelOutputs:
         config.plant_capacity_mtpy
         * (
             feedstocks.raw_water_consumption * feedstocks.raw_water_unitcost
-            + feedstocks.lime_consumption * feedstocks.lime_unitcost
-            + feedstocks.carbon_consumption * feedstocks.carbon_unitcost
-            + feedstocks.iron_ore_consumption * feedstocks.iron_ore_pellet_unitcost
+            + feedstocks.lime_consumption
+            * (feedstocks.lime_unitcost + feedstocks.lime_transport_cost)
+            + feedstocks.carbon_consumption
+            * (feedstocks.carbon_unitcost + feedstocks.carbon_transport_cost)
+            + feedstocks.iron_ore_consumption
+            * (feedstocks.iron_ore_pellet_unitcost + feedstocks.iron_ore_pellet_transport_cost)
         )
         / 12
     )
@@ -448,9 +463,12 @@ def run_steel_cost_model(config: SteelCostModelConfig) -> SteelCostModelOutputs:
         config.plant_capacity_mtpy
         * (
             feedstocks.raw_water_consumption * feedstocks.raw_water_unitcost
-            + feedstocks.lime_consumption * feedstocks.lime_unitcost
-            + feedstocks.carbon_consumption * feedstocks.carbon_unitcost
-            + feedstocks.iron_ore_consumption * feedstocks.iron_ore_pellet_unitcost
+            + feedstocks.lime_consumption
+            * (feedstocks.lime_unitcost + feedstocks.lime_transport_cost)
+            + feedstocks.carbon_consumption
+            * (feedstocks.carbon_unitcost + feedstocks.carbon_transport_cost)
+            + feedstocks.iron_ore_consumption
+            * (feedstocks.iron_ore_pellet_unitcost + feedstocks.iron_ore_pellet_transport_cost)
         )
         / 365
         * 60
@@ -768,21 +786,21 @@ def run_steel_finance_model(
         name="Lime",
         usage=feedstocks.lime_consumption,
         unit="metric tonnes of lime per metric tonne of steel",
-        cost=feedstocks.lime_unitcost,
+        cost=(feedstocks.lime_unitcost + feedstocks.lime_transport_cost),
         escalation=config.gen_inflation,
     )
     pf.add_feedstock(
         name="Carbon",
         usage=feedstocks.carbon_consumption,
         unit="metric tonnes of carbon per metric tonne of steel",
-        cost=feedstocks.carbon_unitcost,
+        cost=(feedstocks.carbon_unitcost + feedstocks.carbon_transport_cost),
         escalation=config.gen_inflation,
     )
     pf.add_feedstock(
         name="Iron Ore",
         usage=feedstocks.iron_ore_consumption,
         unit="metric tonnes of iron ore per metric tonne of steel",
-        cost=feedstocks.iron_ore_pellet_unitcost,
+        cost=(feedstocks.iron_ore_pellet_unitcost + feedstocks.iron_ore_pellet_transport_cost),
         escalation=config.gen_inflation,
     )
     pf.add_feedstock(
