@@ -564,6 +564,51 @@ def run_opex(
     return total_annual_operating_costs, opex_breakdown_annual
 
 
+def calc_financial_parameter_weighted_average_by_capex(
+    parameter_name: str, greenheart_config: dict, capex_breakdown: dict
+) -> float:
+    """Allows the user to provide individual financial parameters for each technology in the system.
+        The values given will be weighted by their CAPEX values to determine the final
+        weighted-average parameter value to be supplied to the financial model. If only one
+        technology has a unique parameter value, a "general" parameter value in the dictionary and
+        that will be used for all technologies not specified individually.
+
+    Args:
+        parameter_name (str): The name of the parameter to be weighted by capex. The name should
+        correspond to the name in the greenheart config greenheart_config (dict): Dictionary form of
+        the greenheart config capex_breakdown (dict): Output from `run_capex`, a dictionary of all
+        capital items for the financial model
+
+    Returns:
+        parameter_value (float): if the parameter in the greenheart config is given as a dictionary,
+        then the weighted average by capex parameter value is returnd. Otherwise no averaging is
+        done and the value of the parameter in the greenheart_config is returned.
+    """
+
+    if type(greenheart_config["finance_parameters"][parameter_name]) is not dict:
+        # if only one value is given for the parameter, use that value
+        parameter_value = greenheart_config["finance_parameters"][parameter_name]
+
+    else:
+        # assign capex amounts as weights
+        weights = np.array(list(capex_breakdown.values()))
+
+        # initialize value array
+        values = np.zeros_like(weights)
+
+        # assign values
+        for i, key in enumerate(capex_breakdown.keys()):
+            if key in greenheart_config["finance_parameters"][parameter_name].keys():
+                values[i] = greenheart_config["finance_parameters"][parameter_name][key]
+            else:
+                values[i] = greenheart_config["finance_parameters"][parameter_name]["general"]
+
+        # calcuated weighted average parameter value
+        parameter_value = np.average(values, weights=weights)
+
+    return parameter_value
+
+
 def run_profast_lcoe(
     greenheart_config,
     wind_cost_results,
@@ -580,6 +625,9 @@ def run_profast_lcoe(
     if isinstance(output_dir, str):
         output_dir = Path(output_dir).resolve()
     gen_inflation = greenheart_config["finance_parameters"]["profast_general_inflation"]
+
+    # initialize dictionary of weights for averaging financial parameters
+    finance_param_weights = {}
 
     if (
         design_scenario["h2_storage_location"] == "onshore"
@@ -652,23 +700,10 @@ def run_profast_lcoe(
     pf.set_params("sell undepreciated cap", True)
     pf.set_params("tax losses monetized", True)
     pf.set_params("general inflation rate", gen_inflation)
-    pf.set_params(
-        "leverage after tax nominal discount rate",
-        greenheart_config["finance_parameters"]["discount_rate"],
-    )
-    pf.set_params(
-        "debt equity ratio of initial financing",
-        (
-            greenheart_config["finance_parameters"]["debt_equity_split"]
-            / (100 - greenheart_config["finance_parameters"]["debt_equity_split"])
-        ),
-    )
+
     pf.set_params("debt type", greenheart_config["finance_parameters"]["debt_type"])
     pf.set_params("loan period if used", greenheart_config["finance_parameters"]["loan_period"])
-    pf.set_params(
-        "debt interest rate",
-        greenheart_config["finance_parameters"]["debt_interest_rate"],
-    )
+
     pf.set_params("cash onhand", greenheart_config["finance_parameters"]["cash_onhand_months"])
 
     # ----------------------------------- Add capital items to ProFAST ----------------
@@ -680,6 +715,7 @@ def run_profast_lcoe(
             depr_period=greenheart_config["finance_parameters"]["depreciation_period"],
             refurb=[0],
         )
+        finance_param_weights["wind"] = capex_breakdown["wind"]
     if "wave" in capex_breakdown.keys():
         pf.add_capital_item(
             name="Wave System",
@@ -688,7 +724,7 @@ def run_profast_lcoe(
             depr_period=greenheart_config["finance_parameters"]["depreciation_period"],
             refurb=[0],
         )
-
+        finance_param_weights["wave"] = capex_breakdown["wave"]
     if "solar" in capex_breakdown.keys():
         pf.add_capital_item(
             name="Solar System",
@@ -697,7 +733,7 @@ def run_profast_lcoe(
             depr_period=greenheart_config["finance_parameters"]["depreciation_period"],
             refurb=[0],
         )
-
+        finance_param_weights["solar"] = capex_breakdown["solar"]
     if "battery" in capex_breakdown.keys():
         pf.add_capital_item(
             name="Battery System",
@@ -706,7 +742,7 @@ def run_profast_lcoe(
             depr_period=greenheart_config["finance_parameters"]["depreciation_period"],
             refurb=[0],
         )
-
+        finance_param_weights["battery"] = capex_breakdown["battery"]
     if design_scenario["transportation"] == "hvdc+pipeline" or not (
         design_scenario["electrolyzer_location"] == "turbine"
         and design_scenario["h2_storage_location"] == "turbine"
@@ -718,7 +754,9 @@ def run_profast_lcoe(
             depr_period=greenheart_config["finance_parameters"]["depreciation_period"],
             refurb=[0],
         )
-
+        finance_param_weights["electrical_export_system"] = capex_breakdown[
+            "electrical_export_system"
+        ]
     # -------------------------------------- Add fixed costs--------------------------------
     pf.add_fixed_cost(
         name="Wind and Electrical Fixed O&M Cost",
@@ -785,6 +823,50 @@ def run_profast_lcoe(
         tax_credit=True,
     )  # TODO check decay
 
+    # ----------------------- Add weight-averaged parameters -----------------------
+
+    equity_discount_rate = calc_financial_parameter_weighted_average_by_capex(
+        parameter_name="discount_rate",
+        greenheart_config=greenheart_config,
+        capex_breakdown=finance_param_weights,
+    )
+    pf.set_params(
+        "leverage after tax nominal discount rate",
+        equity_discount_rate,
+    )
+
+    debt_interest_rate = calc_financial_parameter_weighted_average_by_capex(
+        parameter_name="debt_interest_rate",
+        greenheart_config=greenheart_config,
+        capex_breakdown=finance_param_weights,
+    )
+    pf.set_params(
+        "debt interest rate",
+        debt_interest_rate,
+    )
+
+    if greenheart_config["finance_parameters"]["debt_equity_split"]:
+        debt_equity_split = calc_financial_parameter_weighted_average_by_capex(
+            parameter_name="debt_equity_split",
+            greenheart_config=greenheart_config,
+            capex_breakdown=finance_param_weights,
+        )
+        pf.set_params(
+            "debt equity ratio of initial financing",
+            (debt_equity_split / (100 - debt_equity_split)),
+        )
+    elif greenheart_config["finance_parameters"]["debt_equity_ratio"]:
+        debt_equity_ratio = calc_financial_parameter_weighted_average_by_capex(
+            parameter_name="debt_equity_ratio",
+            greenheart_config=greenheart_config,
+            capex_breakdown=finance_param_weights,
+        )
+        pf.set_params(
+            "debt equity ratio of initial financing",
+            debt_equity_ratio,
+        )
+
+    # ---------------------- Run ProFAST -------------------------------------------
     sol = pf.solve_price()
 
     lcoe = sol["price"]
@@ -792,6 +874,7 @@ def run_profast_lcoe(
     if verbose:
         print("\nProFAST LCOE: ", "%.2f" % (lcoe * 1e3), "$/MWh")
 
+    # -------------------------- Plots ---------------------------------------------
     if show_plots or save_plots:
         savepath = output_dir / "figures/wind_only"
         if not savepath.exists():
@@ -846,6 +929,9 @@ def run_profast_grid_only(
     if isinstance(output_dir, str):
         output_dir = Path(output_dir).resolve()
     gen_inflation = greenheart_config["finance_parameters"]["profast_general_inflation"]
+
+    # initialize dictionary of weights for averaging financial parameters
+    finance_param_weights = {}
 
     if (
         design_scenario["h2_storage_location"] == "onshore"
@@ -917,23 +1003,10 @@ def run_profast_grid_only(
     pf.set_params("sell undepreciated cap", True)
     pf.set_params("tax losses monetized", True)
     pf.set_params("general inflation rate", gen_inflation)
-    pf.set_params(
-        "leverage after tax nominal discount rate",
-        greenheart_config["finance_parameters"]["discount_rate"],
-    )
-    pf.set_params(
-        "debt equity ratio of initial financing",
-        (
-            greenheart_config["finance_parameters"]["debt_equity_split"]
-            / (100 - greenheart_config["finance_parameters"]["debt_equity_split"])
-        ),
-    )
+
     pf.set_params("debt type", greenheart_config["finance_parameters"]["debt_type"])
     pf.set_params("loan period if used", greenheart_config["finance_parameters"]["loan_period"])
-    pf.set_params(
-        "debt interest rate",
-        greenheart_config["finance_parameters"]["debt_interest_rate"],
-    )
+
     pf.set_params("cash onhand", greenheart_config["finance_parameters"]["cash_onhand_months"])
 
     # ----------------------------------- Add capital items to ProFAST ----------------
@@ -972,7 +1045,7 @@ def run_profast_grid_only(
         depr_period=greenheart_config["finance_parameters"]["depreciation_period_electrolyzer"],
         refurb=list(electrolyzer_refurbishment_schedule),
     )
-
+    finance_param_weights["electrolyzer"] = capex_breakdown["electrolyzer"]
     pf.add_capital_item(
         name="Hydrogen Storage System",
         cost=capex_breakdown["h2_storage"],
@@ -980,6 +1053,7 @@ def run_profast_grid_only(
         depr_period=greenheart_config["finance_parameters"]["depreciation_period_electrolyzer"],
         refurb=[0],
     )
+    finance_param_weights["h2_storage"] = capex_breakdown["h2_storage"]
     # pf.add_capital_item(
     #     name="Desalination system",
     #     cost=capex_breakdown["desal"],
@@ -1053,6 +1127,52 @@ def run_profast_grid_only(
         escalation=gen_inflation,
     )
 
+    # ----------------------- Add weight-averaged parameters -----------------------
+
+    equity_discount_rate = calc_financial_parameter_weighted_average_by_capex(
+        parameter_name="discount_rate",
+        greenheart_config=greenheart_config,
+        capex_breakdown=finance_param_weights,
+    )
+
+    pf.set_params(
+        "leverage after tax nominal discount rate",
+        equity_discount_rate,
+    )
+
+    debt_interest_rate = calc_financial_parameter_weighted_average_by_capex(
+        parameter_name="debt_interest_rate",
+        greenheart_config=greenheart_config,
+        capex_breakdown=finance_param_weights,
+    )
+    pf.set_params(
+        "debt interest rate",
+        debt_interest_rate,
+    )
+
+    if greenheart_config["finance_parameters"]["debt_equity_split"]:
+        debt_equity_split = calc_financial_parameter_weighted_average_by_capex(
+            parameter_name="debt_equity_split",
+            greenheart_config=greenheart_config,
+            capex_breakdown=finance_param_weights,
+        )
+        pf.set_params(
+            "debt equity ratio of initial financing",
+            (debt_equity_split / (100 - debt_equity_split)),
+        )
+    elif greenheart_config["finance_parameters"]["debt_equity_ratio"]:
+        debt_equity_ratio = calc_financial_parameter_weighted_average_by_capex(
+            parameter_name="debt_equity_ratio",
+            greenheart_config=greenheart_config,
+            capex_breakdown=finance_param_weights,
+        )
+        pf.set_params(
+            "debt equity ratio of initial financing",
+            debt_equity_ratio,
+        )
+
+    # ----------------------- Run ProFAST -----------------------------------------
+
     sol = pf.solve_price()
 
     lcoh = sol["price"]
@@ -1064,6 +1184,7 @@ def run_profast_grid_only(
         print(f'ProFAST grid only Profit Index: {sol["profit index"]:.2f}')
         print(f'ProFAST grid only payback period: {sol["investor payback period"]}')
 
+    # ----------------------- Plots -----------------------------------------------
     if save_plots or show_plots:
         savepaths = [
             output_dir / "figures/capex",
@@ -1114,6 +1235,9 @@ def run_profast_full_plant_model(
     if isinstance(output_dir, str):
         output_dir = Path(output_dir).resolve()
     gen_inflation = greenheart_config["finance_parameters"]["profast_general_inflation"]
+
+    # initialize dictionary of weights for averaging financial parameters
+    finance_param_weights = {}
 
     if (
         design_scenario["h2_storage_location"] == "onshore"
@@ -1194,29 +1318,9 @@ def run_profast_full_plant_model(
     pf.set_params("sell undepreciated cap", True)
     pf.set_params("tax losses monetized", True)
     pf.set_params("general inflation rate", gen_inflation)
-    pf.set_params(
-        "leverage after tax nominal discount rate",
-        greenheart_config["finance_parameters"]["discount_rate"],
-    )
-    if greenheart_config["finance_parameters"]["debt_equity_split"]:
-        pf.set_params(
-            "debt equity ratio of initial financing",
-            (
-                greenheart_config["finance_parameters"]["debt_equity_split"]
-                / (100 - greenheart_config["finance_parameters"]["debt_equity_split"])
-            ),
-        )  # TODO this may not be put in right
-    elif greenheart_config["finance_parameters"]["debt_equity_ratio"]:
-        pf.set_params(
-            "debt equity ratio of initial financing",
-            (greenheart_config["finance_parameters"]["debt_equity_ratio"]),
-        )  # TODO this may not be put in right
+
     pf.set_params("debt type", greenheart_config["finance_parameters"]["debt_type"])
     pf.set_params("loan period if used", greenheart_config["finance_parameters"]["loan_period"])
-    pf.set_params(
-        "debt interest rate",
-        greenheart_config["finance_parameters"]["debt_interest_rate"],
-    )
     pf.set_params("cash onhand", greenheart_config["finance_parameters"]["cash_onhand_months"])
 
     # ----------------------------------- Add capital and fixed items to ProFAST ----------------
@@ -1228,6 +1332,8 @@ def run_profast_full_plant_model(
             depr_period=greenheart_config["finance_parameters"]["depreciation_period"],
             refurb=[0],
         )
+        finance_param_weights["wind"] = capex_breakdown["wind"]
+
     if "wave" in capex_breakdown.keys():
         pf.add_capital_item(
             name="Wave System",
@@ -1236,6 +1342,8 @@ def run_profast_full_plant_model(
             depr_period=greenheart_config["finance_parameters"]["depreciation_period"],
             refurb=[0],
         )
+        finance_param_weights["wave"] = capex_breakdown["wave"]
+
     if "solar" in capex_breakdown.keys():
         pf.add_capital_item(
             name="Solar System",
@@ -1244,6 +1352,7 @@ def run_profast_full_plant_model(
             depr_period=greenheart_config["finance_parameters"]["depreciation_period"],
             refurb=[0],
         )
+        finance_param_weights["solar"] = capex_breakdown["solar"]
 
     if "battery" in capex_breakdown.keys():
         pf.add_capital_item(
@@ -1253,6 +1362,7 @@ def run_profast_full_plant_model(
             depr_period=greenheart_config["finance_parameters"]["depreciation_period"],
             refurb=[0],
         )
+        finance_param_weights["battery"] = capex_breakdown["battery"]
 
     if "platform" in capex_breakdown.keys() and capex_breakdown["platform"] > 0:
         pf.add_capital_item(
@@ -1262,6 +1372,8 @@ def run_profast_full_plant_model(
             depr_period=greenheart_config["finance_parameters"]["depreciation_period"],
             refurb=[0],
         )
+        finance_param_weights["platform"] = capex_breakdown["platform"]
+
         pf.add_fixed_cost(
             name="Equipment Platform O&M Cost",
             usage=1.0,
@@ -1315,6 +1427,9 @@ def run_profast_full_plant_model(
             depr_period=greenheart_config["finance_parameters"]["depreciation_period"],
             refurb=[0],
         )
+        finance_param_weights["electrical_export_system"] = capex_breakdown[
+            "electrical_export_system"
+        ]
         # TODO assess if this makes sense (electrical export O&M included in wind O&M)
 
     electrolyzer_refurbishment_schedule = np.zeros(
@@ -1337,6 +1452,7 @@ def run_profast_full_plant_model(
         depr_period=greenheart_config["finance_parameters"]["depreciation_period_electrolyzer"],
         refurb=list(electrolyzer_refurbishment_schedule),
     )
+    finance_param_weights["electrolyzer"] = capex_breakdown["electrolyzer"]
     pf.add_fixed_cost(
         name="Electrolysis System Fixed O&M Cost",
         usage=1.0,
@@ -1353,6 +1469,7 @@ def run_profast_full_plant_model(
             depr_period=greenheart_config["finance_parameters"]["depreciation_period_electrolyzer"],
             refurb=[0],
         )
+        finance_param_weights["h2_pipe_array"] = capex_breakdown["h2_pipe_array"]
         pf.add_fixed_cost(
             name="H2 Pipe Array Fixed O&M Cost",
             usage=1.0,
@@ -1379,6 +1496,9 @@ def run_profast_full_plant_model(
             depr_period=greenheart_config["finance_parameters"]["depreciation_period_electrolyzer"],
             refurb=[0],
         )
+        finance_param_weights["h2_transport_compressor"] = capex_breakdown[
+            "h2_transport_compressor"
+        ]
         pf.add_capital_item(
             name="H2 Transport Pipeline System",
             cost=capex_breakdown["h2_transport_pipeline"],
@@ -1386,6 +1506,7 @@ def run_profast_full_plant_model(
             depr_period=greenheart_config["finance_parameters"]["depreciation_period_electrolyzer"],
             refurb=[0],
         )
+        finance_param_weights["h2_transport_pipeline"] = capex_breakdown["h2_transport_pipeline"]
 
         pf.add_fixed_cost(
             name="H2 Transport Compression Fixed O&M Cost",
@@ -1410,6 +1531,7 @@ def run_profast_full_plant_model(
             depr_period=greenheart_config["finance_parameters"]["depreciation_period_electrolyzer"],
             refurb=[0],
         )
+        finance_param_weights["h2_storage"] = capex_breakdown["h2_storage"]
         pf.add_fixed_cost(
             name="Hydrogen Storage Fixed O&M Cost",
             usage=1.0,
@@ -1440,6 +1562,7 @@ def run_profast_full_plant_model(
             depr_period=greenheart_config["finance_parameters"]["depreciation_period_electrolyzer"],
             refurb=[0],
         )
+        finance_param_weights["desal"] = capex_breakdown["desal"]
         pf.add_fixed_cost(
             name="Desal Fixed O&M Cost",
             usage=1.0,
@@ -1549,6 +1672,49 @@ def run_profast_full_plant_model(
         sunset_years=10,
         tax_credit=True,
     )  # TODO check decay
+
+    # ----------------------- Add weight-averaged parameters -----------------------
+
+    equity_discount_rate = calc_financial_parameter_weighted_average_by_capex(
+        parameter_name="discount_rate",
+        greenheart_config=greenheart_config,
+        capex_breakdown=finance_param_weights,
+    )
+    pf.set_params(
+        "leverage after tax nominal discount rate",
+        equity_discount_rate,
+    )
+
+    debt_interest_rate = calc_financial_parameter_weighted_average_by_capex(
+        parameter_name="debt_interest_rate",
+        greenheart_config=greenheart_config,
+        capex_breakdown=finance_param_weights,
+    )
+    pf.set_params(
+        "debt interest rate",
+        debt_interest_rate,
+    )
+
+    if greenheart_config["finance_parameters"]["debt_equity_split"]:
+        debt_equity_split = calc_financial_parameter_weighted_average_by_capex(
+            parameter_name="debt_equity_split",
+            greenheart_config=greenheart_config,
+            capex_breakdown=finance_param_weights,
+        )
+        pf.set_params(
+            "debt equity ratio of initial financing",
+            (debt_equity_split / (100 - debt_equity_split)),
+        )
+    elif greenheart_config["finance_parameters"]["debt_equity_ratio"]:
+        debt_equity_ratio = calc_financial_parameter_weighted_average_by_capex(
+            parameter_name="debt_equity_ratio",
+            greenheart_config=greenheart_config,
+            capex_breakdown=finance_param_weights,
+        )
+        pf.set_params(
+            "debt equity ratio of initial financing",
+            debt_equity_ratio,
+        )
 
     # ------------------------------------ solve and post-process -----------------------------
 
