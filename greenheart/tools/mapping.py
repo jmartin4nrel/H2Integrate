@@ -74,7 +74,7 @@ def compile_prices(folder, price_type:str = 'lcoh'):
 # Arrange prices into spatial data frame
 def arrange_sdf(output_path, price_type):
 
-    lats, lons, prices, label = compile_prices(output_path)
+    lats, lons, prices, label = compile_prices(output_path, price_type)
     geodata = requests.get(
         "https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson").json()
     lats = np.array(lats,ndmin=2)
@@ -137,10 +137,11 @@ def price_map(coord_sdf, map_prefs: dict = {'latlon_lims': [42,50,-98,-82],
                                             'pwd':'',
                                             'zoomlevel':7,
                                             'center':[46,-90],
-                                            'colormap':'jet',
+                                            'colormap':'turbo',
                                             'marker_size':5,
-                                            'dpi':92,
-                                            'title':'LCOH',
+                                            'dpi':100,
+                                            'inches_per_deg':1,
+                                            'price_type':'lcoe',
                                             'snippet':'',
                                             'tags':'',
                                             'label':'',
@@ -153,8 +154,11 @@ def price_map(coord_sdf, map_prefs: dict = {'latlon_lims': [42,50,-98,-82],
     max_x = merc_x(lon_max)
     min_y = merc_y(lat_min)
     max_y = merc_y(lat_max)
-    width = (max_x-min_x)/map_prefs['dpi']
-    height = (max_y-min_y)/map_prefs['dpi']
+    width = (max_x-min_x)
+    height = (max_y-min_y)
+    pix_width = map_prefs['inches_per_deg']*(lon_max-lon_min)*map_prefs['dpi']
+    pix_height = map_prefs['inches_per_deg']*(lat_max-lat_min)*map_prefs['dpi']
+        
     
     # Create map and set up display
     if not map_prefs['skip_webcall']:
@@ -190,7 +194,7 @@ def price_map(coord_sdf, map_prefs: dict = {'latlon_lims': [42,50,-98,-82],
         coord_sdf.spatial.plot(map,renderer=rend)
         map
         if map_prefs['save_to_web']:
-            map.save({'title':map_prefs['title'],
+            map.save({'title':map_prefs['price_type'],
                     'snippet':map_prefs['snippet'],
                     'tags':map_prefs['tags'],
                     'extent':{'spatialReference':{'wkid':3857},
@@ -209,22 +213,30 @@ def price_map(coord_sdf, map_prefs: dict = {'latlon_lims': [42,50,-98,-82],
                                         'ymin':min_y,
                                         'xmax':max_x,
                                         'ymax':max_y},
-                                    output_dimensions=(width,height))
+                                    output_dimensions=(pix_width,pix_height))
         with requests.get(map_url) as resp:
             with open(map_path+'/'+fn, 'wb') as file_handle:
                 file_handle.write(resp.content)
+        writer = open(map_path+'/'+fn[:-4]+'_'+map_prefs['price_type']+'_max_vals.pkl', 'wb')
+        pickle.dump(max_vals, writer)
+    else:
+        try:
+            reader = open(map_path+'/'+fn[:-4]+'_'+map_prefs['price_type']+'_max_vals.pkl', 'rb')
+            max_vals = pickle.load(reader)
+        except:
+            raise FileNotFoundError('Map not made with ArcGIS API yet - run with skip_webcall set to False')
 
     # Render colorbar using matplotlib
 
     dpi = map_prefs['dpi']
 
     fig = plt.gcf()
-    fig.set_figwidth(width/dpi)
-    fig.set_figheight(height/dpi)
+    fig.set_figwidth(pix_width/dpi)
+    fig.set_figheight(pix_height/dpi)
 
     im = plt.imshow(np.reshape(max_vals,(16,16)), cmap=map_prefs['colormap'])
     image = plt.imread(map_path+'/'+fn)
-    plt.imshow(image, extent=[0, width, 0, height])
+    plt.imshow(image, extent=[0, pix_width, 0, pix_height])
     plt.xticks([])
     plt.yticks([])
     plt.rcParams['font.size'] = 48
@@ -232,10 +244,15 @@ def price_map(coord_sdf, map_prefs: dict = {'latlon_lims': [42,50,-98,-82],
 
     ax = plt.gca()
     bbox = ax.bbox.bounds
-    cbaxes = inset_axes(ax, width="3%", height="80%", loc=7) 
+    cbaxes = inset_axes(ax, width="3%", height="45%", loc='lower left',
+                        bbox_to_anchor=(.95, 0.5, 1, 1),  # position of the colorbar
+                        bbox_transform=ax.transAxes,  # coordinate system for the colorbar
+                        borderpad=0,  # padding around the colorbar
+                        )
     cbar = plt.colorbar(im, cax=cbaxes, ticklocation='left')
-    cbaxes.tick_params(direction='inout')
-    ax.text(width*.75,height*.5,map_prefs['label'],horizontalalignment='center',verticalalignment='center')
+    cbaxes.tick_params(direction='inout',labelsize=8)
+    ax.text(pix_width*.775,pix_height*.725,map_prefs['label'],horizontalalignment='center',
+            verticalalignment='center',fontsize=8)
 
 
     plt.show()
