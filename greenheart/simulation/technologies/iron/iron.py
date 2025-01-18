@@ -3,6 +3,7 @@ from typing import Dict, Union, Optional, Tuple
 
 import ProFAST
 import pandas as pd
+from pandas import DataFrame
 from attrs import define, Factory, field
 
 import os
@@ -102,6 +103,7 @@ class IronCostModelConfig:
             Surface water discharge per metric tonne of iron production.
     """
 
+    ore_type: str
     technology: str
     operational_year: int
     plant_capacity_mtpy: float
@@ -146,22 +148,14 @@ class IronCosts:
         These represent the minimum set of required cost data for
         `run_iron_finance_model`, as well as base data for `IronCostModelOutputs`.
     """
-    capital_costs: dict
-    # capex_eaf_casting: float
-    # capex_shaft_furnace: float
-    # capex_oxygen_supply: float
-    # capex_h2_preheating: float
-    # capex_cooling_tower: float
-    # capex_piping: float
-    # capex_elec_instr: float
-    # capex_buildings_storage_water: float
-    # capex_misc: float
-    labor_cost_annual_operation: float
-    labor_cost_maintenance: float
-    labor_cost_admin_support: float
-    property_tax_insurance: float
-    land_cost: float
-    installation_cost: float
+    capital_costs: Optional[dict] = 0
+    labor_cost_annual_operation: Optional[float] = 0
+    labor_cost_maintenance: Optional[float] = 0
+    labor_cost_admin_support: Optional[float] = 0
+    property_tax_insurance: Optional[float] = 0
+    land_cost: Optional[float] = 0
+    installation_cost: Optional[float] = 0
+    mine_df: Optional[DataFrame] = 0
 
 
 @define
@@ -195,15 +189,15 @@ class IronCostModelOutputs(IronCosts):
             initial supply stock, safety equipment, and initial training programs.
     """
 
-    total_plant_cost: float
-    total_fixed_operating_cost: float
-    labor_cost_fivemonth: float
-    maintenance_materials_onemonth: float
-    non_fuel_consumables_onemonth: float
-    waste_disposal_onemonth: float
-    monthly_energy_cost: float
-    spare_parts_cost: float
-    misc_owners_costs: float
+    total_plant_cost: Optional[float] = 0
+    total_fixed_operating_cost: Optional[float] = 0
+    labor_cost_fivemonth: Optional[float] = 0
+    maintenance_materials_onemonth: Optional[float] = 0
+    non_fuel_consumables_onemonth: Optional[float] = 0
+    waste_disposal_onemonth: Optional[float] = 0
+    monthly_energy_cost: Optional[float] = 0
+    spare_parts_cost: Optional[float] = 0
+    misc_owners_costs: Optional[float] = 0
 
 @define
 class IronCapacityModelConfig:
@@ -568,33 +562,40 @@ def run_iron_cost_model(config: IronCostModelConfig) -> IronCostModelOutputs:
         model = importlib.import_module(config.cost_model['model_fp'])
         model_outputs = model.main(config)
 
-        capital_costs,total_plant_cost,labor_cost_annual_operation,labor_cost_maintenance,\
-            labor_cost_admin_support,property_tax_insurance,total_fixed_operating_cost,\
-            labor_cost_fivemonth,maintenance_materials_onemonth,non_fuel_consumables_onemonth,\
-            waste_disposal_onemonth,monthly_energy_cost,spare_parts_cost,land_cost,\
-            misc_owners_costs,installation_cost = model_outputs
+        if cost_model == 'Rosner':
 
-        return IronCostModelOutputs(
-            # CapEx
-            capital_costs= capital_costs,
-            total_plant_cost=total_plant_cost,
-            # Fixed OpEx
-            labor_cost_annual_operation=labor_cost_annual_operation,
-            labor_cost_maintenance=labor_cost_maintenance,
-            labor_cost_admin_support=labor_cost_admin_support,
-            property_tax_insurance=property_tax_insurance,
-            total_fixed_operating_cost=total_fixed_operating_cost,
-            # Owner's Installation costs
-            labor_cost_fivemonth=labor_cost_fivemonth,
-            maintenance_materials_onemonth=maintenance_materials_onemonth,
-            non_fuel_consumables_onemonth=non_fuel_consumables_onemonth,
-            waste_disposal_onemonth=waste_disposal_onemonth,
-            monthly_energy_cost=monthly_energy_cost,
-            spare_parts_cost=spare_parts_cost,
-            land_cost=land_cost,
-            misc_owners_costs=misc_owners_costs,
-            installation_cost=installation_cost,
-        )
+            capital_costs,total_plant_cost,labor_cost_annual_operation,labor_cost_maintenance,\
+                labor_cost_admin_support,property_tax_insurance,total_fixed_operating_cost,\
+                labor_cost_fivemonth,maintenance_materials_onemonth,non_fuel_consumables_onemonth,\
+                waste_disposal_onemonth,monthly_energy_cost,spare_parts_cost,land_cost,\
+                misc_owners_costs,installation_cost = model_outputs
+            
+            return IronCostModelOutputs(
+                # CapEx
+                capital_costs= capital_costs,
+                total_plant_cost=total_plant_cost,
+                # Fixed OpEx
+                labor_cost_annual_operation=labor_cost_annual_operation,
+                labor_cost_maintenance=labor_cost_maintenance,
+                labor_cost_admin_support=labor_cost_admin_support,
+                property_tax_insurance=property_tax_insurance,
+                total_fixed_operating_cost=total_fixed_operating_cost,
+                # Owner's Installation costs
+                labor_cost_fivemonth=labor_cost_fivemonth,
+                maintenance_materials_onemonth=maintenance_materials_onemonth,
+                non_fuel_consumables_onemonth=non_fuel_consumables_onemonth,
+                waste_disposal_onemonth=waste_disposal_onemonth,
+                monthly_energy_cost=monthly_energy_cost,
+                spare_parts_cost=spare_parts_cost,
+                land_cost=land_cost,
+                misc_owners_costs=misc_owners_costs,
+                installation_cost=installation_cost,
+            )
+            
+        elif cost_model == 'Martin Ore':
+
+            return IronCostModelOutputs(mine_df = model_outputs)
+        
 
 @define
 class IronFinanceModelConfig:
@@ -640,6 +641,8 @@ class IronFinanceModelConfig:
     show_plots: bool = False
     output_dir: str = "./output/"
     design_scenario_id: int = 0
+    iron_config: dict = dict
+    cost_year: int = 2020
 
 @define
 class IronFinanceModelOutputs:
@@ -691,8 +694,21 @@ def run_iron_finance_model(
             and breakeven price for the iron production facility.
     """
 
+    
+    finance_model = config.iron_config['finance_model']['name']
+    if config.iron_config['finance_model']['model_fp'] == '':
+        config.iron_config['finance_model']['model_fp'] = model_locs['finance'][finance_model]['model']
+    model = importlib.import_module(config.iron_config['finance_model']['model_fp'])
+    model_outputs = model.main(config)
+
+    sol, summary, price_breakdown = model_outputs
+    return IronFinanceModelOutputs(sol=sol,
+                                   summary=summary,
+                                   price_breakdown=price_breakdown)
+
     feedstocks = config.feedstocks
     costs = config.costs
+
 
     # Set up ProFAST
     pf = ProFAST.ProFAST("blank")
@@ -703,202 +719,204 @@ def run_iron_finance_model(
 
     analysis_start = int(list(config.grid_prices.keys())[0]) - config.install_years
 
-    # Fill these in - can have most of them as 0 also
-    pf.set_params(
-        "commodity",
-        {
-            "name": "iron",
-            "unit": "metric tonnes",
-            "initial price": 1000,
-            "escalation": config.gen_inflation,
-        },
-    )
-    pf.set_params("capacity", config.plant_capacity_mtpy / 365)  # units/day
-    pf.set_params("maintenance", {"value": 0, "escalation": config.gen_inflation})
-    pf.set_params("analysis start year", analysis_start)
-    pf.set_params("operating life", config.plant_life)
-    pf.set_params("installation months", 12 * config.install_years)
-    pf.set_params(
-        "installation cost",
-        {
-            "value": costs.installation_cost,
-            "depr type": "Straight line",
-            "depr period": 4,
-            "depreciable": False,
-        },
-    )
-    pf.set_params("non depr assets", costs.land_cost)
-    pf.set_params(
-        "end of proj sale non depr assets",
-        costs.land_cost * (1 + config.gen_inflation) ** config.plant_life,
-    )
-    pf.set_params("demand rampup", 5.3)
-    pf.set_params("long term utilization", config.plant_capacity_factor)
-    pf.set_params("credit card fees", 0)
-    pf.set_params("sales tax", 0)
-    pf.set_params(
-        "license and permit", {"value": 00, "escalation": config.gen_inflation}
-    )
-    pf.set_params("rent", {"value": 0, "escalation": config.gen_inflation})
-    pf.set_params("property tax and insurance", 0)
-    pf.set_params("admin expense", 0)
-    pf.set_params("sell undepreciated cap", True)
-    pf.set_params("tax losses monetized", True)
-    pf.set_params("general inflation rate", config.gen_inflation)
-    pf.set_params("debt type", "Revolving debt")
-    pf.set_params("cash onhand", 1)
+    if config.cost_model['name'] == 'Rosner':
 
-    # ----------------------------------- Add capital items to ProFAST ----------------
-    # apply all params passed through from config
-    for param, val in costs.capital_costs.items():
-        pf.add_capital_item(
-            name= param,
-            cost= val,
-            depr_type="MACRS",
-            depr_period=7,
-            refurb=[0], 
+        # Fill these in - can have most of them as 0 also
+        pf.set_params(
+            "commodity",
+            {
+                "name": "iron",
+                "unit": "metric tonnes",
+                "initial price": 1000,
+                "escalation": config.gen_inflation,
+            },
+        )
+        pf.set_params("capacity", config.plant_capacity_mtpy / 365)  # units/day
+        pf.set_params("maintenance", {"value": 0, "escalation": config.gen_inflation})
+        pf.set_params("analysis start year", analysis_start)
+        pf.set_params("operating life", config.plant_life)
+        pf.set_params("installation months", 12 * config.install_years)
+        pf.set_params(
+            "installation cost",
+            {
+                "value": costs.installation_cost,
+                "depr type": "Straight line",
+                "depr period": 4,
+                "depreciable": False,
+            },
+        )
+        pf.set_params("non depr assets", costs.land_cost)
+        pf.set_params(
+            "end of proj sale non depr assets",
+            costs.land_cost * (1 + config.gen_inflation) ** config.plant_life,
+        )
+        pf.set_params("demand rampup", 5.3)
+        pf.set_params("long term utilization", config.plant_capacity_factor)
+        pf.set_params("credit card fees", 0)
+        pf.set_params("sales tax", 0)
+        pf.set_params(
+            "license and permit", {"value": 00, "escalation": config.gen_inflation}
+        )
+        pf.set_params("rent", {"value": 0, "escalation": config.gen_inflation})
+        pf.set_params("property tax and insurance", 0)
+        pf.set_params("admin expense", 0)
+        pf.set_params("sell undepreciated cap", True)
+        pf.set_params("tax losses monetized", True)
+        pf.set_params("general inflation rate", config.gen_inflation)
+        pf.set_params("debt type", "Revolving debt")
+        pf.set_params("cash onhand", 1)
+
+        # ----------------------------------- Add capital items to ProFAST ----------------
+        # apply all params passed through from config
+        for param, val in costs.capital_costs.items():
+            pf.add_capital_item(
+                name= param,
+                cost= val,
+                depr_type="MACRS",
+                depr_period=7,
+                refurb=[0], 
+            )
+
+        # -------------------------------------- Add fixed costs--------------------------------
+        pf.add_fixed_cost(
+            name="Annual Operating Labor Cost",
+            usage=1,
+            unit="$/year",
+            cost=costs.labor_cost_annual_operation,
+            escalation=config.gen_inflation,
+        )
+        pf.add_fixed_cost(
+            name="Maintenance Labor Cost",
+            usage=1,
+            unit="$/year",
+            cost=costs.labor_cost_maintenance,
+            escalation=config.gen_inflation,
+        )
+        pf.add_fixed_cost(
+            name="Administrative & Support Labor Cost",
+            usage=1,
+            unit="$/year",
+            cost=costs.labor_cost_admin_support,
+            escalation=config.gen_inflation,
+        )
+        pf.add_fixed_cost(
+            name="Property tax and insurance",
+            usage=1,
+            unit="$/year",
+            cost=costs.property_tax_insurance,
+            escalation=0.0,
+        )
+        # Putting property tax and insurance here to zero out depcreciation/escalation. Could instead put it in set_params if
+        # we think that is more accurate
+
+        # ---------------------- Add feedstocks, note the various cost options-------------------
+        pf.add_feedstock(
+            name="Maintenance Materials",
+            usage=1.0,
+            unit="Units per metric tonne of iron",
+            cost=feedstocks.maintenance_materials_unitcost,
+            escalation=config.gen_inflation,
+        )
+        pf.add_feedstock(
+            name="Raw Water Withdrawal",
+            usage=feedstocks.raw_water_consumption,
+            unit="metric tonnes of water per metric tonne of iron",
+            cost=feedstocks.raw_water_unitcost,
+            escalation=config.gen_inflation,
+        )
+        pf.add_feedstock(
+            name="Lime",
+            usage=feedstocks.lime_consumption,
+            unit="metric tonnes of lime per metric tonne of iron",
+            cost=feedstocks.lime_unitcost,
+            escalation=config.gen_inflation,
+        )
+        pf.add_feedstock(
+            name="Carbon",
+            usage=feedstocks.carbon_consumption,
+            unit="metric tonnes of carbon per metric tonne of iron",
+            cost=feedstocks.carbon_unitcost,
+            escalation=config.gen_inflation,
+        )
+        pf.add_feedstock(
+            name="Iron Ore",
+            usage=feedstocks.iron_ore_consumption,
+            unit="metric tonnes of iron ore per metric tonne of iron",
+            cost=feedstocks.iron_ore_pellet_unitcost,
+            escalation=config.gen_inflation,
+        )
+        pf.add_feedstock(
+            name="Hydrogen",
+            usage=feedstocks.hydrogen_consumption,
+            unit="metric tonnes of hydrogen per metric tonne of iron",
+            cost=config.lcoh * 1000,
+            escalation=config.gen_inflation,
+        )
+        pf.add_feedstock(
+            name="Natural Gas",
+            usage=feedstocks.natural_gas_consumption,
+            unit="GJ-LHV per metric tonne of iron",
+            cost=feedstocks.natural_gas_prices,
+            escalation=config.gen_inflation,
+        )
+        pf.add_feedstock(
+            name="Electricity",
+            usage=feedstocks.electricity_consumption,
+            unit="MWh per metric tonne of iron",
+            cost=config.grid_prices,
+            escalation=config.gen_inflation,
+        )
+        pf.add_feedstock(
+            name="Slag Disposal",
+            usage=feedstocks.slag_production,
+            unit="metric tonnes of slag per metric tonne of iron",
+            cost=feedstocks.slag_disposal_unitcost,
+            escalation=config.gen_inflation,
         )
 
-    # -------------------------------------- Add fixed costs--------------------------------
-    pf.add_fixed_cost(
-        name="Annual Operating Labor Cost",
-        usage=1,
-        unit="$/year",
-        cost=costs.labor_cost_annual_operation,
-        escalation=config.gen_inflation,
-    )
-    pf.add_fixed_cost(
-        name="Maintenance Labor Cost",
-        usage=1,
-        unit="$/year",
-        cost=costs.labor_cost_maintenance,
-        escalation=config.gen_inflation,
-    )
-    pf.add_fixed_cost(
-        name="Administrative & Support Labor Cost",
-        usage=1,
-        unit="$/year",
-        cost=costs.labor_cost_admin_support,
-        escalation=config.gen_inflation,
-    )
-    pf.add_fixed_cost(
-        name="Property tax and insurance",
-        usage=1,
-        unit="$/year",
-        cost=costs.property_tax_insurance,
-        escalation=0.0,
-    )
-    # Putting property tax and insurance here to zero out depcreciation/escalation. Could instead put it in set_params if
-    # we think that is more accurate
-
-    # ---------------------- Add feedstocks, note the various cost options-------------------
-    pf.add_feedstock(
-        name="Maintenance Materials",
-        usage=1.0,
-        unit="Units per metric tonne of iron",
-        cost=feedstocks.maintenance_materials_unitcost,
-        escalation=config.gen_inflation,
-    )
-    pf.add_feedstock(
-        name="Raw Water Withdrawal",
-        usage=feedstocks.raw_water_consumption,
-        unit="metric tonnes of water per metric tonne of iron",
-        cost=feedstocks.raw_water_unitcost,
-        escalation=config.gen_inflation,
-    )
-    pf.add_feedstock(
-        name="Lime",
-        usage=feedstocks.lime_consumption,
-        unit="metric tonnes of lime per metric tonne of iron",
-        cost=feedstocks.lime_unitcost,
-        escalation=config.gen_inflation,
-    )
-    pf.add_feedstock(
-        name="Carbon",
-        usage=feedstocks.carbon_consumption,
-        unit="metric tonnes of carbon per metric tonne of iron",
-        cost=feedstocks.carbon_unitcost,
-        escalation=config.gen_inflation,
-    )
-    pf.add_feedstock(
-        name="Iron Ore",
-        usage=feedstocks.iron_ore_consumption,
-        unit="metric tonnes of iron ore per metric tonne of iron",
-        cost=feedstocks.iron_ore_pellet_unitcost,
-        escalation=config.gen_inflation,
-    )
-    pf.add_feedstock(
-        name="Hydrogen",
-        usage=feedstocks.hydrogen_consumption,
-        unit="metric tonnes of hydrogen per metric tonne of iron",
-        cost=config.lcoh * 1000,
-        escalation=config.gen_inflation,
-    )
-    pf.add_feedstock(
-        name="Natural Gas",
-        usage=feedstocks.natural_gas_consumption,
-        unit="GJ-LHV per metric tonne of iron",
-        cost=feedstocks.natural_gas_prices,
-        escalation=config.gen_inflation,
-    )
-    pf.add_feedstock(
-        name="Electricity",
-        usage=feedstocks.electricity_consumption,
-        unit="MWh per metric tonne of iron",
-        cost=config.grid_prices,
-        escalation=config.gen_inflation,
-    )
-    pf.add_feedstock(
-        name="Slag Disposal",
-        usage=feedstocks.slag_production,
-        unit="metric tonnes of slag per metric tonne of iron",
-        cost=feedstocks.slag_disposal_unitcost,
-        escalation=config.gen_inflation,
-    )
-
-    pf.add_coproduct(
-        name="Oxygen sales",
-        usage=feedstocks.excess_oxygen,
-        unit="kg O2 per metric tonne of iron",
-        cost=feedstocks.oxygen_market_price,
-        escalation=config.gen_inflation,
-    )
-
-    # ------------------------------ Set up outputs ---------------------------
-
-    sol = pf.solve_price()
-    summary = pf.get_summary_vals()
-    price_breakdown = pf.get_cost_breakdown()
-
-    if config.save_plots or config.show_plots:
-        savepaths = [
-            config.output_dir + "figures/capex/",
-            config.output_dir + "figures/annual_cash_flow/",
-            config.output_dir + "figures/lcos_breakdown/",
-            config.output_dir + "data/",
-        ]
-        for savepath in savepaths:
-            if not os.path.exists(savepath):
-                os.makedirs(savepath)
-
-        pf.plot_capital_expenses(
-            fileout=savepaths[0] + "iron_capital_expense_%i.pdf" % (config.design_scenario_id),
-            show_plot=config.show_plots,
-        )
-        pf.plot_cashflow(
-            fileout=savepaths[1] + "iron_cash_flow_%i.png"
-            % (config.design_scenario_id),
-            show_plot=config.show_plots,
+        pf.add_coproduct(
+            name="Oxygen sales",
+            usage=feedstocks.excess_oxygen,
+            unit="kg O2 per metric tonne of iron",
+            cost=feedstocks.oxygen_market_price,
+            escalation=config.gen_inflation,
         )
 
-        pd.DataFrame.from_dict(data=pf.cash_flow_out).to_csv(
-            savepaths[3] + "iron_cash_flow_%i.csv" % (config.design_scenario_id)
-        )
+        # ------------------------------ Set up outputs ---------------------------
 
-        pf.plot_costs(
-            savepaths[2] + "lcos_%i" % (config.design_scenario_id),
-            show_plot=config.show_plots,
-        )
+        sol = pf.solve_price()
+        summary = pf.get_summary_vals()
+        price_breakdown = pf.get_cost_breakdown()
+
+        if config.save_plots or config.show_plots:
+            savepaths = [
+                config.output_dir + "figures/capex/",
+                config.output_dir + "figures/annual_cash_flow/",
+                config.output_dir + "figures/lcos_breakdown/",
+                config.output_dir + "data/",
+            ]
+            for savepath in savepaths:
+                if not os.path.exists(savepath):
+                    os.makedirs(savepath)
+
+            pf.plot_capital_expenses(
+                fileout=savepaths[0] + "iron_capital_expense_%i.pdf" % (config.design_scenario_id),
+                show_plot=config.show_plots,
+            )
+            pf.plot_cashflow(
+                fileout=savepaths[1] + "iron_cash_flow_%i.png"
+                % (config.design_scenario_id),
+                show_plot=config.show_plots,
+            )
+
+            pd.DataFrame.from_dict(data=pf.cash_flow_out).to_csv(
+                savepaths[3] + "iron_cash_flow_%i.csv" % (config.design_scenario_id)
+            )
+
+            pf.plot_costs(
+                savepaths[2] + "lcos_%i" % (config.design_scenario_id),
+                show_plot=config.show_plots,
+            )
 
     return IronFinanceModelOutputs(
         sol=sol,
@@ -945,6 +963,7 @@ def run_iron_full_model(greenheart_config: dict, save_plots=False, show_plots=Fa
     # run iron cost model
     iron_costs["feedstocks"] = feedstocks
     iron_cost_config = IronCostModelConfig(
+        ore_type=iron_config['ore_type'],
         technology=iron_config['technology'],
         plant_capacity_mtpy=iron_capacity.iron_plant_capacity_mtpy,
         **iron_costs
@@ -969,7 +988,9 @@ def run_iron_full_model(greenheart_config: dict, save_plots=False, show_plots=Fa
         save_plots=save_plots,
         output_dir=output_dir,
         design_scenario_id=design_scenario_id,
-        **iron_finance
+        **iron_finance,
+        iron_config=iron_config,
+        cost_year=greenheart_config['project_parameters']['cost_year']
     )
     iron_finance = run_iron_finance_model(iron_finance_config)
 
