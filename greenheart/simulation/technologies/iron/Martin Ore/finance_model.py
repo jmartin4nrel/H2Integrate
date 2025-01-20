@@ -7,18 +7,17 @@ from greenheart.simulation.technologies.iron.load_top_down_coeffs import load_to
 
 def main(config):
 
-    # Pull in feedstocks and costs from config
-    feedstocks = config.feedstocks
+    # Pull in costs from config
     costs = config.costs
-    cost_names = costs.mine_df.loc[:,'Name'].values
-    cost_types = costs.mine_df.loc[:,'Type'].values
-    cost_units = costs.mine_df.loc[:,'Unit'].values
+    cost_names = costs.costs_df.loc[:,'Name'].values
+    cost_types = costs.costs_df.loc[:,'Type'].values
+    cost_units = costs.costs_df.loc[:,'Unit'].values
 
     # Set up ProFAST
     pf = ProFAST.ProFAST("blank")
 
     # Get mine/ore costs into data frame/series with cost names as index
-    cost_df = costs.mine_df.set_index('Name')
+    cost_df = costs.costs_df.set_index('Name')
     cost_ds = cost_df.loc[:,config.iron_config['ore_type']]
 
     # Apply all params passed through from config

@@ -13,10 +13,6 @@ CD = Path(__file__).parent
 model_locs_fp = CD / '../model_locations.yaml'
 model_locs = load_yaml(model_locs_fp)
 
-# Load CPI and CEPCI
-cpi_df = pd.read_csv(CD/"../../../../tools/inflation/cpi.csv",index_col=0)
-cepci_df = pd.read_csv(CD/"../../../../tools/inflation/cepci.csv",index_col=0)
-
 def main(config):
 
     # Import 'top-down' costs
@@ -37,10 +33,10 @@ def main(config):
         col = np.where(np.equal(input_df.columns.values,config.ore_type))
         cols = [0,1,2,3,int(col[0])]
         
-        mine_df = input_df.iloc[rows]
-        mine_df = mine_df.iloc[:,cols]
+        costs_df = input_df.iloc[rows]
+        costs_df = costs_df.iloc[:,cols]
         
-        return mine_df
+        return costs_df
 
     else:
         coeff_df = pd.read_csv(CD/config.cost_model['coeffs_fp'],index_col=[0,1,2,3])

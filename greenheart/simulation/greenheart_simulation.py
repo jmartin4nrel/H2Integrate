@@ -29,7 +29,7 @@ from greenheart.simulation.technologies.iron.iron import (
     run_iron_full_model,
     IronCostModelOutputs,
     IronFinanceModelOutputs,
-    IronCapacityModelOutputs,
+    IronPerformanceModelOutputs,
 )
 from greenheart.simulation.technologies.iron.iron_ore import (
     run_iron_ore_full_model,
@@ -279,7 +279,7 @@ class GreenHeartSimulationOutput:
     steel_costs: Optional[SteelCostModelOutputs] = field(default=None)
     steel_finance: Optional[SteelFinanceModelOutputs] = field(default=None)
 
-    iron_capacity: Optional[IronCapacityModelOutputs] = field(default=None)
+    iron_performance: Optional[IronPerformanceModelOutputs] = field(default=None)
     iron_costs: Optional[IronCostModelOutputs] = field(default=None)
     iron_finance: Optional[IronFinanceModelOutputs] = field(default=None)
 
@@ -1177,22 +1177,16 @@ def run_simulation(config: GreenHeartSimulationConfig):
                 iron_config["iron"]["costs"]["lcoh"] = lcoh
 
             # use the hydrogen amount from the electrolyzer physics model if it is not already in the config
-            if "hydrogen_amount_kgpy" not in iron_config["iron"]["capacity"]:
-                iron_config["iron"]["capacity"][
+            if "hydrogen_amount_kgpy" not in iron_config["iron"]["performance"]:
+                iron_config["iron"]["performance"][
                     "hydrogen_amount_kgpy"
                 ] = hydrogen_amount_kgpy
 
             if not config.iron_modular:
             
-                iron_capacity, iron_costs, iron_finance = run_iron_full_model(
-                    iron_config,
-                    save_plots=config.save_plots,
-                    show_plots=config.show_plots,
-                    output_dir=config.output_dir,
-                    design_scenario_id=config.design_scenario["id"],
-                )
+                iron_performance, iron_costs, iron_finance = run_iron_full_model(iron_config)
 
-                output_names = ["iron_capacity","iron_costs","iron_finance"]
+                output_names = ["iron_performance","iron_costs","iron_finance"]
                 paths = [config.iron_out_fn+'/'+i+'/' for i in output_names]
                 for i, path in enumerate(paths):
                     if not os.path.exists(path):

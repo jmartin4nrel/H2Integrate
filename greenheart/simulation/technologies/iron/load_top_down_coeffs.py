@@ -12,7 +12,7 @@ CD = str(os.path.abspath(os.path.dirname(__file__)))
 # Set number of label columns at the left side of the input .csv (may change)
 num_label_cols = 4
 
-def load_top_down_coeffs(coeff_list, cost_year):
+def load_top_down_coeffs(coeff_list=None, cost_year=None):
 
     coeff_dict = {}
 
@@ -22,13 +22,19 @@ def load_top_down_coeffs(coeff_list, cost_year):
     coeff_names = coeff_df.loc[:,'Name'].values
     coeff_units = coeff_df.loc[:,'Unit'].values
 
+    if not coeff_list:
+        coeff_list = coeff_names
+
     for name in coeff_list:
         coeff_idx = np.where(coeff_names==name)[0][0]
         unit = coeff_units[coeff_idx]
-        if unit[5] == '$':
-            source_year = int(unit[:4])
-            source_year_costs = coeff_df.iloc[coeff_idx,num_label_cols:]
-            values = inflate_cpi(source_year_costs,source_year,cost_year)
+        if cost_year:
+            if unit[5] == '$':
+                source_year = int(unit[:4])
+                source_year_costs = coeff_df.iloc[coeff_idx,num_label_cols:]
+                values = inflate_cpi(source_year_costs,source_year,cost_year)
+            else:
+                values = coeff_df.iloc[coeff_idx,3:]
         else:
             values = coeff_df.iloc[coeff_idx,3:]
         coeff_dict[name] = {'values':values.values,'unit':unit}
