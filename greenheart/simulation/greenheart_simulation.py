@@ -614,7 +614,13 @@ def setup_greenheart_simulation(config: GreenHeartSimulationConfig):
     else:
 
         # Preserve iron from new instance of config
-        iron_config = copy.deepcopy(config.greenheart_config['iron'])
+        if config.iron_modular:
+            iron_ore_config = copy.deepcopy(config.greenheart_config['iron_ore'])
+            # iron_pre_config = copy.deepcopy(config.greenheart_config['iron_pre'])
+            iron_win_config = copy.deepcopy(config.greenheart_config['iron_win'])
+            # iron_post_config = copy.deepcopy(config.greenheart_config['iron_post'])
+        else:
+            iron_config = copy.deepcopy(config.greenheart_config['iron'])
         
         # Identify the site resource
         lat = config.hopp_config["site"]["data"]["lat"]
@@ -634,7 +640,13 @@ def setup_greenheart_simulation(config: GreenHeartSimulationConfig):
 
         # Flip run_pre_iron back to False (was True when saved)
         config.run_pre_iron = False
-        config.greenheart_config['iron'] = iron_config
+        if config.iron_modular:
+            config.greenheart_config['iron_ore'] = iron_ore_config
+            # config.greenheart_config['iron_pre'] = iron_pre_config
+            config.greenheart_config['iron_win'] = iron_win_config
+            # config.greenheart_config['iron_post'] = iron_post_config
+        else:
+            config.greenheart_config['iron'] = iron_config
         
         # HOPP Interface is expected as an output, but not needed 
         hi = None
@@ -1163,27 +1175,27 @@ def run_simulation(config: GreenHeartSimulationConfig):
                 design_scenario_id=config.design_scenario["id"],
             )
 
-        if "iron" in config.greenheart_config:
+        if any([i in config.greenheart_config for i in ["iron","iron_pre","iron_pre","iron_win","iron_post"]]):
             iron_config = copy.deepcopy(config.greenheart_config)
             if config.verbose:
                 print("Running iron\n")
 
-            # use lcoh from the electrolyzer model if it is not already in the config
-            if "lcoh" not in iron_config["iron"]["finances"]:
-                iron_config["iron"]["finances"]["lcoh"] = lcoh
-
-            # use lcoh from the electrolyzer model if it is not already in the config
-            if "lcoh" not in iron_config["iron"]["costs"]:
-                iron_config["iron"]["costs"]["lcoh"] = lcoh
-
-            # use the hydrogen amount from the electrolyzer physics model if it is not already in the config
-            if "hydrogen_amount_kgpy" not in iron_config["iron"]["performance"]:
-                iron_config["iron"]["performance"][
-                    "hydrogen_amount_kgpy"
-                ] = hydrogen_amount_kgpy
-
             if not config.iron_modular:
             
+                # use lcoh from the electrolyzer model if it is not already in the config
+                if "lcoh" not in iron_config["iron"]["finances"]:
+                    iron_config["iron"]["finances"]["lcoh"] = lcoh
+
+                # use lcoh from the electrolyzer model if it is not already in the config
+                if "lcoh" not in iron_config["iron"]["costs"]:
+                    iron_config["iron"]["costs"]["lcoh"] = lcoh
+
+                # use the hydrogen amount from the electrolyzer physics model if it is not already in the config
+                if "hydrogen_amount_kgpy" not in iron_config["iron"]["performance"]:
+                    iron_config["iron"]["performance"][
+                        "hydrogen_amount_kgpy"
+                    ] = hydrogen_amount_kgpy
+
                 iron_performance, iron_costs, iron_finance = run_iron_full_model(iron_config)
 
                 output_names = ["iron_performance","iron_costs","iron_finance"]
@@ -1196,55 +1208,54 @@ def run_simulation(config: GreenHeartSimulationConfig):
 
             else:
 
+                # This is not the most graceful way to do this... but it avoids copied imports and copying iron.py
+                iron_ore_config = copy.deepcopy(iron_config)
+                iron_pre_config = copy.deepcopy(iron_config)
+                iron_win_config = copy.deepcopy(iron_config)
+                iron_post_config = copy.deepcopy(iron_config)
+                iron_ore_config["iron"] = iron_config["iron_ore"]
+                # iron_pre_config["iron"] = iron_config["iron_pre"]
+                iron_win_config["iron"] = iron_config["iron_win"]
+                # iron_post_config["iron"] = iron_config["iron_post"]
+                for sub_iron_config in [iron_ore_config,iron_win_config]: # iron_pre_config, iron_post_config
+                    sub_iron_config["iron"]["performance"]["hydrogen_amount_kgpy"] = hydrogen_amount_kgpy
+                    sub_iron_config["iron"]["costs"]["lcoe"] = lcoe
+                    sub_iron_config["iron"]["finances"]["lcoe"] = lcoe
+                    sub_iron_config["iron"]["costs"]["lcoh"] = lcoh
+                    sub_iron_config["iron"]["finances"]["lcoh"] = lcoh
+
                 #NOTE: assumes iron_config (greenheart_config) is updated with additional nesting layers for ore, pre, win, and post. update accordingly if changed
                 # Capcacity-determining variable from iron_config: "iron_ore_mpty_run_of_mine" (raw ore coming directly out of the mine)
                 
-                iron_ore_capacity, iron_ore_costs, iron_ore_finance = run_iron_ore_full_model(
-                    iron_config,
-                    save_plots=config.save_plots,
-                    show_plots=config.show_plots,
-                    output_dir=config.output_dir,
-                    design_scenario_id=config.design_scenario["id"],
-                )
+                iron_ore_capacity, iron_ore_costs, iron_ore_finance = \
+                    run_iron_full_model(iron_ore_config)
 
-                # Capcacity-determining variable from iron_config: "iron_ore_mpty_sold_from_mine" (finished ore lumps/pellets/fines sold from the mine)
-                # TODO: Change iron_mpty_sold_from_mine in iron_config to result from iron_ore_capacity
+                # # Capcacity-determining variable from iron_config: "iron_ore_mpty_sold_from_mine" (finished ore lumps/pellets/fines sold from the mine)
+                # # TODO: Change iron_mpty_sold_from_mine in iron_config to result from iron_ore_capacity
 
-                iron_pre_capacity, iron_pre_costs, iron_pre_finance = run_iron_pre_full_model(
-                    iron_config,
-                    save_plots=config.save_plots,
-                    show_plots=config.show_plots,
-                    output_dir=config.output_dir,
-                    design_scenario_id=config.design_scenario["id"],
-                )
+                # iron_pre_capacity, iron_pre_costs, iron_pre_finance = \
+                #     run_iron_full_model(iron_pre_config)
 
                 # Capcacity-determining variable from iron_config: "iron_ore_mpty_into_winning" (preprocessed ore fed into furnaces/electrowinning)
                 # TODO: Change iron_ore_mpty_into_winning in iron_config to result from iron_pre_capacity
 
-                iron_win_capacity, iron_win_costs, iron_win_finance = run_iron_win_full_model(
-                    iron_config,
-                    save_plots=config.save_plots,
-                    show_plots=config.show_plots,
-                    output_dir=config.output_dir,
-                    design_scenario_id=config.design_scenario["id"],
-                )
+                iron_win_config['iron']['costs']['lco_iron_ore_tonne'] = iron_ore_finance.sol['lco']
+                iron_win_capacity, iron_win_costs, iron_win_finance = \
+                    run_iron_full_model(iron_win_config)
 
-                # Capcacity-determining variable from iron_config: "iron_mpty_into_post" (reduced iron out of furnaces/electrowinnign for final upgrading)
-                # TODO: Change iron_mpty_into_post in iron_config to result from iron_win_capacity
+                # # Capcacity-determining variable from iron_config: "iron_mpty_into_post" (reduced iron out of furnaces/electrowinnign for final upgrading)
+                # # TODO: Change iron_mpty_into_post in iron_config to result from iron_win_capacity
 
-                iron_post_capacity, iron_post_costs, iron_post_finance = run_iron_post_full_model(
-                    iron_config,
-                    save_plots=config.save_plots,
-                    show_plots=config.show_plots,
-                    output_dir=config.output_dir,
-                    design_scenario_id=config.design_scenario["id"],
-                )
+                # iron_post_capacity, iron_post_costs, iron_post_finance = \
+                #     run_iron_full_model(iron_post_config)
 
                 # Final end product: "iron_mpty"
                 # TODO: Change iron_mpty in iron_config to result from iron_post_capacity
 
+                iron_finance = iron_win_finance
+
         else:
-            steel_finance = {}
+            iron_finance = {}
 
         if "ammonia" in config.greenheart_config:
             ammonia_config = copy.deepcopy(config.greenheart_config)
@@ -1334,8 +1345,8 @@ def run_simulation(config: GreenHeartSimulationConfig):
     elif config.output_level == 6:
         return hopp_results, electrolyzer_physics_results, remaining_power_profile
     elif config.output_level == 7:
-        if "iron" in config.greenheart_config:
-            return lcoe, lcoh, iron_finance, ammonia_finance #, iron_ore_finance, iron_pre_finance, iron_win_finance, iron_post_finance, 
+        if any([i in config.greenheart_config for i in ["iron","iron_pre","iron_pre","iron_win","iron_post"]]):
+            return lcoe, lcoh, iron_finance, ammonia_finance
         else:
             return lcoe, lcoh, steel_finance, ammonia_finance
     elif config.output_level == 8:

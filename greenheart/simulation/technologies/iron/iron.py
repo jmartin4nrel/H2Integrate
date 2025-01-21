@@ -20,25 +20,31 @@ class IronPerformanceModelConfig:
     Configuration inputs for the iron performance model.
 
     Attributes:
-        technology (str): The particular iron reduction technology being used in this case.
+        product_selection (str): The particular iron product selected.
         site (dict): Contains information on the site where iron is being reduced.
         model (dict): Contains name of performance model and, if necessary, filepaths to
                         secure location passed from input if not part of public GreenHEART.
                         Also contains 'refit_coeffs' boolean to re-do model coefficient curve fitting.
         params (dict): The rest of the parameters for the performance model. TODO: define as fields.
     """
-    technology: str = ''
+    product_selection: str = ''
     site: dict = {}
     model: dict = {}
     params: dict = {}
 
     def __attrs_post_init__(self):
-        if self.technology == '':
-            raise ValueError("Iron performance technology must be set.")
+        if self.product_selection == '':
+            raise ValueError("Iron performance product_selection must be set.")
         if self.site == {}:
             raise ValueError("Iron performance site must be set.")
         if self.model == {}:
             raise ValueError("Iron performance model must be set.")
+        for fieldname in ['model_fp','inputs_fp','coeffs_fp','refit_coeffs']:
+            if fieldname not in self.model.keys():
+                if fieldname != 'refit_coeffs':
+                    self.model[fieldname] = ''
+                else:
+                    self.model[fieldname] = False
 
 @define
 class IronPerformanceModelOutputs:
@@ -84,12 +90,13 @@ def run_size_iron_plant_performance(config: IronPerformanceModelConfig) -> IronP
     return IronPerformanceModelOutputs(performances_df)
 
 @define
-class IronCostModelConfig:
+class IronCostModelConfig():
     """
     Configuration inputs for the iron cost model.
 
     Attributes:
-        technology (str): The particular iron reduction technology being used in this case.
+        performance(IronPerformanceModelOutputs): Outputs from the performance model.
+        product_selection (str): The particular iron product selected.
         site (dict): Contains information on the site where iron is being reduced.
         model (dict): Contains name of cost model and, if necessary, filepaths to
                         secure location passed from input if not part of public GreenHEART.
@@ -97,18 +104,24 @@ class IronCostModelConfig:
         params (dict): The rest of the parameters for the cost model. TODO: define as fields.
     """
     performance: IronPerformanceModelOutputs
-    technology: str = ''
+    product_selection: str = ''
     site: dict = {}
     model: dict = {}
     params: dict = {}
 
     def __attrs_post_init__(self):
-        if self.technology == '':
-            raise ValueError("Iron cost technology must be set.")
+        if self.product_selection == '':
+            raise ValueError("Iron cost product_selection must be set.")
         if self.site == {}:
             raise ValueError("Iron cost site must be set.")
         if self.model == {}:
             raise ValueError("Iron cost model must be set.")
+        for fieldname in ['model_fp','inputs_fp','coeffs_fp','refit_coeffs']:
+            if fieldname not in self.model.keys():
+                if fieldname != 'refit_coeffs':
+                    self.model[fieldname] = ''
+                else:
+                    self.model[fieldname] = False
 
 @define
 class IronCostModelOutputs:
@@ -159,32 +172,40 @@ def run_iron_cost_model(config: IronCostModelConfig) -> IronCostModelOutputs:
         
 
 @define
-class IronFinanceModelConfig:
+class IronFinanceModelConfig(IronCostModelConfig):
     """
     Configuration inputs for the iron finance model.
 
     Attributes:
-        technology (str): The particular iron reduction technology being used in this case.
+        cost(IronCostModelOutputs): Outputs from the cost model.
+        performance(IronPerformanceModelOutputs): Outputs from the performance model.
+        product_selection (str): The particular iron product selected.
         site (dict): Contains information on the site where iron is being reduced.
         model (dict): Contains name of finance model and, if necessary, filepaths to
                         secure location passed from input if not part of public GreenHEART.
                         Also contains 'refit_coeffs' boolean to re-do model coefficient curve fitting.
         params (dict): The rest of the parameters for the finance model. TODO: define as fields.
     """
-    performance: IronPerformanceModelOutputs
     cost: IronCostModelOutputs
-    technology: str = ''
+    performance: IronPerformanceModelOutputs
+    product_selection: str = ''
     site: dict = {}
     model: dict = {}
     params: dict = {}
-
+    
     def __attrs_post_init__(self):
-        if self.technology == '':
-            raise ValueError("Iron finance technology must be set.")
+        if self.product_selection == '':
+            raise ValueError("Iron finance product_selection must be set.")
         if self.site == {}:
             raise ValueError("Iron finance site must be set.")
         if self.model == {}:
             raise ValueError("Iron finance model must be set.")
+        for fieldname in ['model_fp','inputs_fp','coeffs_fp','refit_coeffs']:
+            if fieldname not in self.model.keys():
+                if fieldname != 'refit_coeffs':
+                    self.model[fieldname] = ''
+                else:
+                    self.model[fieldname] = False
 
 @define
 class IronFinanceModelOutputs:
@@ -273,16 +294,16 @@ def run_iron_full_model(greenheart_config: dict) -> \
             )
         )
 
-    iron_technology = iron_config['technology']
+    iron_product_selection = iron_config['product_selection']
     iron_site = iron_config['site']
     
     iron_performance_inputs = iron_config["performance"]
     performance_model = iron_config["performance_model"]
 
-    iron_cost_inputs = iron_config["costs"]
+    iron_cost_inputs = iron_performance_inputs | iron_config["costs"]
     cost_model = iron_config["cost_model"]
 
-    iron_finance_inputs = iron_config["finances"]
+    iron_finance_inputs = iron_cost_inputs | iron_config["finances"]
     finance_model = iron_config["finance_model"]
 
     iron_finance_inputs['operational_year'] = iron_cost_inputs['operational_year']
@@ -292,7 +313,7 @@ def run_iron_full_model(greenheart_config: dict) -> \
 
     # run iron performance model to get iron plant size
     performance_config = IronPerformanceModelConfig(
-        technology= iron_technology,
+        product_selection = iron_product_selection,
         site = iron_site,
         model = performance_model,
         params = iron_performance_inputs
@@ -301,7 +322,7 @@ def run_iron_full_model(greenheart_config: dict) -> \
 
     # run iron cost model to get iron plant costs
     cost_config = IronCostModelConfig(
-        technology= iron_technology,
+        product_selection = iron_product_selection,
         site = iron_site,
         model = cost_model,
         params = iron_cost_inputs,
@@ -311,7 +332,7 @@ def run_iron_full_model(greenheart_config: dict) -> \
 
     # run iron finance model to get iron plant finances
     finance_config = IronFinanceModelConfig(
-        technology= iron_technology,
+        product_selection = iron_product_selection,
         site = iron_site,
         model = finance_model,
         params = iron_finance_inputs,

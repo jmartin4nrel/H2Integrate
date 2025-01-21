@@ -7,20 +7,18 @@ from greenheart.simulation.technologies.iron.load_top_down_coeffs import load_to
 
 def main(config):
     
-    # Pull in costs from config
-    performance = config.performance
-    costs = config.cost
-    cost_names = costs.costs_df.loc[:,'Name'].values
-    cost_types = costs.costs_df.loc[:,'Type'].values
-    cost_units = costs.costs_df.loc[:,'Unit'].values
-
     # TODO: Get feedstock costs from input sheets
     natural_gas_prices = 0
     excess_oxygen = 395
     lime_unitcost = 122.1
     carbon_unitcost = 236.97
     electricity_cost = 48.92
+    electricity_cost = config.params['lcoe'] # Originally in $/kWh
+    lcoe_dollar_MWH = electricity_cost * 1000
+    hydrogen_cost = config.params['lcoh'] # Originally in $/kg
+    lcoh_dollar_metric_tonne = hydrogen_cost * 1000
     iron_ore_pellet_unitcost = 207.35
+    iron_ore_pellet_unitcost = config.params['lco_iron_ore_tonne']
     oxygen_market_price = 0.03
     raw_water_unitcost = 0.59289
     iron_ore_consumption = 1.62927
@@ -35,15 +33,23 @@ def main(config):
     maintenance_materials_unitcost = 7.72
 
     # Get plant performances into data frame/series with performance names as index
+    performance = config.performance
     perf_df = performance.performances_df.set_index('Name')
-    perf_ds = perf_df.loc[:,config.site['name']]
+    perf_ds = perf_df.loc[:,'Model']
+    perf_names = perf_df.index.values
+    perf_types = perf_df.loc[:,'Type'].values
+    perf_units = perf_df.loc[:,'Unit'].values
 
-    plant_capacity_mtpy = perf_ds['Reduced Iron Capacity'] # In metric tonnes per year
+    plant_capacity_mtpy = config.params['plant_capacity_mtpy'] # In metric tonnes per year
     plant_capacity_factor = perf_ds['Capacity Factor'] # Fractional
 
     # Get reduction plant costs into data frame/series with cost names as index
+    costs = config.cost
     cost_df = costs.costs_df.set_index('Name')
     cost_ds = cost_df.loc[:,config.site['name']]
+    cost_names = cost_df.index.values
+    cost_types = cost_df.loc[:,'Type'].values
+    cost_units = cost_df.loc[:,'Unit'].values
 
     installation_cost = cost_ds['Installation cost']
     land_cost = cost_ds['Land cost']
@@ -198,7 +204,7 @@ def main(config):
         name="Hydrogen",
         usage=hydrogen_consumption,
         unit="metric tonnes of hydrogen per metric tonne of iron",
-        cost=config.params['lcoh'] * 1000,
+        cost=lcoh_dollar_metric_tonne,
         escalation=gen_inflation,
     )
     pf.add_feedstock(
@@ -212,7 +218,7 @@ def main(config):
         name="Electricity",
         usage=electricity_consumption,
         unit="MWh per metric tonne of iron",
-        cost=config.params['grid_prices'],
+        cost=lcoe_dollar_MWH,
         escalation=gen_inflation,
     )
     pf.add_feedstock(
