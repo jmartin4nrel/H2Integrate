@@ -31,30 +31,6 @@ from greenheart.simulation.technologies.iron.iron import (
     IronFinanceModelOutputs,
     IronPerformanceModelOutputs,
 )
-from greenheart.simulation.technologies.iron.iron_ore import (
-    run_iron_ore_full_model,
-    IronOreCostModelOutputs,
-    IronOreFinanceModelOutputs,
-    IronOreCapacityModelOutputs,
-)
-from greenheart.simulation.technologies.iron.iron_pre import (
-    run_iron_pre_full_model,
-    IronPreCostModelOutputs,
-    IronPreFinanceModelOutputs,
-    IronPreCapacityModelOutputs,
-)
-from greenheart.simulation.technologies.iron.iron_win import (
-    run_iron_win_full_model,
-    IronWinCostModelOutputs,
-    IronWinFinanceModelOutputs,
-    IronWinCapacityModelOutputs,
-)
-from greenheart.simulation.technologies.iron.iron_post import (
-    run_iron_post_full_model,
-    IronPostCostModelOutputs,
-    IronPostFinanceModelOutputs,
-    IronPostCapacityModelOutputs,
-)
 
 # visualization imports
 import matplotlib.pyplot as plt
@@ -282,22 +258,6 @@ class GreenHeartSimulationOutput:
     iron_performance: Optional[IronPerformanceModelOutputs] = field(default=None)
     iron_costs: Optional[IronCostModelOutputs] = field(default=None)
     iron_finance: Optional[IronFinanceModelOutputs] = field(default=None)
-
-    iron_ore_capacity: Optional[IronOreCapacityModelOutputs] = field(default=None)
-    iron_ore_costs: Optional[IronOreCostModelOutputs] = field(default=None)
-    iron_ore_finance: Optional[IronOreFinanceModelOutputs] = field(default=None)
-
-    iron_pre_capacity: Optional[IronPreCapacityModelOutputs] = field(default=None)
-    iron_pre_costs: Optional[IronPreCostModelOutputs] = field(default=None)
-    iron_pre_finance: Optional[IronPreFinanceModelOutputs] = field(default=None)
-
-    iron_win_capacity: Optional[IronWinCapacityModelOutputs] = field(default=None)
-    iron_win_costs: Optional[IronWinCostModelOutputs] = field(default=None)
-    iron_win_finance: Optional[IronWinFinanceModelOutputs] = field(default=None)
-
-    iron_post_capacity: Optional[IronPostCapacityModelOutputs] = field(default=None)
-    iron_post_costs: Optional[IronPostCostModelOutputs] = field(default=None)
-    iron_post_finance: Optional[IronPostFinanceModelOutputs] = field(default=None)
 
     ammonia_capacity: Optional[AmmoniaCapacityModelOutputs] = field(default=None)
     ammonia_costs: Optional[AmmoniaCostModelOutputs] = field(default=None)
