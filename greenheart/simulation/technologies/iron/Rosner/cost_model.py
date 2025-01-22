@@ -101,7 +101,6 @@ def main(config):
 
         coeff_df.to_csv(CD/config.model['coeffs_fp'])
     coeff_df = pd.read_csv(CD/config.model['coeffs_fp'],index_col=[0,1,2,3])
-    
     product = config.product_selection
 
     prod_coeffs = coeff_df[[product]].reset_index()

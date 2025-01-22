@@ -578,7 +578,7 @@ def setup_greenheart_simulation(config: GreenHeartSimulationConfig):
             iron_ore_config = copy.deepcopy(config.greenheart_config['iron_ore'])
             # iron_pre_config = copy.deepcopy(config.greenheart_config['iron_pre'])
             iron_win_config = copy.deepcopy(config.greenheart_config['iron_win'])
-            # iron_post_config = copy.deepcopy(config.greenheart_config['iron_post'])
+            iron_post_config = copy.deepcopy(config.greenheart_config['iron_post'])
         else:
             iron_config = copy.deepcopy(config.greenheart_config['iron'])
         
@@ -604,7 +604,7 @@ def setup_greenheart_simulation(config: GreenHeartSimulationConfig):
             config.greenheart_config['iron_ore'] = iron_ore_config
             # config.greenheart_config['iron_pre'] = iron_pre_config
             config.greenheart_config['iron_win'] = iron_win_config
-            # config.greenheart_config['iron_post'] = iron_post_config
+            config.greenheart_config['iron_post'] = iron_post_config
         else:
             config.greenheart_config['iron'] = iron_config
         
@@ -1176,8 +1176,8 @@ def run_simulation(config: GreenHeartSimulationConfig):
                 iron_ore_config["iron"] = iron_config["iron_ore"]
                 # iron_pre_config["iron"] = iron_config["iron_pre"]
                 iron_win_config["iron"] = iron_config["iron_win"]
-                # iron_post_config["iron"] = iron_config["iron_post"]
-                for sub_iron_config in [iron_ore_config,iron_win_config]: # iron_pre_config, iron_post_config
+                iron_post_config["iron"] = iron_config["iron_post"]
+                for sub_iron_config in [iron_ore_config,iron_win_config,iron_post_config]: # iron_pre_config, iron_post_config
                     sub_iron_config["iron"]["performance"]["hydrogen_amount_kgpy"] = hydrogen_amount_kgpy
                     sub_iron_config["iron"]["costs"]["lcoe"] = lcoe
                     sub_iron_config["iron"]["finances"]["lcoe"] = lcoe
@@ -1206,8 +1206,9 @@ def run_simulation(config: GreenHeartSimulationConfig):
                 # # Capcacity-determining variable from iron_config: "iron_mpty_into_post" (reduced iron out of furnaces/electrowinnign for final upgrading)
                 # # TODO: Change iron_mpty_into_post in iron_config to result from iron_win_capacity
 
-                # iron_post_capacity, iron_post_costs, iron_post_finance = \
-                #     run_iron_full_model(iron_post_config)
+                iron_post_config['iron']['costs']['lco_iron_tonne'] = iron_win_finance.sol['lco']
+                iron_post_capacity, iron_post_costs, iron_post_finance = \
+                    run_iron_full_model(iron_post_config)
 
                 # Final end product: "iron_mpty"
                 # TODO: Change iron_mpty in iron_config to result from iron_post_capacity
