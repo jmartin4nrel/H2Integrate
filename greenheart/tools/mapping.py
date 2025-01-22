@@ -41,6 +41,10 @@ def compile_prices(folder, price_type:str = 'lcoh'):
         folder = str(folder)+"_pre_iron/lcoh"
         label = 'Levelized\nCost of\nHydrogen\n[$/kg]'
         def read_price(price_struct): price = price_struct; return price
+    elif price_type == 'lco_ore':
+        folder = str(folder)+"_iron_out/iron_ore_finance"
+        label = 'Levelized\nCost of\nIron Ore\nPellets\n[$/tonne]'
+        def read_price(price_struct): price = price_struct.sol['price']; return price
     elif price_type == 'lcoi':
         folder = str(folder)+"_iron_out/iron_finance"
         label = 'Levelized\nCost of\nIron\n[$/tonne]'
@@ -137,6 +141,9 @@ def price_map(coord_sdf, map_prefs: dict = {'latlon_lims': [42,50,-98,-82],
                                             'pwd':'',
                                             'zoomlevel':7,
                                             'center':[46,-90],
+                                            'colorbar_pos':(.5,.5,1,1),
+                                            'colorbar_size':[.03,.50],
+                                            'colorbar_label_pos':[],
                                             'colormap':'turbo',
                                             'marker_size':5,
                                             'dpi':100,
@@ -244,14 +251,18 @@ def price_map(coord_sdf, map_prefs: dict = {'latlon_lims': [42,50,-98,-82],
 
     ax = plt.gca()
     bbox = ax.bbox.bounds
-    cbaxes = inset_axes(ax, width="3%", height="45%", loc='lower left',
-                        bbox_to_anchor=(.95, 0.5, 1, 1),  # position of the colorbar
+    cbaxes = inset_axes(ax,
+                        width='{:.2f}%'.format(map_prefs['colorbar_size'][0]*100),
+                        height='{:.2f}%'.format(map_prefs['colorbar_size'][1]*100),
+                        loc='lower left',
+                        bbox_to_anchor=map_prefs['colorbar_pos'],  # position of the colorbar
                         bbox_transform=ax.transAxes,  # coordinate system for the colorbar
                         borderpad=0,  # padding around the colorbar
                         )
     cbar = plt.colorbar(im, cax=cbaxes, ticklocation='left')
     cbaxes.tick_params(direction='inout',labelsize=8)
-    ax.text(pix_width*.775,pix_height*.725,map_prefs['label'],horizontalalignment='center',
+    label_pos = map_prefs['colorbar_label_pos']
+    ax.text(pix_width*label_pos[0],pix_height*label_pos[1],map_prefs['label'],horizontalalignment='center',
             verticalalignment='center',fontsize=8)
 
 
