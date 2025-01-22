@@ -36,8 +36,11 @@ def main(config):
     performance = config.performance
     perf_df = performance.performances_df.set_index('Name')
     perf_ds = perf_df.loc[:,'Model']
+    print("PERF DS")
+    perf_values = perf_df.loc[:,'Model'].values
+    print(perf_ds)
     perf_names = perf_df.index.values
-    perf_types = perf_df.loc[:,'Type'].values
+    perf_types = perf_df.loc[:,'Type'].values 
     perf_units = perf_df.loc[:,'Unit'].values
 
     plant_capacity_mtpy = config.params['plant_capacity_mtpy'] # In metric tonnes per year
@@ -174,56 +177,56 @@ def main(config):
     )
     pf.add_feedstock(
         name="Raw Water Withdrawal",
-        usage=raw_water_consumption,
+        usage=perf_ds['Raw Water Withdrawal'],
         unit="metric tonnes of water per metric tonne of iron",
         cost=raw_water_unitcost,
         escalation=gen_inflation,
     )
     pf.add_feedstock(
         name="Lime",
-        usage=lime_consumption,
+        usage=perf_ds['Lime'],
         unit="metric tonnes of lime per metric tonne of iron",
         cost=lime_unitcost,
         escalation=gen_inflation,
     )
     pf.add_feedstock(
         name="Carbon",
-        usage=carbon_consumption,
+        usage=perf_ds['Carbon (Coke)'],
         unit="metric tonnes of carbon per metric tonne of iron",
         cost=carbon_unitcost,
         escalation=gen_inflation,
     )
     pf.add_feedstock(
         name="Iron Ore",
-        usage=iron_ore_consumption,
+        usage=perf_ds['Iron Ore'],
         unit="metric tonnes of iron ore per metric tonne of iron",
         cost=iron_ore_pellet_unitcost,
         escalation=gen_inflation,
     )
     pf.add_feedstock(
         name="Hydrogen",
-        usage=hydrogen_consumption,
+        usage=perf_ds['Hydrogen'],
         unit="metric tonnes of hydrogen per metric tonne of iron",
         cost=lcoh_dollar_metric_tonne,
         escalation=gen_inflation,
     )
     pf.add_feedstock(
         name="Natural Gas",
-        usage=natural_gas_consumption,
+        usage=perf_ds['Natural Gas'],
         unit="GJ-LHV per metric tonne of iron",
         cost=natural_gas_prices,
         escalation=gen_inflation,
     )
     pf.add_feedstock(
         name="Electricity",
-        usage=electricity_consumption,
+        usage=perf_ds['Electricity'],
         unit="MWh per metric tonne of iron",
         cost=lcoe_dollar_MWH,
         escalation=gen_inflation,
     )
     pf.add_feedstock(
         name="Slag Disposal",
-        usage=slag_production,
+        usage=perf_ds['Slag'],
         unit="metric tonnes of slag per metric tonne of iron",
         cost=slag_disposal_unitcost,
         escalation=gen_inflation,

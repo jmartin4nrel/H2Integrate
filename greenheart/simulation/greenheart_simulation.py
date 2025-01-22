@@ -1206,7 +1206,7 @@ def run_simulation(config: GreenHeartSimulationConfig):
                 # # Capcacity-determining variable from iron_config: "iron_mpty_into_post" (reduced iron out of furnaces/electrowinnign for final upgrading)
                 # # TODO: Change iron_mpty_into_post in iron_config to result from iron_win_capacity
 
-                iron_post_config['iron']['costs']['lco_iron_tonne'] = iron_win_finance.sol['lco']
+                iron_post_config['iron']['costs']['lco_iron_ore_tonne'] = iron_win_finance.sol['lco']
                 iron_post_capacity, iron_post_costs, iron_post_finance = \
                     run_iron_full_model(iron_post_config)
 

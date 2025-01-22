@@ -50,7 +50,7 @@
 48,h2_eaf,Steel Production,capacity,lin,mtpy,1953600
 49,h2_eaf,Pig Iron Production,capacity,lin,mtpy,2328689.051
 50,h2_eaf,Capacity Factor,capacity,lin,%,100
-51,h2_eaf,Iron Ore,feed,lin,mt ore / mt steel,0
+51,h2_eaf,Iron Ore,feed,lin,mt ore / mt steel,1.62927
 52,h2_eaf,Reformer Catalyst,feed,lin,m3 catalyst/mt steel,0
 53,h2_eaf,Hydrogen,feed,lin,mt H2 / mt steel,0
 54,h2_eaf,Natural Gas,feed,lin,GJ-LHV NG / mt steel,0.094282245
@@ -59,10 +59,10 @@
 57,h2_eaf,Lime,feed,lin,mt lime / mt steel,0.01812
 58,h2_eaf,Raw Water Withdrawal,feed,lin,mt H2O / mt steel,0.160731923
 59,h2_eaf,Carbon Dioxide (Methane as Fuel),emission,lin,mt CO2 / mt steel,0.009658199
-60,h2_eaf,Carbon Dioxide (Carbon),emission,lin,mt CO2 / mt steel,-0.202986164
+60,h2_eaf,Carbon Dioxide (Carbon),emission,lin,mt CO2 / mt steel,0
 61,h2_eaf,Slag,emission,lin,mt slag / mt steel,0.17433
 62,h2_eaf,Surface Water Discharge,emission,lin,mt H2O discharged/mt H2O withdrawn,0.150369685
-63,h2_eaf,Steelmaking efficiency,efficiency,lin,%,-27.918
+63,h2_eaf,Steelmaking efficiency,efficiency,lin,%,60.07
 64,h2_eaf,Reformer Furnace & Stack Air Blower,feed,lin,kW / mtpy steel,0
 65,h2_eaf,Process Gas recycle,feed,lin,kW / mtpy steel,0
 66,h2_eaf,DRI Scrubber Electricity,feed,lin,kW / mtpy steel,0
