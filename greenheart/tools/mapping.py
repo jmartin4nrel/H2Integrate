@@ -161,10 +161,11 @@ def price_map(coord_sdf, map_prefs: dict = {'latlon_lims': [42,50,-98,-82],
     max_x = merc_x(lon_max)
     min_y = merc_y(lat_min)
     max_y = merc_y(lat_max)
-    width = (max_x-min_x)
-    height = (max_y-min_y)
+    # width = (max_x-min_x)
+    # height = (max_y-min_y)
     pix_width = map_prefs['inches_per_deg']*(lon_max-lon_min)*map_prefs['dpi']
-    pix_height = map_prefs['inches_per_deg']*(lat_max-lat_min)*map_prefs['dpi']
+    vert_dist = (1/np.cos(np.pi*lat_min/180)+1/np.cos(np.pi*lat_max/180))/2
+    pix_height = map_prefs['inches_per_deg']*(lat_max-lat_min)*map_prefs['dpi']*vert_dist
         
     
     # Create map and set up display
@@ -238,11 +239,14 @@ def price_map(coord_sdf, map_prefs: dict = {'latlon_lims': [42,50,-98,-82],
     dpi = map_prefs['dpi']
 
     fig = plt.gcf()
+    
+    im = plt.imshow(np.reshape(max_vals,(16,16)), cmap=map_prefs['colormap'])
+    image = plt.imread(map_path+'/'+fn)
+    # pix_width = image.shape[0]
+    # pix_height = image.shape[1]
     fig.set_figwidth(pix_width/dpi)
     fig.set_figheight(pix_height/dpi)
 
-    im = plt.imshow(np.reshape(max_vals,(16,16)), cmap=map_prefs['colormap'])
-    image = plt.imread(map_path+'/'+fn)
     plt.imshow(image, extent=[0, pix_width, 0, pix_height])
     plt.xticks([])
     plt.yticks([])
@@ -250,6 +254,25 @@ def price_map(coord_sdf, map_prefs: dict = {'latlon_lims': [42,50,-98,-82],
     plt.rcParams['xtick.major.size'] = 10
 
     ax = plt.gca()
+
+    # Associate colors with colormap
+    prices = coord_sdf.loc[:,'price'].values
+    price_colors = []
+    for price_idx, price in enumerate(prices):
+        price_dists = np.abs(price-max_vals)
+        color_idx = np.argmin(price_dists)
+        price_colors.append(im.cmap.colors[color_idx])
+
+    for row_idx in range(coord_sdf.shape[0]):
+        row = coord_sdf.iloc[row_idx,:]
+        x = merc_x(row['lon'])
+        y = merc_y(row['lat'])
+        lon = row['lon']
+        lat = row['lat']
+        map_x = (lon-lon_min)/(lon_max-lon_min)
+        map_y = (lat-lat_min)/(lat_max-lat_min)
+        plt.plot(map_x*pix_width,map_y*pix_height,'o',color=price_colors[row_idx])
+    
     bbox = ax.bbox.bounds
     cbaxes = inset_axes(ax,
                         width='{:.2f}%'.format(map_prefs['colorbar_size'][0]*100),
