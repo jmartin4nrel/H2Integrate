@@ -16,17 +16,18 @@ def main(config):
     if config.model['refit_coeffs']:
         input_df = pd.read_csv(CD/config.model['inputs_fp'])
 
-        # Right now all the performance modeling is linear
-        input_df.insert(3, 'Coeff', np.full((len(input_df),),'lin'))
+        # Right now all the performance modeling is constant
+        input_df.insert(3, 'Coeff', np.full((len(input_df),),'constant'))
 
         coeff_df = input_df
         coeff_df.to_csv(CD/config.model['coeffs_fp'])
+
     else:
-        coeff_df = pd.read_csv(CD/config.model['coeffs_fp'],index_col=0)   
+        coeff_df = pd.read_csv(CD/config.model['coeffs_fp'],index_col=0)
 
     prod = config.product_selection
-    site = 'Model'
-    
+    site = config.site['name']
+
     rows = np.where(coeff_df.loc[:,'Product']==prod)[0]
     col = np.where(coeff_df.columns==site)[0]
     cols = [0,1,2,3,4]
@@ -48,7 +49,7 @@ def main(config):
     col_idxs.remove(3)
     perf_df = pd.DataFrame([],columns=perf_cols)
     for row in range(length):
-        if prod_df.iloc[row,3] == 'lin':
+        if prod_df.iloc[row,3] == 'constant':
             perf_df.loc[len(perf_df)] = prod_df.iloc[row,col_idxs]
 
     return perf_df
