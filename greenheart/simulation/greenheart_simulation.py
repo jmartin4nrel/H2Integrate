@@ -41,7 +41,7 @@ import greenheart.tools.eco.finance as he_fin
 import greenheart.tools.eco.hopp_mgmt as he_hopp
 import greenheart.tools.eco.utilities as he_util
 import greenheart.tools.eco.hydrogen_mgmt as he_h2
-
+from greenheart.tools.greenheart_sim_file_utils import save_pre_iron_greenheart_setup,save_pre_iron_greenheart_simulation,load_pre_iron_greenheart_setup,load_pre_iron_greenheart_simulation
 
 @define
 class GreenHeartSimulationConfig:
@@ -107,6 +107,9 @@ class GreenHeartSimulationConfig:
     pre_iron_fn: Optional[str] = field(default=None)
     iron_out_fn: Optional[str] = field(default=None)
     iron_modular: bool = field(default=False)
+    user_lcoh: Optional[float] = field(default = None)
+    user_lcoe: Optional[float] = field(default = None)
+    user_life_annual_h2_prod: Optional[Union[float,dict]] = field(default = None)
 
     # these are set in the __attrs_post_init__ method
     hopp_config: dict = field(init=False)
@@ -554,22 +557,23 @@ def setup_greenheart_simulation(config: GreenHeartSimulationConfig):
         )
 
         if config.save_pre_iron:
+            save_pre_iron_greenheart_setup(config,wind_cost_results)
 
-            # Identify the site resource
-            lat = config.hopp_config["site"]["data"]["lat"]
-            lon = config.hopp_config["site"]["data"]["lon"]
-            year = config.hopp_config['site']['data']['year']
-            site_res_id = "{:.3f}_{:.3f}_{:d}".format(lat,lon,year)
+            # # Identify the site resource
+            # lat = config.hopp_config["site"]["data"]["lat"]
+            # lon = config.hopp_config["site"]["data"]["lon"]
+            # year = config.hopp_config['site']['data']['year']
+            # site_res_id = "{:.3f}_{:.3f}_{:d}".format(lat,lon,year)
                     
-            # Write outputs needed for future runs in .pkls
-            pkl_fn = site_res_id+".pkl"
-            output_names = ["config","wind_cost_results"]
-            paths = [config.pre_iron_fn+'/'+i+'/' for i in output_names]
-            for i, path in enumerate(paths):
-                if not os.path.exists(path):
-                    os.makedirs(path)
-                writer = open(path+pkl_fn, 'wb')
-                exec("pickle.dump("+output_names[i]+", writer)")
+            # # Write outputs needed for future runs in .pkls
+            # pkl_fn = site_res_id+".pkl"
+            # output_names = ["config","wind_cost_results"]
+            # paths = [config.pre_iron_fn+'/'+i+'/' for i in output_names]
+            # for i, path in enumerate(paths):
+            #     if not os.path.exists(path):
+            #         os.makedirs(path)
+            #     writer = open(path+pkl_fn, 'wb')
+            #     exec("pickle.dump("+output_names[i]+", writer)")
 
     else:
 
@@ -583,20 +587,21 @@ def setup_greenheart_simulation(config: GreenHeartSimulationConfig):
             iron_config = copy.deepcopy(config.greenheart_config['iron'])
         
         # Identify the site resource
-        lat = config.hopp_config["site"]["data"]["lat"]
-        lon = config.hopp_config["site"]["data"]["lon"]
-        year = config.hopp_config['site']['data']['year']
-        site_res_id = "{:.3f}_{:.3f}_{:d}".format(lat,lon,year)
+        config,wind_cost_results = load_pre_iron_greenheart_setup(config)
+        # lat = config.hopp_config["site"]["data"]["lat"]
+        # lon = config.hopp_config["site"]["data"]["lon"]
+        # year = config.hopp_config['site']['data']['year']
+        # site_res_id = "{:.3f}_{:.3f}_{:d}".format(lat,lon,year)
 
-        # Read in outputs from previously-saved .pkls        
-        pkl_fn = site_res_id+".pkl"
-        output_names = ["config","wind_cost_results"]
-        paths = [config.pre_iron_fn+'/'+i+'/' for i in output_names]
-        outputs = []
-        for i, path in enumerate(paths):
-            reader = open(path+pkl_fn, 'rb')
-            outputs.append(pickle.load(reader))
-        config, wind_cost_results = outputs # Need to keep the same as output_names
+        # # Read in outputs from previously-saved .pkls        
+        # pkl_fn = site_res_id+".pkl"
+        # output_names = ["config","wind_cost_results"]
+        # paths = [config.pre_iron_fn+'/'+i+'/' for i in output_names]
+        # outputs = []
+        # for i, path in enumerate(paths):
+        #     reader = open(path+pkl_fn, 'rb')
+        #     outputs.append(pickle.load(reader))
+        # config, wind_cost_results = outputs # Need to keep the same as output_names
 
         # Flip run_pre_iron back to False (was True when saved)
         config.run_pre_iron = False
@@ -1069,40 +1074,42 @@ def run_simulation(config: GreenHeartSimulationConfig):
             )
 
             if config.save_pre_iron:
-
+                save_pre_iron_greenheart_simulation(config,lcoh,lcoe,electrolyzer_physics_results)
                 # Identify the site resource
-                lat = config.hopp_config["site"]["data"]["lat"]
-                lon = config.hopp_config["site"]["data"]["lon"]
-                year = config.hopp_config['site']['data']['year']
-                site_res_id = "{:.3f}_{:.3f}_{:d}".format(lat,lon,year)
+                # print("saving pre iron in greenheart simulation")
+                # lat = config.hopp_config["site"]["data"]["lat"]
+                # lon = config.hopp_config["site"]["data"]["lon"]
+                # year = config.hopp_config['site']['data']['year']
+                # site_res_id = "{:.3f}_{:.3f}_{:d}".format(lat,lon,year)
                 
-                # Write outputs needed for future runs in .pkls
-                pkl_fn = site_res_id+".pkl"
-                output_names = ["lcoe","lcoh","electrolyzer_physics_results"]
-                paths = [config.pre_iron_fn+'/'+i+'/' for i in output_names]
-                for i, path in enumerate(paths):
-                    if not os.path.exists(path):
-                        os.makedirs(path)
-                    writer = open(path+pkl_fn, 'wb')
-                    exec("pickle.dump("+output_names[i]+", writer)")
+                # # Write outputs needed for future runs in .pkls
+                # pkl_fn = site_res_id+".pkl"
+                # output_names = ["lcoe","lcoh","electrolyzer_physics_results"]
+                # paths = [config.pre_iron_fn+'/'+i+'/' for i in output_names]
+                # for i, path in enumerate(paths):
+                #     if not os.path.exists(path):
+                #         os.makedirs(path)
+                #     writer = open(path+pkl_fn, 'wb')
+                #     exec("pickle.dump("+output_names[i]+", writer)")
                 
         else:
-
+            
+            lcoh,lcoe,electrolyzer_physics_results = load_pre_iron_greenheart_simulation(config)
             # Identify the site resource
-            lat = config.hopp_config["site"]["data"]["lat"]
-            lon = config.hopp_config["site"]["data"]["lon"]
-            year = config.hopp_config['site']['data']['year']
-            site_res_id = "{:.3f}_{:.3f}_{:d}".format(lat,lon,year)
+            # lat = config.hopp_config["site"]["data"]["lat"]
+            # lon = config.hopp_config["site"]["data"]["lon"]
+            # year = config.hopp_config['site']['data']['year']
+            # site_res_id = "{:.3f}_{:.3f}_{:d}".format(lat,lon,year)
 
-            # Read in outputs from previously-saved .pkls        
-            pkl_fn = site_res_id+".pkl"
-            output_names = ["lcoe","lcoh","electrolyzer_physics_results"]
-            paths = [config.pre_iron_fn+'/'+i+'/' for i in output_names]
-            outputs = []
-            for i, path in enumerate(paths):
-                reader = open(path+pkl_fn, 'rb')
-                outputs.append(pickle.load(reader))
-            lcoe, lcoh , electrolyzer_physics_results = outputs # Need to keep the same as output_names
+            # # Read in outputs from previously-saved .pkls        
+            # pkl_fn = site_res_id+".pkl"
+            # output_names = ["lcoe","lcoh","electrolyzer_physics_results"]
+            # paths = [config.pre_iron_fn+'/'+i+'/' for i in output_names]
+            # outputs = []
+            # for i, path in enumerate(paths):
+            #     reader = open(path+pkl_fn, 'rb')
+            #     outputs.append(pickle.load(reader))
+            # lcoe, lcoh , electrolyzer_physics_results = outputs # Need to keep the same as output_names
 
         hydrogen_amount_kgpy = electrolyzer_physics_results["H2_Results"][
                 "Life: Annual H2 production [kg/year]"
@@ -1210,7 +1217,11 @@ def run_simulation(config: GreenHeartSimulationConfig):
                 iron_performance = iron_win_performance
                 iron_costs = iron_win_costs
                 iron_finance = iron_win_finance
-
+            lat = config.hopp_config["site"]["data"]["lat"]
+            lon = config.hopp_config["site"]["data"]["lon"]
+            year = config.hopp_config['site']['data']['year']
+            site_res_id = "{:.3f}_{:.3f}_{:d}".format(lat,lon,year)
+            pkl_fn = site_res_id+".pkl"
             output_names = ["iron_performance","iron_costs","iron_finance"]
             paths = [config.iron_out_fn+'/'+i+'/' for i in output_names]
             for i, path in enumerate(paths):
