@@ -1,5 +1,8 @@
 import numpy as np
-import openmdao.api as om
+try:
+    import openmdao.api as om
+except:
+    om = False
 
 import electrolyzer.inputs.validation as val
 from electrolyzer import run_lcoh
