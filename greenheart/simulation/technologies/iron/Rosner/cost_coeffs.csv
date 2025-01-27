@@ -1,35 +1,35 @@
 Name,Type,Coeff,Unit,h2_dri_eaf,h2_dri,ng_dri_eaf
-Dollar Year,all,-,-,2022,2022,2022
-EAF & Casting,capital,lin,$,352191.5237,0,348441.82
-Shaft Furnace,capital,lin,$,489.68061,498.40116,12706.36
-Reformer,capital,lin,$,0,0,12585.82
-Recycle Compressor,capital,lin,$,0,0,956.77
-Oxygen Supply,capital,lin,$,1715.21508,1364.56,1204.99
-H2 Pre-heating,capital,lin,$,45.69123,45.69123,0
-Cooling Tower,capital,lin,$,2513.08314,2349.2,1790.40
-Piping,capital,lin,$,11815.72718,172.83401,25652
-Electrical & Instrumentation,capital,lin,$,7877.15146,115.22,17101.17
-"Buildings, Storage, Water Service",capital,lin,$,1097.81876,630.5313,1077.40
-Other Miscellaneous Cost,capital,lin,$,7877.15146,115.22,17101.17
-EAF & Casting,capital,exp,-,0.456,0,0.456
-Shaft Furnace,capital,exp,-,0.88741,0.88627,0.65408
-Reformer,capital,exp,-,0,0,0.65045
-Recycle Compressor,capital,exp,-,0,0,0.71
-Oxygen Supply,capital,exp,-,0.64574,0.63427,0.64486
-H2 Pre-heating,capital,exp,-,0.86564,0.86564,0
-Cooling Tower,capital,exp,-,0.63325,0.6287,0.63028
-Piping,capital,exp,-,0.59983,0.83316,0.5641
-Electrical & Instrumentation,capital,exp,-,0.59983,0.8332,0.56411
-"Buildings, Storage, Water Service",capital,exp,-,0.8,0.8,0.8
-Other Miscellaneous Cost,capital,exp,-,0.59983,0.8332,0.56411
+Dollar Year,all,-,-,2022.0,2022.0,2022.0
+EAF & Casting,capital,lin,$,352191.5240169347,0.0,348441.8227127845
+Shaft Furnace,capital,lin,$,489.68060552073365,498.40115875154777,12706.355407490113
+Reformer,capital,lin,$,0.0,0.0,12585.824569411949
+Recycle Compressor,capital,lin,$,0.0,0.0,956.7744259199679
+Oxygen Supply,capital,lin,$,1715.215085611161,1364.5561234251998,1204.9890859896068
+H2 Pre-heating,capital,lin,$,45.691227892080605,45.691227892080605,0.0
+Cooling Tower,capital,lin,$,2513.0831352601786,2349.1522627637264,1790.403730600302
+Piping,capital,lin,$,11815.727185704474,172.83401368816038,25651.75658705922
+Electrical & Instrumentation,capital,lin,$,7877.151460414222,115.2226758287705,17101.171070383716
+"Buildings, Storage, Water Service",capital,lin,$,1097.818759618822,630.5313008617607,1077.395528263029
+Other Miscellaneous Cost,capital,lin,$,7877.151460414222,115.2226758287705,17101.171070383716
+EAF & Casting,capital,exp,-,0.4559999999420569,0.0,0.45599999989917644
+Shaft Furnace,capital,exp,-,0.8874110806752251,0.8862693772994394,0.6540835087553862
+Reformer,capital,exp,-,0.0,0.0,0.6504523630280962
+Recycle Compressor,capital,exp,-,0.0,0.0,0.7100000000012103
+Oxygen Supply,capital,exp,-,0.6457441946722567,0.6342724916068043,0.6448555996459632
+H2 Pre-heating,capital,exp,-,0.8656365854575354,0.8656365854575354,0.0
+Cooling Tower,capital,exp,-,0.6332532740097314,0.6286978709250868,0.6302820063981883
+Piping,capital,exp,-,0.5998309612457867,0.8331608480295306,0.564105631654867
+Electrical & Instrumentation,capital,exp,-,0.5998309612151187,0.8331608479997341,0.5641056316058707
+"Buildings, Storage, Water Service",capital,exp,-,0.7999999998942431,0.799999999982431,0.7999999998654106
+Other Miscellaneous Cost,capital,exp,-,0.5998309612151187,0.8331608479997341,0.5641056316058707
 Preproduction,owner,lin,frac of TPC,0.02,0.02,0.02
 Spare Parts,owner,lin,frac of TPC,0.005,0.005,0.005
-"Initial Catalyst, Sorbent & Chemicals",owner,lin,frac of TPC,0,0,0.250835587
+"Initial Catalyst, Sorbent & Chemicals",owner,lin,frac of TPC,0.0,0.0,0.250835587
 Land,owner,lin,frac of TPC,0.775,0.775,0.775
 Other Owners's Costs,owner,lin,frac of TPC,0.15,0.15,0.15
-Processing Steps,fixed opex,lin,-,29,29,29
-% Skilled Labor,fixed opex,lin,%,35,35,35
-% Unskilled Labor,fixed opex,lin,%,65,65,65
+Processing Steps,fixed opex,lin,-,29.0,29.0,29.0
+% Skilled Labor,fixed opex,lin,%,35.0,35.0,35.0
+% Unskilled Labor,fixed opex,lin,%,65.0,65.0,65.0
 Annual Operating Labor Cost,fixed opex,lin,hr/day/step/(kg/day),4.42732,2.21366,4.42732
 Annual Operating Labor Cost,fixed opex,exp,-,0.25242,0.25242,0.25242
 Maintenance Labor Cost,fixed opex,lin,frac of TPC,0.00863,0.00637674,0.007877171
