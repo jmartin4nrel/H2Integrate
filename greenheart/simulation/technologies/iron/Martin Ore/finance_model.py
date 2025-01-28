@@ -193,4 +193,4 @@ def main(config):
     summary = pf.get_summary_vals()
     price_breakdown = pf.get_cost_breakdown()
 
-    return sol, summary, price_breakdown
+    return sol, summary, price_breakdown, pf

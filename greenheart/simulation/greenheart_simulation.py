@@ -12,6 +12,8 @@ pd.options.mode.chained_assignment = None  # default='warn'
 
 from hopp.simulation import HoppInterface
 from ProFAST import ProFAST
+import greenheart.tools.profast_tools as pf_tools
+import greenheart.tools.profast_reverse_tools as rev_pf_tools
 
 from greenheart.simulation.technologies.ammonia.ammonia import (
     run_ammonia_full_model,
@@ -1198,23 +1200,26 @@ def run_simulation(config: GreenHeartSimulationConfig):
                 ore_pkl_fn = site_res_id+".pkl"
                 output_names = ["iron_ore_performance","iron_ore_costs","iron_ore_finance"]
                 paths = [config.iron_out_fn+'/'+i+'/' for i in output_names]
-                for i, path in enumerate(paths):
-                    if not os.path.exists(path):
-                        os.makedirs(path)
-                    writer = open(path+ore_pkl_fn, 'wb')
-                    exec("pickle.dump("+output_names[i]+", writer)")
+                # for i, path in enumerate(paths):
+                #     if not os.path.exists(path):
+                #         os.makedirs(path)
+                #     writer = open(path+ore_pkl_fn, 'wb')
+                #     exec("pickle.dump("+output_names[i]+", writer)")
                 
                 # iron_pre_performance, iron_pre_costs, iron_pre_finance = \
                 #     run_iron_full_model(iron_pre_config)
-
+                ### DRI -------------------------------------------------------------------------------
                 iron_win_config['iron']['costs']['lco_iron_ore_tonne'] = iron_ore_finance.sol['lco']
                 iron_win_performance, iron_win_costs, iron_win_finance = \
                     run_iron_full_model(iron_win_config)
 
                 # # Capcacity-determining variable from iron_config: "iron_mpty_into_post" (reduced iron out of furnaces/electrowinnign for final upgrading)
                 # # TODO: Change iron_mpty_into_post in iron_config to result from iron_win_capacity
-
-                iron_post_config['iron']['costs']['lco_iron_ore_tonne'] = iron_win_finance.sol['lco']
+                ### EAF -------------------------------------------------------------------------------
+                pf_config = rev_pf_tools.make_pf_config_from_profast(iron_win_finance.pf) #dictionary of profast objects
+                pf_dict = rev_pf_tools.convert_pf_res_to_pf_config(pf_config) #profast dictionary of values
+                iron_post_config['iron']['finances']['pf'] = pf_dict
+                iron_post_config['iron']['costs']['lco_iron_ore_tonne'] = iron_ore_finance.sol['lco']
                 iron_post_capacity, iron_post_costs, iron_post_finance = \
                     run_iron_full_model(iron_post_config)
 
@@ -1228,11 +1233,11 @@ def run_simulation(config: GreenHeartSimulationConfig):
             pkl_fn = site_res_id+".pkl"
             output_names = ["iron_performance","iron_costs","iron_finance"]
             paths = [config.iron_out_fn+'/'+i+'/' for i in output_names]
-            for i, path in enumerate(paths):
-                if not os.path.exists(path):
-                    os.makedirs(path)
-                writer = open(path+pkl_fn, 'wb')
-                exec("pickle.dump("+output_names[i]+", writer)")
+            # for i, path in enumerate(paths):
+            #     if not os.path.exists(path):
+            #         os.makedirs(path)
+            #     writer = open(path+pkl_fn, 'wb')
+            #     exec("pickle.dump("+output_names[i]+", writer)")
 
         else:
             iron_finance = {}

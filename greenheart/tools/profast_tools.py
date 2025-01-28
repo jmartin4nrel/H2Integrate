@@ -45,11 +45,12 @@ def update_params_based_on_defaults(pf_config,update_config):
 def create_and_populate_profast(pf_config):
     
     pf = ProFAST.ProFAST()
-    params = pf_config['params']
-    inflation = params['general inflation rate']
     config_keys = list(pf_config.keys())
-    for i in params:
-        pf.set_params(i,params[i])
+    if 'params' in config_keys:
+        params = pf_config['params']
+        inflation = params['general inflation rate']
+        for i in params:
+            pf.set_params(i,params[i])
 
     if 'feedstocks' in config_keys:
         variables = pf_config['feedstocks']

@@ -2,6 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 import ProFAST
+import greenheart.tools.profast_tools as pf_tools
 from greenheart.tools.inflation.inflate import inflate_cpi, inflate_cepci
 from greenheart.simulation.technologies.iron.load_top_down_coeffs import load_top_down_coeffs
 
@@ -36,9 +37,7 @@ def main(config):
     performance = config.performance
     perf_df = performance.performances_df.set_index('Name')
     perf_ds = perf_df.loc[:,'Model']
-    print("PERF DS")
     perf_values = perf_df.loc[:,'Model'].values
-    print(perf_ds)
     perf_names = perf_df.index.values
     perf_types = perf_df.loc[:,'Type'].values 
     perf_units = perf_df.loc[:,'Unit'].values
@@ -68,9 +67,14 @@ def main(config):
     cost_year = config.params['cost_year']
 
     analysis_start = operational_year-install_years
-
-    # Set up ProFAST
-    pf = ProFAST.ProFAST("blank")
+    # print("CONFIG.PF",config.params['pf'])
+    if 'pf' in config.params:
+        # config.pf.pop("params")
+        print("CONFIG.PF",config.params['pf'])
+        pf = pf_tools.create_and_populate_profast(config.params['pf'])
+    else:
+        # Set up ProFAST
+        pf = ProFAST.ProFAST("blank")
 
     # apply all params passed through from config
     for param, val in config.params['financial_assumptions'].items():
@@ -142,7 +146,7 @@ def main(config):
         cost = inflate_cepci(source_year_cost, source_year, cost_year)
 
         pf.add_capital_item(
-                name= name,
+                name= f"{config.product_selection}: {name}",
                 cost= cost,
                 depr_type="MACRS",
                 depr_period=7,
@@ -158,7 +162,7 @@ def main(config):
         source_year_cost = cost_ds.iloc[idx]
         cost = inflate_cpi(source_year_cost, source_year, cost_year)
         pf.add_fixed_cost(
-            name=name,
+            name=f"{config.product_selection}: {name}",
             usage=1,
             unit="$/year",
             cost=cost,
@@ -169,63 +173,63 @@ def main(config):
 
     # ---------------------- Add feedstocks, note the various cost options-------------------
     pf.add_feedstock(
-        name="Maintenance Materials",
+        name=f"{config.product_selection}: Maintenance Materials",
         usage=1.0,
         unit="Units per metric tonne of iron",
         cost=maintenance_materials_unitcost,
         escalation=gen_inflation,
     )
     pf.add_feedstock(
-        name="Raw Water Withdrawal",
+        name=f"{config.product_selection}: Raw Water Withdrawal",
         usage=perf_ds['Raw Water Withdrawal'],
         unit="metric tonnes of water per metric tonne of iron",
         cost=raw_water_unitcost,
         escalation=gen_inflation,
     )
     pf.add_feedstock(
-        name="Lime",
+        name=f"{config.product_selection}: Lime",
         usage=perf_ds['Lime'],
         unit="metric tonnes of lime per metric tonne of iron",
         cost=lime_unitcost,
         escalation=gen_inflation,
     )
     pf.add_feedstock(
-        name="Carbon",
+        name=f"{config.product_selection}: Carbon",
         usage=perf_ds['Carbon (Coke)'],
         unit="metric tonnes of carbon per metric tonne of iron",
         cost=carbon_unitcost,
         escalation=gen_inflation,
     )
     pf.add_feedstock(
-        name="Iron Ore",
+        name=f"{config.product_selection}: Iron Ore",
         usage=perf_ds['Iron Ore'],
         unit="metric tonnes of iron ore per metric tonne of iron",
         cost=iron_ore_pellet_unitcost,
         escalation=gen_inflation,
     )
     pf.add_feedstock(
-        name="Hydrogen",
+        name=f"{config.product_selection}: Hydrogen",
         usage=perf_ds['Hydrogen'],
         unit="metric tonnes of hydrogen per metric tonne of iron",
         cost=lcoh_dollar_metric_tonne,
         escalation=gen_inflation,
     )
     pf.add_feedstock(
-        name="Natural Gas",
+        name=f"{config.product_selection}: Natural Gas",
         usage=perf_ds['Natural Gas'],
         unit="GJ-LHV per metric tonne of iron",
         cost=natural_gas_prices,
         escalation=gen_inflation,
     )
     pf.add_feedstock(
-        name="Electricity",
+        name=f"{config.product_selection}: Electricity",
         usage=perf_ds['Electricity'],
         unit="MWh per metric tonne of iron",
         cost=lcoe_dollar_MWH,
         escalation=gen_inflation,
     )
     pf.add_feedstock(
-        name="Slag Disposal",
+        name=f"{config.product_selection}: Slag Disposal",
         usage=perf_ds['Slag'],
         unit="metric tonnes of slag per metric tonne of iron",
         cost=slag_disposal_unitcost,
@@ -233,7 +237,7 @@ def main(config):
     )
 
     pf.add_coproduct(
-        name="Oxygen sales",
+        name=f"{config.product_selection}: Oxygen sales",
         usage=excess_oxygen,
         unit="kg O2 per metric tonne of iron",
         cost=oxygen_market_price,
@@ -246,4 +250,4 @@ def main(config):
     summary = pf.get_summary_vals()
     price_breakdown = pf.get_cost_breakdown()
 
-    return sol, summary, price_breakdown
+    return sol, summary, price_breakdown, pf
