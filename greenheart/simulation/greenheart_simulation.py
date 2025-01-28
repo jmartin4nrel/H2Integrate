@@ -1158,14 +1158,6 @@ def run_simulation(config: GreenHeartSimulationConfig):
 
                 iron_performance, iron_costs, iron_finance = run_iron_full_model(iron_config)
 
-                output_names = ["iron_performance","iron_costs","iron_finance"]
-                paths = [config.iron_out_fn+'/'+i+'/' for i in output_names]
-                for i, path in enumerate(paths):
-                    if not os.path.exists(path):
-                        os.makedirs(path)
-                    writer = open(path+pkl_fn, 'wb')
-                    exec("pickle.dump("+output_names[i]+", writer)")
-
             else:
 
                 # This is not the most graceful way to do this... but it avoids copied imports and copying iron.py
@@ -1184,23 +1176,32 @@ def run_simulation(config: GreenHeartSimulationConfig):
                     sub_iron_config["iron"]["costs"]["lcoh"] = lcoh
                     sub_iron_config["iron"]["finances"]["lcoh"] = lcoh
 
-                #NOTE: assumes iron_config (greenheart_config) is updated with additional nesting layers for ore, pre, win, and post. update accordingly if changed
-                # Capcacity-determining variable from iron_config: "iron_ore_mpty_run_of_mine" (raw ore coming directly out of the mine)
-                
-                iron_ore_capacity, iron_ore_costs, iron_ore_finance = \
+                # TODO: find a way of looping the above and below
+                iron_ore_performance, iron_ore_costs, iron_ore_finance = \
                     run_iron_full_model(iron_ore_config)
 
-                # # Capcacity-determining variable from iron_config: "iron_ore_mpty_sold_from_mine" (finished ore lumps/pellets/fines sold from the mine)
-                # # TODO: Change iron_mpty_sold_from_mine in iron_config to result from iron_ore_capacity
-
-                # iron_pre_capacity, iron_pre_costs, iron_pre_finance = \
+                # TODO: save all the individual module outputs, using a loop
+                # Identify the site 
+                perf_df = iron_ore_performance.performances_df.set_index('Name')
+                perf_ds = perf_df.loc[:,iron_ore_config['iron_ore']['site']['name']]
+                lat = perf_ds['Latitude']
+                lon = perf_ds['Longitude']
+                year = config.hopp_config['site']['data']['year']
+                site_res_id = "{:.3f}_{:.3f}_{:d}".format(lat,lon,year)
+                ore_pkl_fn = site_res_id+".pkl"
+                output_names = ["iron_ore_performance","iron_ore_costs","iron_ore_finance"]
+                paths = [config.iron_out_fn+'/'+i+'/' for i in output_names]
+                for i, path in enumerate(paths):
+                    if not os.path.exists(path):
+                        os.makedirs(path)
+                    writer = open(path+ore_pkl_fn, 'wb')
+                    exec("pickle.dump("+output_names[i]+", writer)")
+                
+                # iron_pre_performance, iron_pre_costs, iron_pre_finance = \
                 #     run_iron_full_model(iron_pre_config)
 
-                # Capcacity-determining variable from iron_config: "iron_ore_mpty_into_winning" (preprocessed ore fed into furnaces/electrowinning)
-                # TODO: Change iron_ore_mpty_into_winning in iron_config to result from iron_pre_capacity
-
                 iron_win_config['iron']['costs']['lco_iron_ore_tonne'] = iron_ore_finance.sol['lco']
-                iron_win_capacity, iron_win_costs, iron_win_finance = \
+                iron_win_performance, iron_win_costs, iron_win_finance = \
                     run_iron_full_model(iron_win_config)
 
                 # # Capcacity-determining variable from iron_config: "iron_mpty_into_post" (reduced iron out of furnaces/electrowinnign for final upgrading)
@@ -1210,10 +1211,17 @@ def run_simulation(config: GreenHeartSimulationConfig):
                 iron_post_capacity, iron_post_costs, iron_post_finance = \
                     run_iron_full_model(iron_post_config)
 
-                # Final end product: "iron_mpty"
-                # TODO: Change iron_mpty in iron_config to result from iron_post_capacity
-
+                iron_performance = iron_win_performance
+                iron_costs = iron_win_costs
                 iron_finance = iron_win_finance
+
+            output_names = ["iron_performance","iron_costs","iron_finance"]
+            paths = [config.iron_out_fn+'/'+i+'/' for i in output_names]
+            for i, path in enumerate(paths):
+                if not os.path.exists(path):
+                    os.makedirs(path)
+                writer = open(path+pkl_fn, 'wb')
+                exec("pickle.dump("+output_names[i]+", writer)")
 
         else:
             iron_finance = {}
