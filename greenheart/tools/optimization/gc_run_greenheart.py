@@ -8,12 +8,16 @@ import logging
 import warnings
 
 import numpy as np
-import openmdao.api as om
+
 
 
 from greenheart.simulation.greenheart_simulation import GreenHeartSimulationConfig, setup_greenheart_simulation
+
 from greenheart.tools.optimization.gc_PoseOptimization import PoseOptimization
-from greenheart.tools.optimization.openmdao import GreenHeartComponent
+try:
+    from greenheart.tools.optimization.openmdao import GreenHeartComponent
+except:
+    GreenHeartComponent = None
 from greenheart.tools.optimization.mpi_tools import MPI, map_comm_heirarchical
 from greenheart.tools.optimization import fileIO
 
@@ -109,6 +113,7 @@ def run_greenheart(config:GreenHeartSimulationConfig, overridden_values=None, ru
         logger.info("Started")
 
     if color_i == 0:  # the top layer of cores enters
+        import openmdao.api as om
         if MPI:
             # Parallel settings for OpenMDAO
             prob = om.Problem(model=om.Group(num_par_fd=n_FD), comm=comm_i, reports=False)
