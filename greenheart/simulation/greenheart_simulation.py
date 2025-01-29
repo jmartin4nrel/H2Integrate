@@ -12,7 +12,6 @@ pd.options.mode.chained_assignment = None  # default='warn'
 
 from hopp.simulation import HoppInterface
 from ProFAST import ProFAST
-import greenheart.tools.profast_tools as pf_tools
 import greenheart.tools.profast_reverse_tools as rev_pf_tools
 
 from greenheart.simulation.technologies.ammonia.ammonia import (
@@ -1331,7 +1330,7 @@ def run_simulation(config: GreenHeartSimulationConfig):
         return hopp_results, electrolyzer_physics_results, remaining_power_profile
     elif config.output_level == 7:
         if any([i in config.greenheart_config for i in ["iron","iron_pre","iron_pre","iron_win","iron_post"]]):
-            return lcoe, lcoh, iron_finance, ammonia_finance
+            return lcoe, lcoh, iron_finance, iron_post_finance, ammonia_finance
         else:
             return lcoe, lcoh, steel_finance, ammonia_finance
     elif config.output_level == 8:

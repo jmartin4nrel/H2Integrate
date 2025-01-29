@@ -9,8 +9,7 @@ from greenheart.simulation.technologies.iron.load_top_down_coeffs import load_to
 def main(config):
     
     # TODO: Get feedstock costs from input sheets
-    natural_gas_prices = 0
-    excess_oxygen = 395
+    natural_gas_prices = 3.76232 # TODO: Update to read in from greenheart_config
     lime_unitcost = 122.1
     carbon_unitcost = 236.97
     electricity_cost = 48.92
@@ -22,16 +21,11 @@ def main(config):
     iron_ore_pellet_unitcost = config.params['lco_iron_ore_tonne']
     oxygen_market_price = 0.03
     raw_water_unitcost = 0.59289
-    iron_ore_consumption = 1.62927
-    raw_water_consumption = 0.80367
-    lime_consumption = 0.01812
-    carbon_consumption = 0.0538
-    hydrogen_consumption = 0.06596
-    natural_gas_consumption = 0.71657
-    electricity_consumption = 0.5502
     slag_disposal_unitcost = 37.63
-    slag_production = 0.17433
-    maintenance_materials_unitcost = 7.72
+    if config.product_selection == 'ng_eaf' or 'h2_eaf':
+        excess_oxygen = 0
+    else:
+        excess_oxygen = 395
 
     # Get plant performances into data frame/series with performance names as index
     performance = config.performance
@@ -55,10 +49,6 @@ def main(config):
 
     installation_cost = cost_ds['Installation cost']
     land_cost = cost_ds['Land cost']
-    # labor_cost_annual_operation = cost_ds['labor_cost_annual_operation']
-    # labor_cost_maintenance = cost_ds['labor_cost_maintenance']
-    # labor_cost_admin_support = cost_ds['labor_cost_admin_support']
-    # property_tax_insurance = cost_ds['property_tax_insurance']
 
     operational_year = config.params['operational_year']
     install_years = config.params['installation_years']
@@ -67,10 +57,7 @@ def main(config):
     cost_year = config.params['cost_year']
 
     analysis_start = operational_year-install_years
-    # print("CONFIG.PF",config.params['pf'])
     if 'pf' in config.params:
-        # config.pf.pop("params")
-        print("CONFIG.PF",config.params['pf'])
         pf = pf_tools.create_and_populate_profast(config.params['pf'])
     else:
         # Set up ProFAST
@@ -81,10 +68,16 @@ def main(config):
         pf.set_params(param, val)
 
     # Fill these in - can have most of them as 0 also
+    if config.product_selection == 'ng_dri' or 'h2_dri':
+        product_name = "reduced iron"
+    elif config.product_selection == 'ng_eaf' or 'h2_eaf':
+        product_name = "steel"
+    else:
+        raise ValueError("product_selection must be 'ng_dri', 'h2_dri','ng_eaf' or 'h2_eaf' for 'Rosner' model")
     pf.set_params(
         "commodity",
         {
-            "name": "reduced iron",
+            "name": f"{product_name}",
             "unit": "metric tonnes",
             "initial price": 1000,
             "escalation": gen_inflation,
@@ -126,17 +119,6 @@ def main(config):
     pf.set_params("cash onhand", 1)
 
     # ----------------------------------- Add capital items to ProFAST ----------------
-    # # apply all params passed through from config
-    # for param, val in costs.capital_costs.items():
-    #     pf.add_capital_item(
-    #         name= param,
-    #         cost= val,
-    #         depr_type="MACRS",
-    #         depr_period=7,
-    #         refurb=[0], 
-    #     )
-
-    # Add capital items
     capital_idxs = np.where(cost_types=='capital')[0]
     for idx in capital_idxs:
         name = cost_names[idx]
@@ -172,13 +154,6 @@ def main(config):
     # we think that is more accurate
 
     # ---------------------- Add feedstocks, note the various cost options-------------------
-    pf.add_feedstock(
-        name=f"{config.product_selection}: Maintenance Materials",
-        usage=1.0,
-        unit="Units per metric tonne of iron",
-        cost=maintenance_materials_unitcost,
-        escalation=gen_inflation,
-    )
     pf.add_feedstock(
         name=f"{config.product_selection}: Raw Water Withdrawal",
         usage=perf_ds['Raw Water Withdrawal'],
@@ -249,5 +224,7 @@ def main(config):
     sol = pf.solve_price()
     summary = pf.get_summary_vals()
     price_breakdown = pf.get_cost_breakdown()
+
+    price_breakdown.to_csv(f"{config.product_selection}_price_breakdown.csv")
 
     return sol, summary, price_breakdown, pf
