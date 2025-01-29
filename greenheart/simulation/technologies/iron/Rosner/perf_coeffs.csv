@@ -50,7 +50,7 @@
 48,h2_eaf,Steel Production,capacity,lin,mtpy,1953600
 49,h2_eaf,Pig Iron Production,capacity,lin,mtpy,2328689.051
 50,h2_eaf,Capacity Factor,capacity,lin,%,100
-51,h2_eaf,Iron Ore,feed,lin,mt ore / mt steel,1.62927
+51,h2_eaf,Iron Ore,feed,lin,mt ore / mt steel,0
 52,h2_eaf,Reformer Catalyst,feed,lin,m3 catalyst/mt steel,0
 53,h2_eaf,Hydrogen,feed,lin,mt H2 / mt steel,0
 54,h2_eaf,Natural Gas,feed,lin,GJ-LHV NG / mt steel,0.094282245
@@ -122,7 +122,7 @@
 ,ng_eaf,Steel Production,capacity,lin,mtpy,1953600
 ,ng_eaf,Pig Iron Production,capacity,lin,mtpy,2328689.051
 ,ng_eaf,Capacity Factor,capacity,lin,%,100
-,ng_eaf,Iron Ore,feed,lin,mt ore / mt steel,1.629206363
+,ng_eaf,Iron Ore,feed,lin,mt ore / mt steel,0
 ,ng_eaf,Reformer Catalyst,feed,lin,m3 catalyst/mt steel,0
 ,ng_eaf,Hydrogen,feed,lin,mt H2 / mt steel,0
 ,ng_eaf,Natural Gas,feed,lin,GJ-LHV NG / mt steel,2.148073333

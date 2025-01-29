@@ -185,6 +185,7 @@ class IronFinanceModelConfig(IronCostModelConfig):
                         secure location passed from input if not part of public GreenHEART.
                         Also contains 'refit_coeffs' boolean to re-do model coefficient curve fitting.
         params (dict): The rest of the parameters for the finance model. TODO: define as fields.
+        pf (dict): Optional dictionary of the ProFAST object.
     """
     cost: IronCostModelOutputs
     performance: IronPerformanceModelOutputs
@@ -192,6 +193,7 @@ class IronFinanceModelConfig(IronCostModelConfig):
     site: dict = {}
     model: dict = {}
     params: dict = {}
+    pf: Optional[dict] = field(default=None)
     
     def __attrs_post_init__(self):
         if self.product_selection == '':
@@ -224,11 +226,14 @@ class IronFinanceModelOutputs:
             A Pandas DataFrame detailing the cost breakdown for producing iron,
             including both capital and operating expenses, as well as the impact of
             various cost factors on the overall price of iron.
+        pf (object):
+            ProFAST object.
     """
 
     sol: dict
     summary: dict
     price_breakdown: pd.DataFrame
+    pf: object
 
 
 def run_iron_finance_model(
@@ -252,9 +257,9 @@ def run_iron_finance_model(
     Returns:
         IronFinanceModelOutputs:
             Object containing detailed financial analysis results, including solution
-            metrics, summary values, price breakdown, and iron price breakdown per
-            tonne. This output is instrumental in assessing the financial performance
-            and breakeven price for the iron production facility.
+            metrics, summary values, price breakdown, iron price breakdown per
+            tonne, and the ProFAST object. This output is instrumental in assessing the 
+            financial performance and breakeven price for the iron production facility.
     """
 
     
@@ -264,10 +269,12 @@ def run_iron_finance_model(
     model = importlib.import_module(config.model['model_fp'])
     model_outputs = model.main(config)
 
-    sol, summary, price_breakdown = model_outputs
+    sol, summary, price_breakdown, pf = model_outputs
     return IronFinanceModelOutputs(sol=sol,
                                    summary=summary,
-                                   price_breakdown=price_breakdown)
+                                   price_breakdown=price_breakdown,
+                                   pf=pf
+                                   )
 
 
 
@@ -293,7 +300,6 @@ def run_iron_full_model(greenheart_config: dict) -> \
                 If neither is specified, LCOH will be calculated."
             )
         )
-
     iron_product_selection = iron_config['product_selection']
     iron_site = iron_config['site']
     
@@ -337,7 +343,7 @@ def run_iron_full_model(greenheart_config: dict) -> \
         model = finance_model,
         params = iron_finance_inputs,
         performance = iron_performance,
-        cost = iron_cost
+        cost = iron_cost,
     )
     iron_finance = run_iron_finance_model(finance_config)
 

@@ -7,11 +7,19 @@ import warnings
 
 import numpy as np
 from typing import Optional, Union
-
-import openmdao.api as om
+try:
+    import openmdao.api as om
+except:
+    om = False
+   
+try:
+    from greenheart.tools.optimization.openmdao import TurbineDistanceComponent, BoundaryDistanceComponent
+except:
+    TurbineDistanceComponent = None
+    BoundaryDistanceComponent = None
 
 from greenheart.simulation.greenheart_simulation import GreenHeartSimulationConfig
-from greenheart.tools.optimization.openmdao import TurbineDistanceComponent, BoundaryDistanceComponent
+
 from hopp.simulation import HoppInterface
 
 class PoseOptimization(object):
