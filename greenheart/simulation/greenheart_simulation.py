@@ -42,7 +42,7 @@ import greenheart.tools.eco.finance as he_fin
 import greenheart.tools.eco.hopp_mgmt as he_hopp
 import greenheart.tools.eco.utilities as he_util
 import greenheart.tools.eco.hydrogen_mgmt as he_h2
-from greenheart.tools.greenheart_sim_file_utils import save_pre_iron_greenheart_setup,save_pre_iron_greenheart_simulation,load_pre_iron_greenheart_setup,load_pre_iron_greenheart_simulation
+import greenheart.tools.greenheart_sim_file_utils as gh_fio
 
 @define
 class GreenHeartSimulationConfig:
@@ -558,23 +558,7 @@ def setup_greenheart_simulation(config: GreenHeartSimulationConfig):
         )
 
         if config.save_pre_iron:
-            save_pre_iron_greenheart_setup(config,wind_cost_results)
-
-            # # Identify the site resource
-            # lat = config.hopp_config["site"]["data"]["lat"]
-            # lon = config.hopp_config["site"]["data"]["lon"]
-            # year = config.hopp_config['site']['data']['year']
-            # site_res_id = "{:.3f}_{:.3f}_{:d}".format(lat,lon,year)
-                    
-            # # Write outputs needed for future runs in .pkls
-            # pkl_fn = site_res_id+".pkl"
-            # output_names = ["config","wind_cost_results"]
-            # paths = [config.pre_iron_fn+'/'+i+'/' for i in output_names]
-            # for i, path in enumerate(paths):
-            #     if not os.path.exists(path):
-            #         os.makedirs(path)
-            #     writer = open(path+pkl_fn, 'wb')
-            #     exec("pickle.dump("+output_names[i]+", writer)")
+            gh_fio.save_pre_iron_greenheart_setup(config,wind_cost_results)
 
     else:
 
@@ -588,21 +572,7 @@ def setup_greenheart_simulation(config: GreenHeartSimulationConfig):
             iron_config = copy.deepcopy(config.greenheart_config['iron'])
         
         # Identify the site resource
-        config,wind_cost_results = load_pre_iron_greenheart_setup(config)
-        # lat = config.hopp_config["site"]["data"]["lat"]
-        # lon = config.hopp_config["site"]["data"]["lon"]
-        # year = config.hopp_config['site']['data']['year']
-        # site_res_id = "{:.3f}_{:.3f}_{:d}".format(lat,lon,year)
-
-        # # Read in outputs from previously-saved .pkls        
-        # pkl_fn = site_res_id+".pkl"
-        # output_names = ["config","wind_cost_results"]
-        # paths = [config.pre_iron_fn+'/'+i+'/' for i in output_names]
-        # outputs = []
-        # for i, path in enumerate(paths):
-        #     reader = open(path+pkl_fn, 'rb')
-        #     outputs.append(pickle.load(reader))
-        # config, wind_cost_results = outputs # Need to keep the same as output_names
+        config,wind_cost_results = gh_fio.load_pre_iron_greenheart_setup(config)
 
         # Flip run_pre_iron back to False (was True when saved)
         config.run_pre_iron = False
@@ -1074,47 +1044,17 @@ def run_simulation(config: GreenHeartSimulationConfig):
                 output_dir=config.output_dir,
             )
 
+            # save lcoh, lcoe and electrolyzer physics results
             if config.save_pre_iron:
-                save_pre_iron_greenheart_simulation(config,lcoh,lcoe,electrolyzer_physics_results)
-                # Identify the site resource
-                # print("saving pre iron in greenheart simulation")
-                # lat = config.hopp_config["site"]["data"]["lat"]
-                # lon = config.hopp_config["site"]["data"]["lon"]
-                # year = config.hopp_config['site']['data']['year']
-                # site_res_id = "{:.3f}_{:.3f}_{:d}".format(lat,lon,year)
-                
-                # # Write outputs needed for future runs in .pkls
-                # pkl_fn = site_res_id+".pkl"
-                # output_names = ["lcoe","lcoh","electrolyzer_physics_results"]
-                # paths = [config.pre_iron_fn+'/'+i+'/' for i in output_names]
-                # for i, path in enumerate(paths):
-                #     if not os.path.exists(path):
-                #         os.makedirs(path)
-                #     writer = open(path+pkl_fn, 'wb')
-                #     exec("pickle.dump("+output_names[i]+", writer)")
+                print("saving ore iron")
+                gh_fio.save_pre_iron_greenheart_simulation(config,lcoh,lcoe,electrolyzer_physics_results)
                 
         else:
-            
-            lcoh,lcoe,electrolyzer_physics_results = load_pre_iron_greenheart_simulation(config)
-            # Identify the site resource
-            # lat = config.hopp_config["site"]["data"]["lat"]
-            # lon = config.hopp_config["site"]["data"]["lon"]
-            # year = config.hopp_config['site']['data']['year']
-            # site_res_id = "{:.3f}_{:.3f}_{:d}".format(lat,lon,year)
-
-            # # Read in outputs from previously-saved .pkls        
-            # pkl_fn = site_res_id+".pkl"
-            # output_names = ["lcoe","lcoh","electrolyzer_physics_results"]
-            # paths = [config.pre_iron_fn+'/'+i+'/' for i in output_names]
-            # outputs = []
-            # for i, path in enumerate(paths):
-            #     reader = open(path+pkl_fn, 'rb')
-            #     outputs.append(pickle.load(reader))
-            # lcoe, lcoh , electrolyzer_physics_results = outputs # Need to keep the same as output_names
-
-        hydrogen_amount_kgpy = electrolyzer_physics_results["H2_Results"][
-                "Life: Annual H2 production [kg/year]"
-            ]
+            # load lcoh, lcoe and electrolyzer physics results from previous run
+            lcoh,lcoe,electrolyzer_physics_results = gh_fio.load_pre_iron_greenheart_simulation(config)
+            hydrogen_amount_kgpy = electrolyzer_physics_results["H2_Results"][
+                    "Life: Annual H2 production [kg/year]"
+                ]
         
         if "steel" in config.greenheart_config:
             steel_config = copy.deepcopy(config.greenheart_config)
@@ -1190,20 +1130,8 @@ def run_simulation(config: GreenHeartSimulationConfig):
 
                 # TODO: save all the individual module outputs, using a loop
                 # Identify the site 
-                perf_df = iron_ore_performance.performances_df.set_index('Name')
-                perf_ds = perf_df.loc[:,iron_ore_config['iron_ore']['site']['name']]
-                lat = perf_ds['Latitude']
-                lon = perf_ds['Longitude']
-                year = config.hopp_config['site']['data']['year']
-                site_res_id = "{:.3f}_{:.3f}_{:d}".format(lat,lon,year)
-                ore_pkl_fn = site_res_id+".pkl"
-                output_names = ["iron_ore_performance","iron_ore_costs","iron_ore_finance"]
-                paths = [config.iron_out_fn+'/'+i+'/' for i in output_names]
-                # for i, path in enumerate(paths):
-                #     if not os.path.exists(path):
-                #         os.makedirs(path)
-                #     writer = open(path+ore_pkl_fn, 'wb')
-                #     exec("pickle.dump("+output_names[i]+", writer)")
+                
+                gh_fio.save_iron_ore_results(config,iron_ore_config,iron_ore_performance,iron_ore_costs,iron_ore_finance)
                 
                 # iron_pre_performance, iron_pre_costs, iron_pre_finance = \
                 #     run_iron_full_model(iron_pre_config)
@@ -1225,18 +1153,7 @@ def run_simulation(config: GreenHeartSimulationConfig):
                 iron_performance = iron_win_performance
                 iron_costs = iron_win_costs
                 iron_finance = iron_win_finance
-            lat = config.hopp_config["site"]["data"]["lat"]
-            lon = config.hopp_config["site"]["data"]["lon"]
-            year = config.hopp_config['site']['data']['year']
-            site_res_id = "{:.3f}_{:.3f}_{:d}".format(lat,lon,year)
-            pkl_fn = site_res_id+".pkl"
-            output_names = ["iron_performance","iron_costs","iron_finance"]
-            paths = [config.iron_out_fn+'/'+i+'/' for i in output_names]
-            # for i, path in enumerate(paths):
-            #     if not os.path.exists(path):
-            #         os.makedirs(path)
-            #     writer = open(path+pkl_fn, 'wb')
-            #     exec("pickle.dump("+output_names[i]+", writer)")
+            gh_fio.save_iron_results(config,iron_performance,iron_costs,iron_finance)
 
         else:
             iron_finance = {}

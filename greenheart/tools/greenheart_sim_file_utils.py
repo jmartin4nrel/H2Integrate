@@ -71,3 +71,39 @@ def load_pre_iron_greenheart_simulation(config):
     lcoe = load_dill_pickle(lcoe_fpath)
     electrolyzer_physics_results = load_dill_pickle(elec_phys_fpath)
     return lcoh,lcoe,electrolyzer_physics_results
+
+def save_iron_ore_results(config,iron_ore_config,iron_ore_performance,iron_ore_costs,iron_ore_finance):
+    # lat = config.hopp_config["site"]["data"]["lat"]
+    # lon = config.hopp_config["site"]["data"]["lon"]
+    year = config.hopp_config['site']['data']['year']
+    perf_df = iron_ore_performance.performances_df.set_index('Name')
+    perf_ds = perf_df.loc[:,iron_ore_config['iron_ore']['site']['name']]
+    lat = perf_ds['Latitude']
+    lon = perf_ds['Longitude']
+
+    site_res_id = "{:.3f}_{:.3f}_{:d}".format(lat,lon,year)
+    pkl_fn = site_res_id+".pkl"
+    output_names = ["iron_ore_performance","iron_ore_costs","iron_ore_finance"]
+    output_data = [iron_ore_performance,iron_ore_costs,iron_ore_finance]
+    output_data_dict = dict(zip(output_names,output_data))
+    for output_name,data in output_data_dict.items():
+        path = config.iron_out_fn+'/'+output_name+'/'
+        check_create_folder(path)
+        output_filepath = path + pkl_fn
+        dump_data_to_pickle(data,output_filepath)
+
+def save_iron_results(config,iron_performance,iron_costs,iron_finance):
+    lat = config.hopp_config["site"]["data"]["lat"]
+    lon = config.hopp_config["site"]["data"]["lon"]
+    year = config.hopp_config['site']['data']['year']
+    site_res_id = "{:.3f}_{:.3f}_{:d}".format(lat,lon,year)
+    pkl_fn = site_res_id+".pkl"
+
+    output_names = ["iron_performance","iron_costs","iron_finance"]
+    output_data = [iron_performance,iron_costs,iron_finance]
+    output_data_dict = dict(zip(output_names,output_data))
+    for output_name,data in output_data_dict.items():
+        path = config.iron_out_fn+'/'+output_name+'/'
+        check_create_folder(path)
+        output_filepath = path + pkl_fn
+        dump_data_to_pickle(data,output_filepath)
