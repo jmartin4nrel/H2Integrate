@@ -225,6 +225,4 @@ def main(config):
     summary = pf.get_summary_vals()
     price_breakdown = pf.get_cost_breakdown()
 
-    price_breakdown.to_csv(f"{config.product_selection}_price_breakdown.csv")
-
     return sol, summary, price_breakdown, pf
