@@ -591,8 +591,13 @@ def setup_greenheart_simulation(config: GreenHeartSimulationConfig):
 
 
 def run_simulation(config: GreenHeartSimulationConfig):
-
-    config, hi, wind_cost_results = setup_greenheart_simulation(config=config)
+    if config.user_lcoe is not None and config.user_lcoh is not None:
+        lcoe = float(config.user_lcoe)
+        lcoh = float(config.user_lcoh)
+        hydrogen_amount_kgpy = float(config.user_life_annual_h2_prod)
+        config.run_pre_iron = False
+    else:
+        config, hi, wind_cost_results = setup_greenheart_simulation(config=config)
 
     # Only run the "pre-iron" steps if needed
     # Otherwise, load their outputs from pickles
@@ -1048,13 +1053,16 @@ def run_simulation(config: GreenHeartSimulationConfig):
             if config.save_pre_iron:
                 print("saving ore iron")
                 gh_fio.save_pre_iron_greenheart_simulation(config,lcoh,lcoe,electrolyzer_physics_results)
-                
-        else:
-            # load lcoh, lcoe and electrolyzer physics results from previous run
-            lcoh,lcoe,electrolyzer_physics_results = gh_fio.load_pre_iron_greenheart_simulation(config)
-            hydrogen_amount_kgpy = electrolyzer_physics_results["H2_Results"][
+                hydrogen_amount_kgpy = electrolyzer_physics_results["H2_Results"][
                     "Life: Annual H2 production [kg/year]"
                 ]
+        else:
+            if config.user_lcoe is None and config.user_lcoh is None:
+                # load lcoh, lcoe and electrolyzer physics results from previous run
+                lcoh,lcoe,electrolyzer_physics_results = gh_fio.load_pre_iron_greenheart_simulation(config)
+                hydrogen_amount_kgpy = electrolyzer_physics_results["H2_Results"][
+                        "Life: Annual H2 production [kg/year]"
+                    ]
         
         if "steel" in config.greenheart_config:
             steel_config = copy.deepcopy(config.greenheart_config)
@@ -1117,7 +1125,7 @@ def run_simulation(config: GreenHeartSimulationConfig):
                 # iron_pre_config["iron"] = iron_config["iron_pre"]
                 iron_win_config["iron"] = iron_config["iron_win"]
                 iron_post_config["iron"] = iron_config["iron_post"]
-                for sub_iron_config in [iron_ore_config,iron_win_config,iron_post_config]: # iron_pre_config, iron_post_config
+                for sub_iron_config in [iron_ore_config,iron_win_config,iron_post_config]: #,iron_post_config]: # iron_pre_config, iron_post_config
                     sub_iron_config["iron"]["performance"]["hydrogen_amount_kgpy"] = hydrogen_amount_kgpy
                     sub_iron_config["iron"]["costs"]["lcoe"] = lcoe
                     sub_iron_config["iron"]["finances"]["lcoe"] = lcoe
@@ -1245,6 +1253,7 @@ def run_simulation(config: GreenHeartSimulationConfig):
         return lcoe, lcoh, lcoh_grid_only, hopp_results["hopp_interface"]
     elif config.output_level == 6:
         return hopp_results, electrolyzer_physics_results, remaining_power_profile
+    
     elif config.output_level == 7:
         if any([i in config.greenheart_config for i in ["iron","iron_pre","iron_pre","iron_win","iron_post"]]):
             return lcoe, lcoh, iron_finance, iron_post_finance, ammonia_finance
@@ -1302,6 +1311,10 @@ def run_simulation(config: GreenHeartSimulationConfig):
             ),
             platform_results=platform_results,
         )
+    elif config.output_level==9:
+        return [lcoe, lcoh, iron_finance, iron_post_finance]
+    
+
 
 
 def run_sweeps(
