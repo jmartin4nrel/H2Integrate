@@ -13,15 +13,12 @@ from attrs import field, define
 
 pd.options.mode.chained_assignment = None  # default='warn'
 
-# visualization imports
 from ProFAST import ProFAST
 from hopp.simulation import HoppInterface
 
 import greenheart.tools.eco.finance as he_fin
 import greenheart.tools.eco.hopp_mgmt as he_hopp
 import greenheart.tools.eco.utilities as he_util
-
-# HOPP imports
 import greenheart.tools.eco.electrolysis as he_elec
 import greenheart.tools.eco.hydrogen_mgmt as he_h2
 import greenheart.tools.profast_reverse_tools as rev_pf_tools
@@ -286,9 +283,9 @@ def setup_greenheart_simulation(config: GreenHeartSimulationConfig):
                     f"'num_turbines' in the orbit_config was"
                     f" {config.orbit_config['plant']['num_turbines']}, but 'num_turbines' in"
                     f"hopp_config was"
-                    f" {config.hopp_config['technologies']['wind']['num_turbines']}. The 'num_turbines'"
-                    " value in the orbit_config is being overwritten with the value from the"
-                    " hopp_config"
+                    f" {config.hopp_config['technologies']['wind']['num_turbines']}. The "
+                    "'num_turbines' value in the orbit_config is being overwritten with the value"
+                    " from the hopp_config"
                 )
 
                 warnings.warn(msg, UserWarning)
@@ -298,8 +295,8 @@ def setup_greenheart_simulation(config: GreenHeartSimulationConfig):
                     {"depth": config.greenheart_config["site"]["depth"]}
                 )
                 msg = (
-                    f"site depth in the orbit_config was {config.orbit_config['site']['depth']}, but"
-                    f" site depth in"
+                    f"site depth in the orbit_config was {config.orbit_config['site']['depth']}, "
+                    f"but site depth in"
                     f" greenheart_config was {config.greenheart_config['site']['depth']}. The site"
                     " depth value in the orbit_config is being overwritten with the value from"
                     " the greenheart_config."
@@ -322,8 +319,8 @@ def setup_greenheart_simulation(config: GreenHeartSimulationConfig):
                     f" {config.orbit_config['plant']['turbine_spacing']}, but 'turbine_spacing' in"
                     f" greenheart_config was"
                     f" {config.greenheart_config['site']['wind_layout']['turbine_spacing']}. The"
-                    " 'turbine_spacing' value in the orbit_config is being overwritten with the value"
-                    " from the greenheart_config"
+                    " 'turbine_spacing' value in the orbit_config is being overwritten with the "
+                    "value from the greenheart_config"
                 )
                 warnings.warn(msg, UserWarning)
 
@@ -339,8 +336,8 @@ def setup_greenheart_simulation(config: GreenHeartSimulationConfig):
                     f" {config.orbit_config['plant']['row_spacing']}, but 'row_spacing' in"
                     f" greenheart_config was"
                     f" {config.greenheart_config['site']['wind_layout']['row_spacing']}. The"
-                    " 'row_spacing' value in the orbit_config is being overwritten with the value from"
-                    " the greenheart_config"
+                    " 'row_spacing' value in the orbit_config is being overwritten with the value "
+                    "from the greenheart_config"
                 )
                 warnings.warn(msg, UserWarning)
 
@@ -383,9 +380,9 @@ def setup_greenheart_simulation(config: GreenHeartSimulationConfig):
                     wind_om_per_kw = config.hopp_config["config"]["cost_info"]["wind_om_per_kw"]
                     msg = (
                         f"'om_capacity[{i}]' in the wind 'fin_model' was {om_fixed_wind_fin_model},"
-                        f" but 'wind_om_per_kw' in 'cost_info' was {wind_om_per_kw}. The 'om_capacity'"
-                        " value in the wind 'fin_model' is being overwritten with the value from the"
-                        " 'cost_info'"
+                        f" but 'wind_om_per_kw' in 'cost_info' was {wind_om_per_kw}. The "
+                        "'om_capacity' value in the wind 'fin_model' is being overwritten with the "
+                        "value from the 'cost_info'"
                     )
                     warnings.warn(msg, UserWarning)
             if ("wind_om_per_mwh" in config.hopp_config["config"]["cost_info"]) and (
@@ -440,10 +437,10 @@ def setup_greenheart_simulation(config: GreenHeartSimulationConfig):
                     ]["om_capacity"][i]
                     pv_om_per_kw = config.hopp_config["config"]["cost_info"]["pv_om_per_kw"]
                     msg = (
-                        f"'om_capacity[{i}]' in the pv 'fin_model' was {om_fixed_pv_fin_model}, but"
-                        f" 'pv_om_per_kw' in 'cost_info' was {pv_om_per_kw}. The 'om_capacity' value"
-                        " in the pv 'fin_model' is being overwritten with the value from the"
-                        " 'cost_info'"
+                        f"'om_capacity[{i}]' in the pv 'fin_model' was {om_fixed_pv_fin_model}, "
+                        f"but 'pv_om_per_kw' in 'cost_info' was {pv_om_per_kw}. The 'om_capacity'"
+                        " value in the pv 'fin_model' is being overwritten with the value from"
+                        " the 'cost_info'"
                     )
                     warnings.warn(msg, UserWarning)
             if ("pv_om_per_mwh" in config.hopp_config["config"]["cost_info"]) and (
@@ -469,8 +466,9 @@ def setup_greenheart_simulation(config: GreenHeartSimulationConfig):
                 pv_om_per_mwh = config.hopp_config["config"]["cost_info"]["pv_om_per_mwh"]
                 msg = (
                     f"'om_production' in the pv 'fin_model' was {om_pv_variable_cost}, but"
-                    f" 'pv_om_per_mwh' in 'cost_info' was {pv_om_per_mwh}. The 'om_production' value"
-                    " in the pv 'fin_model' is being overwritten with the value from the 'cost_info'"
+                    f" 'pv_om_per_mwh' in 'cost_info' was {pv_om_per_mwh}. The 'om_production'"
+                    " value in the pv 'fin_model' is being overwritten with the value from the"
+                    "'cost_info'"
                 )
                 warnings.warn(msg, UserWarning)
 
@@ -527,8 +525,8 @@ def setup_greenheart_simulation(config: GreenHeartSimulationConfig):
                 msg = (
                     f"'om_production' in the battery 'fin_model' was {om_batt_variable_cost}, but"
                     f" 'battery_om_per_mwh' in 'cost_info' was {battery_om_per_mwh}. The"
-                    " 'om_production' value in the battery 'fin_model' is being overwritten with the"
-                    " value from the 'cost_info'",
+                    " 'om_production' value in the battery 'fin_model' is being overwritten with "
+                    "the value from the 'cost_info'",
                 )
                 warnings.warn(msg, UserWarning)
 
@@ -590,7 +588,6 @@ def run_simulation(config: GreenHeartSimulationConfig):
     # Otherwise, load their outputs from pickles
     if config.run_pre_iron:
         # run HOPP model
-        # hopp_results = he_hopp.run_hopp(hopp_site, hopp_technologies, hopp_scenario, hopp_h2_args, verbose=verbose)
         hopp_results = he_hopp.run_hopp(
             hi,
             project_lifetime=config.greenheart_config["project_parameters"]["project_lifetime"],
@@ -750,7 +747,8 @@ def run_simulation(config: GreenHeartSimulationConfig):
             )
             total_accessory_power_renewable_kw += electrolyzer_energy_consumption_bop_kw
             total_accessory_power_grid_kw = np.zeros(len(electrolyzer_energy_consumption_bop_kw))
-            # if transport is not HVDC and h2 storage is on shore, then power the storage from the grid
+            # if transport is not HVDC and h2 storage is on shore, then power the storage from
+            # the grid
             if (design_scenario["transportation"] == "pipeline") and (
                 design_scenario["h2_storage_location"] == "onshore"
             ):
@@ -763,7 +761,8 @@ def run_simulation(config: GreenHeartSimulationConfig):
                     desal_power_kw + h2_transport_compressor_power_kw + h2_storage_power_kw
                 )
 
-            ### subtract peripheral power from supply to get what is left for electrolyzer and also get grid power
+            ### subtract peripheral power from supply to get what is left for electrolyzer and
+            # also get grid power
             remaining_power_profile = np.zeros_like(
                 hopp_results["combined_hybrid_power_production_hopp"]
             )
@@ -879,7 +878,7 @@ def run_simulation(config: GreenHeartSimulationConfig):
                 electrolyzer_bop_kw,
             )
 
-        ############# solving for energy needed for non-electrolyzer components ########################
+        ############# solving for energy needed for non-electrolyzer components ##################
         # this approach either exactly over over-estimates the energy needed for non-electrolyzer
         # components
         solver_results = simple_solver(0)
@@ -899,7 +898,7 @@ def run_simulation(config: GreenHeartSimulationConfig):
         # solver_result = solver_results[0]
         # print(solver_result)
 
-        ##################################################################################################################
+        ##########################################################################################
 
         # get results for final design
         (
@@ -931,13 +930,13 @@ def run_simulation(config: GreenHeartSimulationConfig):
         )
 
         ################# OSW intermediate calculations" aka final financial calculations
-        # does LCOE even make sense if we are only selling the H2? I think in this case LCOE should not
-        # be used, rather LCOH should be used. Or, we could use LCOE based on the electricity actually
-        # used for h2. I think LCOE is just being used to estimate the cost of the electricity used,
-        # but in this case we should just use the cost of the electricity generating plant since we are
-        # not selling to the grid. We could build in a grid connection later such that we use LCOE for
-        # any purchased electricity and sell any excess electricity after H2 production. Actually, I
-        # think this is what OSW is doing for LCOH
+        # does LCOE even make sense if we are only selling the H2? I think in this case LCOE
+        # should not be used, rather LCOH should be used. Or, we could use LCOE based on the
+        # electricity actually used for h2. I think LCOE is just being used to estimate the cost
+        # of the electricity used, but in this case we should just use the cost of the electricity
+        # generating plant since we are not selling to the grid. We could build in a grid
+        # connection later such that we use LCOE for any purchased electricity and sell any excess
+        # electricity after H2 production. Actually, I think this is what OSW is doing for LCOH
 
         # TODO double check full-system CAPEX
         capex, capex_breakdown = he_fin.run_capex(
@@ -1037,9 +1036,9 @@ def run_simulation(config: GreenHeartSimulationConfig):
                 gh_fio.save_pre_iron_greenheart_simulation(
                     config, lcoh, lcoe, electrolyzer_physics_results
                 )
-                hydrogen_amount_kgpy = electrolyzer_physics_results["H2_Results"][
-                    "Life: Annual H2 production [kg/year]"
-                ]
+            hydrogen_amount_kgpy = electrolyzer_physics_results["H2_Results"][
+                "Life: Annual H2 production [kg/year]"
+            ]
         else:
             if config.user_lcoe is None and config.user_lcoh is None:
                 # load lcoh, lcoe and electrolyzer physics results from previous run
@@ -1093,7 +1092,8 @@ def run_simulation(config: GreenHeartSimulationConfig):
                 if "lcoh" not in iron_config["iron"]["costs"]:
                     iron_config["iron"]["costs"]["lcoh"] = lcoh
 
-                # use the hydrogen amount from the electrolyzer physics model if it is not already in the config
+                # use the hydrogen amount from the electrolyzer physics model if it is not
+                # already in the config
                 if "hydrogen_amount_kgpy" not in iron_config["iron"]["performance"]:
                     iron_config["iron"]["performance"]["hydrogen_amount_kgpy"] = (
                         hydrogen_amount_kgpy
@@ -1102,7 +1102,8 @@ def run_simulation(config: GreenHeartSimulationConfig):
                 iron_performance, iron_costs, iron_finance = run_iron_full_model(iron_config)
 
             else:
-                # This is not the most graceful way to do this... but it avoids copied imports and copying iron.py
+                # This is not the most graceful way to do this... but it avoids copied imports
+                # and copying iron.py
                 iron_ore_config = copy.deepcopy(iron_config)
                 copy.deepcopy(iron_config)
                 iron_win_config = copy.deepcopy(iron_config)
@@ -1138,15 +1139,13 @@ def run_simulation(config: GreenHeartSimulationConfig):
 
                 # iron_pre_performance, iron_pre_costs, iron_pre_finance = \
                 #     run_iron_full_model(iron_pre_config)
-                ### DRI -------------------------------------------------------------------------------
+                ### DRI ----------------------------------------------------------------------------
                 iron_win_config["iron"]["costs"]["lco_iron_ore_tonne"] = iron_ore_finance.sol["lco"]
                 iron_win_performance, iron_win_costs, iron_win_finance = run_iron_full_model(
                     iron_win_config
                 )
 
-                # # Capcacity-determining variable from iron_config: "iron_mpty_into_post" (reduced iron out of furnaces/electrowinnign for final upgrading)
-                # # TODO: Change iron_mpty_into_post in iron_config to result from iron_win_capacity
-                ### EAF -------------------------------------------------------------------------------
+                ### EAF ----------------------------------------------------------------------------
                 pf_config = rev_pf_tools.make_pf_config_from_profast(
                     iron_win_finance.pf
                 )  # dictionary of profast objects
