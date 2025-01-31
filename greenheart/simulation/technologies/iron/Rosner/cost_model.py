@@ -101,7 +101,6 @@ def main(config):
 
         coeff_df.to_csv(CD/config.model['coeffs_fp'])
     coeff_df = pd.read_csv(CD/config.model['coeffs_fp'],index_col=[0,1,2,3])
-    
     product = config.product_selection
 
     prod_coeffs = coeff_df[[product]].reset_index()
@@ -181,11 +180,19 @@ def main(config):
     property_tax_insurance = cost
     fixed_costs['property_tax_insurance'] = cost
 
+    cost = (
+        prod_coeffs.loc[prod_coeffs["Name"] == "Maintenance Materials", product].values[0]
+        * plant_capacity_mtpy
+    )
+    maintenance_materials = cost
+    fixed_costs['maintenance_materials'] = cost
+
     total_fixed_operating_cost = (
         labor_cost_annual_operation
         + labor_cost_maintenance
         + labor_cost_admin_support
         + property_tax_insurance
+        + maintenance_materials
     )
 
     for cost_name, cost in fixed_costs.items():
@@ -193,15 +200,18 @@ def main(config):
         costs_df.loc[len(costs_df)] = new_cost
 
     # ---------------------- Owner's (Installation) Costs --------------------------
-    labor_cost_fivemonth = (
-        5
-        / 12
-        * (
-            labor_cost_annual_operation
-            + labor_cost_maintenance
-            + labor_cost_admin_support
+    if config.product_selection == 'ng_dri' or 'h2_dri' or 'ng_dri_eaf' or 'h2_dri_eaf':
+        labor_cost_fivemonth = (
+            5
+            / 12
+            * (
+                labor_cost_annual_operation
+                + labor_cost_maintenance
+                + labor_cost_admin_support
+            )
         )
-    )
+    else: 
+        labor_cost_fivemonth = 0 
 
     maintenance_materials_onemonth = (
         prod_coeffs.loc[prod_coeffs["Name"] == "Maintenance Materials", product].values[0]
