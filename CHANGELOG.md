@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## Unreleased
+## v0.1.4 [31 January 2025]
 
 - Adds `CoolProp` to `pyproject.toml`
 - Changes units of `lcoe_real` in `HOPPComponent` from "MW*h" to "kW*h"
