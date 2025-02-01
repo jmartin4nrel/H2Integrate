@@ -1079,6 +1079,7 @@ def run_simulation(config: GreenHeartSimulationConfig):
             i in config.greenheart_config
             for i in ["iron", "iron_pre", "iron_pre", "iron_win", "iron_post"]
         ):
+            config.greenheart_config["iron_out_fn"] = config.iron_out_fn
             iron_config = copy.deepcopy(config.greenheart_config)
             if config.verbose:
                 print("Running iron\n")
@@ -1213,7 +1214,6 @@ def run_simulation(config: GreenHeartSimulationConfig):
             wind_cost_results,
             platform_results,
             desal_results,
-            iron_performance.performances_df,
             config.design_scenario,
             config.plant_design_scenario,
             config.incentive_option,

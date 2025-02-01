@@ -17,6 +17,8 @@ from hopp.tools.dispatch import plot_tools
 from hopp.simulation.technologies.resource.greet_data import GREETData
 from hopp.simulation.technologies.resource.cambium_data import CambiumData
 
+from greenheart.tools.data_loading_utils import load_dill_pickle
+
 from .finance import adjust_orbit_costs
 
 
@@ -1433,7 +1435,6 @@ def calculate_lca(
     greenheart_config,
     total_accessory_power_renewable_kw,
     total_accessory_power_grid_kw,
-    iron_performance,
     plant_design_scenario_number,
     incentive_option_number,
 ):
@@ -1457,7 +1458,6 @@ def calculate_lca(
             peripherals from renewable power (kWh) with shape = (8760,)
         total_accessory_power_grid_kw (numpy.ndarray): Total electricity to electrolysis
             peripherals from grid power (kWh) with shape = (8760,)
-        iron_performance (pandas.DataFrame): Iron performance model outputs
         plant_design_scenario_number (int): plant design scenario number
         incentive_option_number (int): incentive option number
 
@@ -1466,7 +1466,8 @@ def calculate_lca(
             lifetime of plant and other relevant data
     """
     # TODO:
-    # confirm site lat/long is proper for where electricity use will be (set from iron_pre or iron_win?)
+    # confirm site lat/long is proper for where electricity use will be
+    # (set from iron_pre or iron_win?)
     # add coke_supply_EI to HOPP greet_data.py parsing (GREET1 > EF > BG6:16)
 
     # Load relevant config and results data from HOPP and GreenHEART:
@@ -1861,6 +1862,15 @@ def calculate_lca(
     # (metric tonne lime/metric tonne steel production)
 
     ## Load in Iron model outputs
+    # Read iron_performance.performances_df from pkl
+    iron_performance_fn = "{}/iron_performance/{:.3f}_{:.3f}_{:d}.pkl".format(
+        greenheart_config["iron_out_fn"],
+        site_latitude,
+        site_longitude,
+        hopp_config["site"]["data"]["year"],
+    )
+    iron_performance = load_dill_pickle(iron_performance_fn)
+    iron_performance = iron_performance.performances_df
     if greenheart_config["iron_win"]["product_selection"] == "h2_dri":
         h2_dri_steel_prod = iron_performance.loc[
             iron_performance["Name"] == "Steel Production", "Model"
@@ -2173,7 +2183,8 @@ def calculate_lca(
                 + EI_values["steel_electrolysis_Scope3_EI"]
             )
 
-            # Calculate H2 DRI emissions via hybrid grid electrolysis (kg CO2e/metric tonne pig iron)
+            # Calculate H2 DRI emissions via hybrid grid electrolysis
+            # (kg CO2e/metric tonne pig iron)
             EI_values["h2_dri_electrolysis_Scope3_EI"] = (
                 (h2_dri_H2_consume * MT_to_kg * EI_values["electrolysis_Total_EI"])
                 + (h2_dri_iron_ore_consume * iron_ore_mining_EI_per_MT_ore)
@@ -2197,7 +2208,8 @@ def calculate_lca(
                 + EI_values["h2_dri_electrolysis_Scope3_EI"]
             )
 
-            # Calculate Natural Gas (NG) DRI emissions (kg CO2e/metric tonne pig iron)
+            # Calculate Natural Gas (NG) DRI emissions
+            # (kg CO2e/metric tonne pig iron)
             EI_values["ng_dri_Scope3_EI"] = (
                 (ng_dri_iron_ore_consume * iron_ore_mining_EI_per_MT_ore)
                 + (ng_dri_iron_ore_consume * iron_ore_pelletizing_EI_per_MT_ore)
@@ -2294,7 +2306,8 @@ def calculate_lca(
                 + EI_values["steel_electrolysis_Scope3_EI"]
             )
 
-            # Calculate H2 DRI emissions via hybrid grid electrolysis (kg CO2e/metric tonne pig iron)
+            # Calculate H2 DRI emissions via hybrid grid electrolysis
+            # (kg CO2e/metric tonne pig iron)
             EI_values["h2_dri_electrolysis_Scope3_EI"] = (
                 (h2_dri_H2_consume * MT_to_kg * EI_values["electrolysis_Total_EI"])
                 + (h2_dri_iron_ore_consume * iron_ore_mining_EI_per_MT_ore)
@@ -3057,7 +3070,6 @@ def post_process_simulation(
     wind_cost_results,
     platform_results,
     desal_results,
-    iron_performance,
     design_scenario,
     plant_design_number,
     incentive_option,
@@ -3122,7 +3134,6 @@ def post_process_simulation(
             greenheart_config=greenheart_config,
             total_accessory_power_renewable_kw=total_accessory_power_renewable_kw,
             total_accessory_power_grid_kw=total_accessory_power_grid_kw,
-            iron_performance=iron_performance,
             plant_design_scenario_number=plant_design_number,
             incentive_option_number=incentive_option,
         )
