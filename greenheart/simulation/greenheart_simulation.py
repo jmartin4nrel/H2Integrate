@@ -1213,6 +1213,7 @@ def run_simulation(config: GreenHeartSimulationConfig):
             wind_cost_results,
             platform_results,
             desal_results,
+            iron_performance.performances_df,
             config.design_scenario,
             config.plant_design_scenario,
             config.incentive_option,
