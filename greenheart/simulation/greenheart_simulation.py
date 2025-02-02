@@ -1079,6 +1079,7 @@ def run_simulation(config: GreenHeartSimulationConfig):
             i in config.greenheart_config
             for i in ["iron", "iron_pre", "iron_pre", "iron_win", "iron_post"]
         ):
+            config.greenheart_config["iron_out_fn"] = config.iron_out_fn
             iron_config = copy.deepcopy(config.greenheart_config)
             cap_denom = iron_config["iron_win"]["performance"]["capacity_denominator"]
             # Check that steel is not being specified as capacity denominator
