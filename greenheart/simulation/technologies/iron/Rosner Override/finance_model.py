@@ -3,70 +3,28 @@ import ProFAST
 
 import greenheart.tools.profast_tools as pf_tools
 from greenheart.tools.inflation.inflate import inflate_cpi, inflate_cepci
-from greenheart.simulation.technologies.iron.load_top_down_coeffs import load_top_down_coeffs
 
 
 def main(config):
-    # First thing - get iron petllet cost from previous module
-    iron_ore_pellet_unitcost_tonne = config.params["lco_iron_ore_tonne"]
-
-    # Determine years for analyzing cost
-    operational_year = config.params["operational_year"]
-    install_years = config.params["installation_years"]
-    plant_life = config.params["plant_life"]
-    cost_year = config.params["cost_year"]
-    analysis_start = operational_year - install_years
-
-    # Get feedstock costs from input sheets
-    coeff_dict = load_top_down_coeffs(
-        [
-            "Raw Water",
-            "Lime",
-            "Carbon",
-            "Slag Disposal",
-            "Hydrogen",
-            "Natural Gas",
-            "Electricity",
-            "Inflation Rate",
-        ]
-    )
-
-    years = list(coeff_dict["years"])
-    start_idx = years.index(analysis_start)
-    if len(years) > (start_idx + plant_life + install_years + 1):
-        end_idx = years.index(analysis_start + plant_life + install_years + 1)
-        indices = list(np.arange(start_idx, end_idx))
+    # TODO: Get feedstock costs from input sheets
+    natural_gas_prices = 3.76232  # TODO: Update to read in from greenheart_config
+    natural_gas_prices_MMBTU = 4  #
+    natural_gas_prices = natural_gas_prices_MMBTU * 1.05506  # Convert to GJ
+    lime_unitcost = 100.0
+    carbon_unitcost = 179.47
+    electricity_cost = 0.04892
+    # electricity_cost = config.params['lcoe'] # Originally in $/kWh
+    lcoe_dollar_MWH = electricity_cost * 1000
+    hydrogen_cost = 7  # config.params['lcoh'] # Originally in $/kg
+    lcoh_dollar_metric_tonne = hydrogen_cost * 1000
+    iron_ore_pellet_unitcost = 207.35
+    oxygen_market_price = 0.00
+    raw_water_unitcost = 0.441167535
+    slag_disposal_unitcost = 28.0
+    if config.product_selection in ["ng_eaf", "h2_eaf"]:
+        excess_oxygen = 0
     else:
-        end_idx = len(years) - 1
-        indices = list(np.arange(start_idx, end_idx))
-        repeats = start_idx + plant_life + install_years + 2 - len(years)
-        for _i in range(repeats):
-            indices.append(end_idx)
-
-    raw_water_unitcost_tonne = coeff_dict["Raw Water"]["values"][indices].astype(float)
-    lime_unitcost_tonne = coeff_dict["Lime"]["values"][indices].astype(float)
-    carbon_unitcost_tonne = coeff_dict["Carbon"]["values"][indices].astype(float)
-    slag_disposal_unitcost_tonne = coeff_dict["Slag Disposal"]["values"][indices].astype(float)
-    hydrogen_cost_kg = coeff_dict["Hydrogen"]["values"][indices].astype(float)
-    natural_gas_prices_MMBTU = coeff_dict["Natural Gas"]["values"][indices].astype(float)
-    electricity_cost_kwh = coeff_dict["Electricity"]["values"][indices].astype(float)
-    gen_inflation_pct = coeff_dict["Inflation Rate"]["values"][indices].astype(float)
-    gen_inflation = np.mean(gen_inflation_pct) / 100
-
-    # TODO figure out oxygen sales...
-    # oxygen_market_price = 0.03
-    # if config.product_selection in ['ng_eaf','h2_eaf']:
-    #     excess_oxygen = 0
-    # else:
-    #     excess_oxygen = 395
-
-    # Choose whether to override top-down electricity, hydrogen, and TODO: natural gas
-    electricity_cost_kwh = config.params["lcoe"]  # Originally in $/kWh
-    lcoe_dollar_MWH = electricity_cost_kwh * 1000
-    hydrogen_cost_kg = config.params["lcoh"]  # Originally in $/kg
-    lcoh_dollar_metric_tonne = hydrogen_cost_kg * 1000
-    # TODO: Natural Gas
-    natural_gas_prices_GJ = natural_gas_prices_MMBTU * 1.05506  # Convert to GJ
+        excess_oxygen = 395
 
     # Get plant performances into data frame/series with performance names as index
     performance = config.performance
@@ -86,6 +44,14 @@ def main(config):
 
     installation_cost = cost_ds["Installation cost"]
     land_cost = cost_ds["Land cost"]
+
+    operational_year = config.params["operational_year"]
+    install_years = config.params["installation_years"]
+    plant_life = config.params["plant_life"]
+    gen_inflation = config.params["gen_inflation"]
+    cost_year = config.params["cost_year"]
+
+    analysis_start = operational_year - install_years
 
     if "pf" in config.params:
         pf = pf_tools.create_and_populate_profast(config.params["pf"])
@@ -123,6 +89,7 @@ def main(config):
             "depreciable": False,
         },
     )
+
     pf.set_params("non depr assets", land_cost)
     pf.set_params(
         "end of proj sale non depr assets",
@@ -182,28 +149,28 @@ def main(config):
         name=f"{module_label}: Raw Water Withdrawal",
         usage=perf_ds["Raw Water Withdrawal"],
         unit="metric tonnes of water per metric tonne of iron",
-        cost=raw_water_unitcost_tonne,
+        cost=raw_water_unitcost,
         escalation=gen_inflation,
     )
     pf.add_feedstock(
         name=f"{module_label}: Lime",
         usage=perf_ds["Lime"],
         unit="metric tonnes of lime per metric tonne of iron",
-        cost=lime_unitcost_tonne,
+        cost=lime_unitcost,
         escalation=gen_inflation,
     )
     pf.add_feedstock(
         name=f"{module_label}: Carbon",
         usage=perf_ds["Carbon (Coke)"],
         unit="metric tonnes of carbon per metric tonne of iron",
-        cost=carbon_unitcost_tonne,
+        cost=carbon_unitcost,
         escalation=gen_inflation,
     )
     pf.add_feedstock(
         name=f"{module_label}: Iron Ore",
         usage=perf_ds["Iron Ore"],
         unit="metric tonnes of iron ore per metric tonne of iron",
-        cost=iron_ore_pellet_unitcost_tonne,
+        cost=iron_ore_pellet_unitcost,
         escalation=gen_inflation,
     )
     pf.add_feedstock(
@@ -217,7 +184,7 @@ def main(config):
         name=f"{module_label}: Natural Gas",
         usage=perf_ds["Natural Gas"],
         unit="GJ-LHV per metric tonne of iron",
-        cost=natural_gas_prices_GJ,
+        cost=natural_gas_prices,
         escalation=gen_inflation,
     )
     pf.add_feedstock(
@@ -231,17 +198,17 @@ def main(config):
         name=f"{module_label}: Slag Disposal",
         usage=perf_ds["Slag"],
         unit="metric tonnes of slag per metric tonne of iron",
-        cost=slag_disposal_unitcost_tonne,
+        cost=slag_disposal_unitcost,
         escalation=gen_inflation,
     )
 
-    # pf.add_coproduct(
-    #     name=f"{module_label}: Oxygen sales",
-    #     usage=excess_oxygen,
-    #     unit="kg O2 per metric tonne of iron",
-    #     cost=oxygen_market_price,
-    #     escalation=gen_inflation,
-    # )
+    pf.add_coproduct(
+        name=f"{module_label}: Oxygen sales",
+        usage=excess_oxygen,
+        unit="kg O2 per metric tonne of iron",
+        cost=oxygen_market_price,
+        escalation=gen_inflation,
+    )
 
     # ------------------------------ Set up outputs ---------------------------
 
