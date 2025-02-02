@@ -1429,8 +1429,11 @@ def save_energy_flows(
 
 
 def calculate_lca(
-    hopp_results,
-    electrolyzer_physics_results,
+    wind_annual_energy_kwh,
+    solar_pv_annual_energy_kwh,
+    energy_shortfall_hopp,
+    h2_annual_prod_kg,
+    energy_to_electrolyzer_kwh,
     hopp_config,
     greenheart_config,
     total_accessory_power_renewable_kw,
@@ -1482,12 +1485,7 @@ def calculate_lca(
     tax_incentive_option = greenheart_config["policy_parameters"][
         f"option{incentive_option_number}"
     ]  # tax incentive option number
-    wind_annual_energy_kwh = hopp_results["annual_energies"][
-        "wind"
-    ]  # annual energy from wind (kWh)
-    solar_pv_annual_energy_kwh = hopp_results["annual_energies"][
-        "pv"
-    ]  # annual energy from solar (kWh)
+    
     # battery_annual_energy_kwh = hopp_results["annual_energies"][
     #     "battery"
     # ]  # annual energy from battery (kWh)
@@ -1544,18 +1542,14 @@ def calculate_lca(
     )
 
     # Calculate average annual and lifetime h2 production
-    h2_annual_prod_kg = np.array(
-        electrolyzer_physics_results["H2_Results"]["Life: Annual H2 production [kg/year]"]
-    )  # Lifetime Average Annual H2 production accounting for electrolyzer degradation (kg H2/year)
+    h2_annual_prod_kg # Lifetime Average Annual H2 production accounting for electrolyzer degradation (kg H2/year)
     h2_lifetime_prod_kg = (
         h2_annual_prod_kg * project_lifetime
     )  # Lifetime H2 production accounting for electrolyzer degradation (kg H2)
 
     # Calculate energy to electrolyzer and peripherals when hybrid-grid case
     if grid_case == "hybrid-grid":
-        energy_shortfall_hopp = hopp_results[
-            "energy_shortfall_hopp"
-        ]  # Total electricity to electrolyzer and peripherals from grid power (kWh)
+        # Total electricity to electrolyzer and peripherals from grid power (kWh)
         energy_shortfall_hopp.shape = (
             project_lifetime,
             8760,
@@ -1567,14 +1561,12 @@ def calculate_lca(
 
     # Calculate energy to electrolyzer and peripherals when grid-only case
     if grid_case == "grid-only":
-        energy_to_electrolyzer = electrolyzer_physics_results[
-            "power_to_electrolyzer_kw"
-        ]  # Total electricity to electrolyzer from grid power (kWh
+        energy_to_electrolyzer_kwh # Total electricity to electrolyzer from grid power (kWh
         energy_to_peripherals = (
             total_accessory_power_renewable_kw + total_accessory_power_grid_kw
         )  # Total electricity to peripherals from grid power (kWh)
         annual_energy_to_electrolysis_from_grid = (
-            energy_to_electrolyzer + energy_to_peripherals
+            energy_to_electrolyzer_kwh + energy_to_peripherals
         )  # Average Annual electricity to electrolyzer and peripherals from grid power
         # shape = (8760,)
 
@@ -1872,6 +1864,10 @@ def calculate_lca(
     iron_performance = load_dill_pickle(iron_performance_fn)
     iron_performance = iron_performance.performances_df
     if greenheart_config["iron_win"]["product_selection"] == "h2_dri":
+        # Note to Dakota from Jonathan - the denominator has been corrected,
+        # we're now getting performance per unit pig iron, not per unit steel
+        # Leave this code in though, I want to be able to build an option to
+        # calculate per unit steel instead of per unit iron
         h2_dri_steel_prod = iron_performance.loc[
             iron_performance["Name"] == "Steel Production", "Model"
         ].item()
@@ -1880,7 +1876,13 @@ def calculate_lca(
             iron_performance["Name"] == "Pig Iron Production", "Model"
         ].item()
         # metric tonnes pig iron per year
-        steel_to_pigiron_ratio = h2_dri_steel_prod / h2_dri_pigiron_prod
+        capacity_denominator = greenheart_config["iron_win"]["performance"][
+            "capacity_denominator"
+            ]
+        if capacity_denominator == "iron":
+            steel_to_pigiron_ratio = 1
+        elif capacity_denominator == "steel":
+            steel_to_pigiron_ratio = h2_dri_steel_prod / h2_dri_pigiron_prod
         # conversion from MT steel to MT pig iron in denominator of units
         h2_dri_iron_ore_consume = (
             iron_performance.loc[iron_performance["Name"] == "Iron Ore", "Model"].item()
@@ -1932,7 +1934,13 @@ def calculate_lca(
             iron_performance["Name"] == "Pig Iron Production", "Model"
         ].item()
         # metric tonnes pig iron per year
-        steel_to_pigiron_ratio = ng_dri_steel_prod / ng_dri_pigiron_prod
+        capacity_denominator = greenheart_config["iron_win"]["performance"][
+            "capacity_denominator"
+            ]
+        if capacity_denominator == "iron":
+            steel_to_pigiron_ratio = 1
+        elif capacity_denominator == "steel":
+            steel_to_pigiron_ratio = ng_dri_steel_prod / ng_dri_pigiron_prod
         # conversion from MT steel to MT pig iron in denominator of units
         ng_dri_iron_ore_consume = (
             iron_performance.loc[iron_performance["Name"] == "Iron Ore", "Model"].item()

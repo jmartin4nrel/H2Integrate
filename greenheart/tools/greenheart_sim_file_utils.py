@@ -36,7 +36,13 @@ def load_pre_iron_greenheart_setup(config):
 
 
 
-def save_pre_iron_greenheart_simulation(config,lcoh,lcoe,electrolyzer_physics_results):
+def save_pre_iron_greenheart_simulation(config,
+                                        lcoh,
+                                        lcoe,
+                                        electrolyzer_physics_results,
+                                        wind_annual_energy_kwh,
+                                        solar_pv_annual_energy_kwh,
+                                        energy_shortfall_hopp,):
     #from setup_greenheart_simulation() if config.save_pre_iron (line 1071)
     lat = config.hopp_config["site"]["data"]["lat"]
     lon = config.hopp_config["site"]["data"]["lon"]
