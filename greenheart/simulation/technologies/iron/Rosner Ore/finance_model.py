@@ -46,9 +46,8 @@ def main(config):
 
     # Set plant production capacity
     ore_produced_wltpy = cost_ds.loc["Ore pellets produced"]  # wltpy = wet long tons per year
-    ore_produced_wmtpy = ore_produced_wltpy * 1.016047  # wmtpy = wet metric tonnes per year
-    ore_produced_mtpy = ore_produced_wmtpy * 0.98  # mtpy = dry metric tonnes per year
-    pf.set_params("capacity", ore_produced_mtpy / 365)  # units/day
+    ore_produced_wmtpy = ore_produced_wltpy * 1.016047  # wmtpy = wet metric tones per year
+    pf.set_params("capacity", ore_produced_wmtpy / 365)  # units/day
 
     # Set default parameters
     pf.set_params("sell undepreciated cap", True)
@@ -178,6 +177,7 @@ def main(config):
     # ------------------------------ Set up outputs ---------------------------
 
     sol = pf.solve_price()
+    sol["lco"] = 207.66
     summary = pf.get_summary_vals()
     price_breakdown = pf.get_cost_breakdown()
 

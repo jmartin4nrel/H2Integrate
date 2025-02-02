@@ -41,3 +41,13 @@ finance:
     model: 'greenheart.simulation.technologies.iron.Rosner.finance_model'
     inputs: 'cost_inputs.csv'
     coeffs: 'cost_coeffs.csv'
+  Rosner Ore:
+    compatible_tech: ['h2_dri','ng_dri']
+    model: 'greenheart.simulation.technologies.iron.Rosner Ore.finance_model'
+    inputs: 'cost_inputs.csv'
+    coeffs: 'cost_coeffs.csv'
+  Rosner Override:
+    compatible_tech: ['h2_dri','ng_dri']
+    model: 'greenheart.simulation.technologies.iron.Rosner Override.finance_model'
+    inputs: 'cost_inputs.csv'
+    coeffs: 'cost_coeffs.csv'

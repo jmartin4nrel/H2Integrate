@@ -1080,6 +1080,17 @@ def run_simulation(config: GreenHeartSimulationConfig):
             for i in ["iron", "iron_pre", "iron_pre", "iron_win", "iron_post"]
         ):
             iron_config = copy.deepcopy(config.greenheart_config)
+            cap_denom = iron_config["iron_win"]["performance"]["capacity_denominator"]
+            # Check that steel is not being specified as capacity denominator
+            # without a suitable configuration (e.g. EAF)
+            if cap_denom == "steel":
+                if "eaf" not in iron_config["iron_post"]["product selection"]:
+                    msg = (
+                        "Steel was chosen for capacity denominator, but"
+                        " the iron model is not set up produce steel!"
+                        " (try adding an EAF to the iron_post module)"
+                    )
+                    raise ValueError(msg)
             if config.verbose:
                 print("Running iron\n")
 
@@ -1146,23 +1157,31 @@ def run_simulation(config: GreenHeartSimulationConfig):
                 )
 
                 ### EAF ----------------------------------------------------------------------------
-                pf_config = rev_pf_tools.make_pf_config_from_profast(
-                    iron_win_finance.pf
-                )  # dictionary of profast objects
-                pf_dict = rev_pf_tools.convert_pf_res_to_pf_config(
-                    pf_config
-                )  # profast dictionary of values
-                iron_post_config["iron"]["finances"]["pf"] = pf_dict
-                iron_post_config["iron"]["costs"]["lco_iron_ore_tonne"] = iron_ore_finance.sol[
-                    "lco"
-                ]
-                iron_post_capacity, iron_post_costs, iron_post_finance = run_iron_full_model(
-                    iron_post_config
-                )
+                if iron_config["iron_post"]["product_selection"] == "none":
+                    iron_performance = iron_win_performance
+                    iron_costs = iron_win_costs
+                    iron_finance = iron_win_finance
 
-                iron_performance = iron_win_performance
-                iron_costs = iron_win_costs
-                iron_finance = iron_win_finance
+                else:
+                    pf_config = rev_pf_tools.make_pf_config_from_profast(
+                        iron_win_finance.pf
+                    )  # dictionary of profast objects
+                    pf_dict = rev_pf_tools.convert_pf_res_to_pf_config(
+                        copy.deepcopy(pf_config)
+                    )  # profast dictionary of values
+                    iron_post_config["iron"]["finances"]["pf"] = pf_dict
+                    iron_post_config["iron"]["costs"]["lco_iron_ore_tonne"] = iron_ore_finance.sol[
+                        "lco"
+                    ]
+                    iron_post_config["iron"]["performance"]["capacity_denominator"] = cap_denom
+                    iron_post_performance, iron_post_costs, iron_post_finance = run_iron_full_model(
+                        iron_post_config
+                    )
+
+                    iron_performance = iron_post_performance
+                    iron_costs = iron_post_costs
+                    iron_finance = iron_post_finance
+
             gh_fio.save_iron_results(config, iron_performance, iron_costs, iron_finance)
 
         else:
@@ -1260,7 +1279,7 @@ def run_simulation(config: GreenHeartSimulationConfig):
             i in config.greenheart_config
             for i in ["iron", "iron_pre", "iron_pre", "iron_win", "iron_post"]
         ):
-            return lcoe, lcoh, iron_finance, iron_post_finance, ammonia_finance
+            return lcoe, lcoh, iron_finance, ammonia_finance
         else:
             return lcoe, lcoh, steel_finance, ammonia_finance
     elif config.output_level == 8:
