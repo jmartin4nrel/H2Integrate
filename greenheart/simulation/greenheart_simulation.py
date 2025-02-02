@@ -23,6 +23,7 @@ import greenheart.tools.eco.electrolysis as he_elec
 import greenheart.tools.eco.hydrogen_mgmt as he_h2
 import greenheart.tools.profast_reverse_tools as rev_pf_tools
 import greenheart.tools.greenheart_sim_file_utils as gh_fio
+from greenheart.tools.eco.utilities import calculate_lca
 from greenheart.simulation.technologies.iron.iron import (
     IronCostModelOutputs,
     IronFinanceModelOutputs,
@@ -42,7 +43,6 @@ from greenheart.simulation.technologies.ammonia.ammonia import (
     run_ammonia_full_model,
 )
 
-from greenheart.tools.eco.utilities import calculate_lca
 
 @define
 class GreenHeartSimulationConfig:
@@ -1048,8 +1048,13 @@ def run_simulation(config: GreenHeartSimulationConfig):
             if config.save_pre_iron:
                 print("saving ore iron")
                 gh_fio.save_pre_iron_greenheart_simulation(
-                    config, lcoh, lcoe, electrolyzer_physics_results,
-                    wind_annual_energy_kwh, solar_pv_annual_energy_kwh, 0
+                    config,
+                    lcoh,
+                    lcoe,
+                    electrolyzer_physics_results,
+                    wind_annual_energy_kwh,
+                    solar_pv_annual_energy_kwh,
+                    0,
                 )
             hydrogen_amount_kgpy = electrolyzer_physics_results["H2_Results"][
                 "Life: Annual H2 production [kg/year]"
@@ -1261,20 +1266,20 @@ def run_simulation(config: GreenHeartSimulationConfig):
             output_dir=config.output_dir,
         )  # , lcoe, lcoh, lcoh_with_grid, lcoh_grid_only)
 
-    if iron_config['lca_config']['run_lca']:
+    if iron_config["lca_config"]["run_lca"]:
         lca_df = calculate_lca(
-                wind_annual_energy_kwh,
-                solar_pv_annual_energy_kwh,
-                0,
-                hydrogen_amount_kgpy,
-                hydrogen_annual_energy_kwh,
-                config.hopp_config,
-                config.greenheart_config,
-                0,
-                0,
-                plant_design_scenario_number=9,
-                incentive_option_number=1,
-            )
+            wind_annual_energy_kwh,
+            solar_pv_annual_energy_kwh,
+            0,
+            hydrogen_amount_kgpy,
+            hydrogen_annual_energy_kwh,
+            config.hopp_config,
+            config.greenheart_config,
+            0,
+            0,
+            plant_design_scenario_number=9,
+            incentive_option_number=1,
+        )
 
     # return
     if config.output_level == 0:
@@ -1313,27 +1318,21 @@ def run_simulation(config: GreenHeartSimulationConfig):
             i in config.greenheart_config
             for i in ["iron", "iron_pre", "iron_pre", "iron_win", "iron_post"]
         ):
-            if 'ng' in iron_config["iron_win"]["product_selection"]:
+            if "ng" in iron_config["iron_win"]["product_selection"]:
+                LCA_label = "NG DRI Total Lifetime Average GHG Emissions (kg-CO2e/MT steel)"
+            elif "h2" in iron_config["iron_win"]["product_selection"]:
                 LCA_label = (
-                    "NG DRI Total Lifetime Average GHG Emissions (kg-CO2e/MT steel)"
+                    "H2 DRI Electrolysis Total Lifetime Average GHG Emissions (kg-CO2e/MT steel)"
                 )
-            elif 'h2' in iron_config["iron_win"]["product_selection"]:
-                LCA_label = (
-                "H2 DRI Electrolysis Total Lifetime Average GHG Emissions (kg-CO2e/MT steel)"
+            if iron_config["lca_config"]["run_lca"]:
+                gh_fio.save_iron_results(
+                    config, iron_performance, iron_costs, iron_finance, lca_df[LCA_label].values[0]
                 )
-            if config.post_processing and iron_config['run_lca']:
-                asdf
-                gh_fio.save_iron_results(config,
-                                         iron_performance,
-                                         iron_costs,
-                                         iron_finance,
-                                         lca_df[LCA_label])
+                ammonia_finance = lca_df[LCA_label].values[
+                    0
+                ]  # repurposing ammonia finance to hold CI
             else:
-                gh_fio.save_iron_results(config,
-                                         iron_performance,
-                                         iron_costs,
-                                         iron_finance)
-                asdf
+                gh_fio.save_iron_results(config, iron_performance, iron_costs, iron_finance)
             return lcoe, lcoh, iron_finance, ammonia_finance
         else:
             return lcoe, lcoh, steel_finance, ammonia_finance
