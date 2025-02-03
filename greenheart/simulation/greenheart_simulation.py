@@ -42,6 +42,9 @@ from greenheart.simulation.technologies.ammonia.ammonia import (
     AmmoniaCapacityModelOutputs,
     run_ammonia_full_model,
 )
+from greenheart.simulation.technologies.iron.Martin_Transport.iron_transport import (
+    calc_iron_ship_cost,
+)
 
 
 @define
@@ -1178,7 +1181,12 @@ def run_simulation(config: GreenHeartSimulationConfig):
 
                 # iron_pre_performance, iron_pre_costs, iron_pre_finance = \
                 #     run_iron_full_model(iron_pre_config)
+
+                iron_transport_cost_tonne, ore_profit_pct = calc_iron_ship_cost(iron_win_config)
+
                 ### DRI ----------------------------------------------------------------------------
+                iron_win_config["iron"]["finances"]["ore_profit_pct"] = ore_profit_pct
+                iron_win_config["iron"]["costs"]["iron_transport_tonne"] = iron_transport_cost_tonne
                 iron_win_config["iron"]["costs"]["lco_iron_ore_tonne"] = iron_ore_finance.sol["lco"]
                 iron_win_performance, iron_win_costs, iron_win_finance = run_iron_full_model(
                     iron_win_config

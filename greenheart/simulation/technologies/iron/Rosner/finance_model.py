@@ -7,8 +7,14 @@ from greenheart.simulation.technologies.iron.load_top_down_coeffs import load_to
 
 
 def main(config):
-    # First thing - get iron petllet cost from previous module
+    # First thing - get iron pellet cost from previous modules
     iron_ore_pellet_unitcost_tonne = config.params["lco_iron_ore_tonne"]
+    if "iron_transport_tonne" in config.params.keys():
+        iron_transport_cost_tonne = config.params["iron_transport_tonne"]
+        ore_profit_pct = config.params["ore_profit_pct"]
+        iron_ore_pellet_unitcost_tonne = (
+            iron_ore_pellet_unitcost_tonne + iron_transport_cost_tonne
+        ) * (1 + ore_profit_pct / 100)
 
     # Determine years for analyzing cost
     operational_year = config.params["operational_year"]
