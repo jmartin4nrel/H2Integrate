@@ -37,9 +37,9 @@ def load_top_down_coeffs(coeff_list=None, cost_year=None):
                 source_year_costs = coeff_df.iloc[coeff_idx, num_label_cols:]
                 values = inflate_cpi(source_year_costs, source_year, cost_year)
             else:
-                values = coeff_df.iloc[coeff_idx, 3:]
+                values = coeff_df.iloc[coeff_idx, 4:]
         else:
-            values = coeff_df.iloc[coeff_idx, 3:]
+            values = coeff_df.iloc[coeff_idx, 4:]
         coeff_dict[name] = {"values": values.values, "unit": unit}
 
     return coeff_dict
