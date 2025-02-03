@@ -23,6 +23,7 @@ import greenheart.tools.eco.electrolysis as he_elec
 import greenheart.tools.eco.hydrogen_mgmt as he_h2
 import greenheart.tools.profast_reverse_tools as rev_pf_tools
 import greenheart.tools.greenheart_sim_file_utils as gh_fio
+from greenheart.tools.eco.utilities import calculate_lca
 from greenheart.simulation.technologies.iron.iron import (
     IronCostModelOutputs,
     IronFinanceModelOutputs,
@@ -109,6 +110,9 @@ class GreenHeartSimulationConfig:
     iron_modular: bool = field(default=False)
     user_lcoh: float | None = field(default=None)
     user_lcoe: float | None = field(default=None)
+    user_annual_wind_kwh_prod: float | dict | None = field(default=None)
+    user_annual_pv_kwh_prod: float | dict | None = field(default=None)
+    user_life_annual_h2_kwh: float | dict | None = field(default=None)
     user_life_annual_h2_prod: float | dict | None = field(default=None)
 
     # these are set in the __attrs_post_init__ method
@@ -579,6 +583,9 @@ def run_simulation(config: GreenHeartSimulationConfig):
     if config.user_lcoe is not None and config.user_lcoh is not None:
         lcoe = float(config.user_lcoe)
         lcoh = float(config.user_lcoh)
+        wind_annual_energy_kwh = float(config.user_annual_wind_kwh_prod)
+        solar_pv_annual_energy_kwh = float(config.user_annual_pv_kwh_prod)
+        hydrogen_annual_energy_kwh = float(config.user_life_annual_h2_kwh)
         hydrogen_amount_kgpy = float(config.user_life_annual_h2_prod)
         config.run_pre_iron = False
     else:
@@ -593,6 +600,13 @@ def run_simulation(config: GreenHeartSimulationConfig):
             project_lifetime=config.greenheart_config["project_parameters"]["project_lifetime"],
             verbose=config.verbose,
         )
+
+        wind_annual_energy_kwh = hopp_results["annual_energies"][
+            "wind"
+        ]  # annual energy from wind (kWh)
+        solar_pv_annual_energy_kwh = hopp_results["annual_energies"][
+            "pv"
+        ]  # annual energy from solar (kWh)
 
         if config.design_scenario["wind_location"] == "onshore":
             wind_config = he_fin.WindCostConfig(
@@ -1034,11 +1048,19 @@ def run_simulation(config: GreenHeartSimulationConfig):
             if config.save_pre_iron:
                 print("saving ore iron")
                 gh_fio.save_pre_iron_greenheart_simulation(
-                    config, lcoh, lcoe, electrolyzer_physics_results
+                    config,
+                    lcoh,
+                    lcoe,
+                    electrolyzer_physics_results,
+                    wind_annual_energy_kwh,
+                    solar_pv_annual_energy_kwh,
+                    0,
                 )
             hydrogen_amount_kgpy = electrolyzer_physics_results["H2_Results"][
                 "Life: Annual H2 production [kg/year]"
             ]
+
+            hydrogen_annual_energy_kwh = electrolyzer_physics_results["power_to_electrolyzer_kw"]
         else:
             if config.user_lcoe is None and config.user_lcoh is None:
                 # load lcoh, lcoe and electrolyzer physics results from previous run
@@ -1047,6 +1069,10 @@ def run_simulation(config: GreenHeartSimulationConfig):
                 )
                 hydrogen_amount_kgpy = electrolyzer_physics_results["H2_Results"][
                     "Life: Annual H2 production [kg/year]"
+                ]
+
+                hydrogen_annual_energy_kwh = electrolyzer_physics_results[
+                    "power_to_electrolyzer_kw"
                 ]
 
         if "steel" in config.greenheart_config:
@@ -1079,18 +1105,20 @@ def run_simulation(config: GreenHeartSimulationConfig):
             i in config.greenheart_config
             for i in ["iron", "iron_pre", "iron_pre", "iron_win", "iron_post"]
         ):
+            config.greenheart_config["iron_out_fn"] = config.iron_out_fn
             iron_config = copy.deepcopy(config.greenheart_config)
             cap_denom = iron_config["iron_win"]["performance"]["capacity_denominator"]
             # Check that steel is not being specified as capacity denominator
             # without a suitable configuration (e.g. EAF)
             if cap_denom == "steel":
-                if "eaf" not in iron_config["iron_post"]["product selection"]:
-                    msg = (
-                        "Steel was chosen for capacity denominator, but"
-                        " the iron model is not set up produce steel!"
-                        " (try adding an EAF to the iron_post module)"
-                    )
-                    raise ValueError(msg)
+                raise NotImplementedError("Haven't set up to calculate per unit steel yet")
+                # if "eaf" not in iron_config["iron_post"]["product selection"]:
+                #     msg = (
+                #         "Steel was chosen for capacity denominator, but"
+                #         " the iron model is not set up produce steel!"
+                #         " (try adding an EAF to the iron_post module)"
+                #     )
+                #     raise ValueError(msg)
             if config.verbose:
                 print("Running iron\n")
 
@@ -1182,8 +1210,6 @@ def run_simulation(config: GreenHeartSimulationConfig):
                     iron_costs = iron_post_costs
                     iron_finance = iron_post_finance
 
-            gh_fio.save_iron_results(config, iron_performance, iron_costs, iron_finance)
-
         else:
             iron_finance = {}
 
@@ -1210,6 +1236,8 @@ def run_simulation(config: GreenHeartSimulationConfig):
 
         else:
             ammonia_finance = {}
+
+    gh_fio.save_iron_results(config, iron_performance, iron_costs, iron_finance)
 
     ################# end OSW intermediate calculations
     if config.post_processing:
@@ -1241,6 +1269,21 @@ def run_simulation(config: GreenHeartSimulationConfig):
             verbose=config.verbose,
             output_dir=config.output_dir,
         )  # , lcoe, lcoh, lcoh_with_grid, lcoh_grid_only)
+
+    if iron_config["lca_config"]["run_lca"]:
+        lca_df = calculate_lca(
+            wind_annual_energy_kwh,
+            solar_pv_annual_energy_kwh,
+            0,
+            hydrogen_amount_kgpy,
+            hydrogen_annual_energy_kwh,
+            config.hopp_config,
+            config.greenheart_config,
+            0,
+            0,
+            plant_design_scenario_number=9,
+            incentive_option_number=1,
+        )
 
     # return
     if config.output_level == 0:
@@ -1279,6 +1322,19 @@ def run_simulation(config: GreenHeartSimulationConfig):
             i in config.greenheart_config
             for i in ["iron", "iron_pre", "iron_pre", "iron_win", "iron_post"]
         ):
+            if "ng" in iron_config["iron_win"]["product_selection"]:
+                LCA_label = "NG DRI Total Lifetime Average GHG Emissions (kg-CO2e/MT steel)"
+            elif "h2" in iron_config["iron_win"]["product_selection"]:
+                LCA_label = (
+                    "H2 DRI Electrolysis Total Lifetime Average GHG Emissions (kg-CO2e/MT steel)"
+                )
+            if iron_config["lca_config"]["run_lca"]:
+                gh_fio.save_iron_results(
+                    config, iron_performance, iron_costs, iron_finance, lca_df[LCA_label].values[0]
+                )
+                ammonia_finance = lca_df[LCA_label].values[
+                    0
+                ]  # repurposing ammonia finance to hold CI
             return lcoe, lcoh, iron_finance, ammonia_finance
         else:
             return lcoe, lcoh, steel_finance, ammonia_finance
