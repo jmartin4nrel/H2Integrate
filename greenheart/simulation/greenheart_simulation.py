@@ -1059,6 +1059,8 @@ def run_simulation(config: GreenHeartSimulationConfig):
             hydrogen_amount_kgpy = electrolyzer_physics_results["H2_Results"][
                 "Life: Annual H2 production [kg/year]"
             ]
+
+            hydrogen_annual_energy_kwh = electrolyzer_physics_results["power_to_electrolyzer_kw"]
         else:
             if config.user_lcoe is None and config.user_lcoh is None:
                 # load lcoh, lcoe and electrolyzer physics results from previous run
@@ -1235,6 +1237,8 @@ def run_simulation(config: GreenHeartSimulationConfig):
         else:
             ammonia_finance = {}
 
+    gh_fio.save_iron_results(config, iron_performance, iron_costs, iron_finance)
+
     ################# end OSW intermediate calculations
     if config.post_processing:
         annual_energy_breakdown, hourly_energy_breakdown = he_util.post_process_simulation(
@@ -1331,8 +1335,6 @@ def run_simulation(config: GreenHeartSimulationConfig):
                 ammonia_finance = lca_df[LCA_label].values[
                     0
                 ]  # repurposing ammonia finance to hold CI
-            else:
-                gh_fio.save_iron_results(config, iron_performance, iron_costs, iron_finance)
             return lcoe, lcoh, iron_finance, ammonia_finance
         else:
             return lcoe, lcoh, steel_finance, ammonia_finance
