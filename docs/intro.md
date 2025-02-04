@@ -1,11 +1,13 @@
-# Welcome to your Jupyter Book
+# Welcome to the GreenHEART Documentation
 
-This is a small sample book to give you a feel for how book content is
-structured.
-It shows off a few of the major file types, as well as some sample content.
-It does not go in-depth into any particular topic - check out [the Jupyter Book documentation](https://jupyterbook.org) for more information.
+[![PyPI version](https://badge.fury.io/py/greenheart.svg)](https://badge.fury.io/py/greenheart)
+![CI Tests](https://github.com/NREL/GreenHEART/actions/workflows/ci.yml/badge.svg)
+[![image](https://img.shields.io/pypi/pyversions/greenheart.svg)](https://pypi.python.org/pypi/greenheart)
+[![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
-Check out the content pages bundled with this sample book to see more.
+GreenHEART is a hybrid power-to-x component-level system performance and financial modeling for control and design optimization.
+GreenHEART currently includes renewable energy, hydrogen, ammonia, and steel.
+Other elements such as desalination systems, pipelines, compressors, and storage systems can also be developed by users.
 
 ```{tableofcontents}
 ```
