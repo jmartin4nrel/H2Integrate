@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## Unreleased
+
+- Allow users to save the GreenHEARTOutput class as a yaml file and read that yaml to an instance of the output class
+
 ## v0.1.4 [4 February 2025]
 
 - Adds `CoolProp` to `pyproject.toml`
