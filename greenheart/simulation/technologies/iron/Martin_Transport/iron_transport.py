@@ -4,8 +4,8 @@ Quick-and-dirty model for iron transport
 
 from pathlib import Path
 
-import geopy
 import pandas as pd
+import geopy.distance
 
 from greenheart.simulation.technologies.iron.load_top_down_coeffs import load_top_down_coeffs
 

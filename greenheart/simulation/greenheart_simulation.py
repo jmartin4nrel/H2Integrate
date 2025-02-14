@@ -1067,9 +1067,13 @@ def run_simulation(config: GreenHeartSimulationConfig):
         else:
             if config.user_lcoe is None and config.user_lcoh is None:
                 # load lcoh, lcoe and electrolyzer physics results from previous run
-                lcoh, lcoe, electrolyzer_physics_results = (
-                    gh_fio.load_pre_iron_greenheart_simulation(config)
-                )
+                (
+                    lcoh,
+                    lcoe,
+                    electrolyzer_physics_results,
+                    wind_annual_energy_kwh,
+                    solar_pv_annual_energy_kwh,
+                ) = gh_fio.load_pre_iron_greenheart_simulation(config)
                 hydrogen_amount_kgpy = electrolyzer_physics_results["H2_Results"][
                     "Life: Annual H2 production [kg/year]"
                 ]

@@ -60,8 +60,21 @@ def save_pre_iron_greenheart_simulation(
 
     # Write outputs needed for future runs in .pkls
     pkl_fn = site_res_id + ".pkl"
-    output_names = ["lcoe", "lcoh", "electrolyzer_physics_results"]
-    output_data = [lcoe, lcoh, electrolyzer_physics_results]
+    output_names = [
+        "lcoe",
+        "lcoh",
+        "electrolyzer_physics_results",
+        "wind_annual_energy_kwh",
+        "solar_pv_annual_energy_kwh",
+        "energy_shortfall_hopp",
+    ]
+    output_data = [
+        lcoe,
+        lcoh,
+        electrolyzer_physics_results,
+        wind_annual_energy_kwh,
+        solar_pv_annual_energy_kwh,
+    ]
     output_data_dict = dict(zip(output_names, output_data))
     for output_name, data in output_data_dict.items():
         path = config.pre_iron_fn + "/" + output_name + "/"
@@ -81,10 +94,20 @@ def load_pre_iron_greenheart_simulation(config):
     lcoh_fpath = config.pre_iron_fn + "/" + "lcoh" + "/" + pkl_fn
     lcoe_fpath = config.pre_iron_fn + "/" + "lcoe" + "/" + pkl_fn
     elec_phys_fpath = config.pre_iron_fn + "/" + "electrolyzer_physics_results" + "/" + pkl_fn
+    wind_fpath = config.pre_iron_fn + "/" + "wind_annual_energy_kwh" + "/" + pkl_fn
+    solar_fpath = config.pre_iron_fn + "/" + "solar_pv_annual_energy_kwh" + "/" + pkl_fn
     lcoh = load_dill_pickle(lcoh_fpath)
     lcoe = load_dill_pickle(lcoe_fpath)
     electrolyzer_physics_results = load_dill_pickle(elec_phys_fpath)
-    return lcoh, lcoe, electrolyzer_physics_results
+    wind_annual_energy_kwh = load_dill_pickle(wind_fpath)
+    solar_pv_annual_energy_kwh = load_dill_pickle(solar_fpath)
+    return (
+        lcoh,
+        lcoe,
+        electrolyzer_physics_results,
+        wind_annual_energy_kwh,
+        solar_pv_annual_energy_kwh,
+    )
 
 
 def save_iron_ore_results(
