@@ -1,18 +1,18 @@
 import copy
-from typing import Dict, Union, Optional, Tuple
+import importlib
+from pathlib import Path
 
 import pandas as pd
+from attrs import field, define
 from pandas import DataFrame
-from attrs import define, Factory, field
-
-from pathlib import Path
-import importlib
 from hopp.utilities import load_yaml
+
 
 # Get model locations loaded up to refer to
 CD = Path(__file__).parent
-model_locs_fp = CD / 'model_locations.yaml'
+model_locs_fp = CD / "model_locations.yaml"
 model_locs = load_yaml(model_locs_fp)
+
 
 @define
 class IronPerformanceModelConfig:
@@ -27,24 +27,26 @@ class IronPerformanceModelConfig:
                         Also contains 'refit_coeffs' boolean to re-do model coefficient curve fitting.
         params (dict): The rest of the parameters for the performance model. TODO: define as fields.
     """
-    product_selection: str = ''
+
+    product_selection: str = ""
     site: dict = {}
     model: dict = {}
     params: dict = {}
 
     def __attrs_post_init__(self):
-        if self.product_selection == '':
+        if self.product_selection == "":
             raise ValueError("Iron performance product_selection must be set.")
         if self.site == {}:
             raise ValueError("Iron performance site must be set.")
         if self.model == {}:
             raise ValueError("Iron performance model must be set.")
-        for fieldname in ['model_fp','inputs_fp','coeffs_fp','refit_coeffs']:
+        for fieldname in ["model_fp", "inputs_fp", "coeffs_fp", "refit_coeffs"]:
             if fieldname not in self.model.keys():
-                if fieldname != 'refit_coeffs':
-                    self.model[fieldname] = ''
+                if fieldname != "refit_coeffs":
+                    self.model[fieldname] = ""
                 else:
                     self.model[fieldname] = False
+
 
 @define
 class IronPerformanceModelOutputs:
@@ -54,13 +56,17 @@ class IronPerformanceModelOutputs:
     Attributes:
         performances_df (DataFrame): Contains locations and modeled iron plant performance outputs.
     """
+
     performances_df: DataFrame = pd.DataFrame()
 
     def __attrs_post_init__(self):
         if len(self.performances_df) == 0:
             raise ValueError("No iron performance data has been calculated.")
 
-def run_size_iron_plant_performance(config: IronPerformanceModelConfig) -> IronPerformanceModelOutputs:
+
+def run_size_iron_plant_performance(
+    config: IronPerformanceModelConfig,
+) -> IronPerformanceModelOutputs:
     """
     Calculates either the annual iron production in metric tons based on plant capacity and
     available hydrogen or the amount of required hydrogen based on a desired iron production.
@@ -76,21 +82,22 @@ def run_size_iron_plant_performance(config: IronPerformanceModelConfig) -> IronP
 
     """
 
-    perf_model = config.model['name']
-    if config.model['model_fp'] == '':
-        config.model['model_fp'] = model_locs['performance'][perf_model]['model']
-    if config.model['inputs_fp'] == '':
-        config.model['inputs_fp'] = model_locs['performance'][perf_model]['inputs']
-    if config.model['coeffs_fp'] == '':
-        config.model['coeffs_fp'] = model_locs['performance'][perf_model]['coeffs']
-    model = importlib.import_module(config.model['model_fp'])
+    perf_model = config.model["name"]
+    if config.model["model_fp"] == "":
+        config.model["model_fp"] = model_locs["performance"][perf_model]["model"]
+    if config.model["inputs_fp"] == "":
+        config.model["inputs_fp"] = model_locs["performance"][perf_model]["inputs"]
+    if config.model["coeffs_fp"] == "":
+        config.model["coeffs_fp"] = model_locs["performance"][perf_model]["coeffs"]
+    model = importlib.import_module(config.model["model_fp"])
     model_outputs = model.main(config)
     performances_df = model_outputs
 
     return IronPerformanceModelOutputs(performances_df)
 
+
 @define
-class IronCostModelConfig():
+class IronCostModelConfig:
     """
     Configuration inputs for the iron cost model.
 
@@ -103,25 +110,27 @@ class IronCostModelConfig():
                         Also contains 'refit_coeffs' boolean to re-do model coefficient curve fitting.
         params (dict): The rest of the parameters for the cost model. TODO: define as fields.
     """
+
     performance: IronPerformanceModelOutputs
-    product_selection: str = ''
+    product_selection: str = ""
     site: dict = {}
     model: dict = {}
     params: dict = {}
 
     def __attrs_post_init__(self):
-        if self.product_selection == '':
+        if self.product_selection == "":
             raise ValueError("Iron cost product_selection must be set.")
         if self.site == {}:
             raise ValueError("Iron cost site must be set.")
         if self.model == {}:
             raise ValueError("Iron cost model must be set.")
-        for fieldname in ['model_fp','inputs_fp','coeffs_fp','refit_coeffs']:
+        for fieldname in ["model_fp", "inputs_fp", "coeffs_fp", "refit_coeffs"]:
             if fieldname not in self.model.keys():
-                if fieldname != 'refit_coeffs':
-                    self.model[fieldname] = ''
+                if fieldname != "refit_coeffs":
+                    self.model[fieldname] = ""
                 else:
                     self.model[fieldname] = False
+
 
 @define
 class IronCostModelOutputs:
@@ -131,11 +140,13 @@ class IronCostModelOutputs:
     Attributes:
         costs_df (DataFrame): Contains locations and modeled iron plant cost outputs.
     """
+
     costs_df: DataFrame = pd.DataFrame()
 
     def __attrs_post_init__(self):
         if len(self.costs_df) == 0:
             raise ValueError("No iron performance data has been calculated.")
+
 
 def run_iron_cost_model(config: IronCostModelConfig) -> IronCostModelOutputs:
     """
@@ -158,18 +169,18 @@ def run_iron_cost_model(config: IronCostModelConfig) -> IronCostModelOutputs:
         and more, adjusted based on the Chemical Engineering Plant Cost Index (CEPCI).
     """
     # If cost model name is "placeholder", use the code that was copied over from Green Steel
-    cost_model = config.model['name']
-    if config.model['model_fp'] == '':
-        config.model['model_fp'] = model_locs['cost'][cost_model]['model']
-    if config.model['inputs_fp'] == '':
-        config.model['inputs_fp'] = model_locs['cost'][cost_model]['inputs']
-    if config.model['coeffs_fp'] == '':
-        config.model['coeffs_fp'] = model_locs['cost'][cost_model]['coeffs']
-    model = importlib.import_module(config.model['model_fp'])
+    cost_model = config.model["name"]
+    if config.model["model_fp"] == "":
+        config.model["model_fp"] = model_locs["cost"][cost_model]["model"]
+    if config.model["inputs_fp"] == "":
+        config.model["inputs_fp"] = model_locs["cost"][cost_model]["inputs"]
+    if config.model["coeffs_fp"] == "":
+        config.model["coeffs_fp"] = model_locs["cost"][cost_model]["coeffs"]
+    model = importlib.import_module(config.model["model_fp"])
     model_outputs = model.main(config)
 
-    return IronCostModelOutputs(costs_df = model_outputs)
-        
+    return IronCostModelOutputs(costs_df=model_outputs)
+
 
 @define
 class IronFinanceModelConfig(IronCostModelConfig):
@@ -185,27 +196,31 @@ class IronFinanceModelConfig(IronCostModelConfig):
                         secure location passed from input if not part of public GreenHEART.
                         Also contains 'refit_coeffs' boolean to re-do model coefficient curve fitting.
         params (dict): The rest of the parameters for the finance model. TODO: define as fields.
+        pf (dict): Optional dictionary of the ProFAST object.
     """
+
     cost: IronCostModelOutputs
     performance: IronPerformanceModelOutputs
-    product_selection: str = ''
+    product_selection: str = ""
     site: dict = {}
     model: dict = {}
     params: dict = {}
-    
+    pf: dict | None = field(init=False)
+
     def __attrs_post_init__(self):
-        if self.product_selection == '':
+        if self.product_selection == "":
             raise ValueError("Iron finance product_selection must be set.")
         if self.site == {}:
             raise ValueError("Iron finance site must be set.")
         if self.model == {}:
             raise ValueError("Iron finance model must be set.")
-        for fieldname in ['model_fp','inputs_fp','coeffs_fp','refit_coeffs']:
+        for fieldname in ["model_fp", "inputs_fp", "coeffs_fp", "refit_coeffs"]:
             if fieldname not in self.model.keys():
-                if fieldname != 'refit_coeffs':
-                    self.model[fieldname] = ''
+                if fieldname != "refit_coeffs":
+                    self.model[fieldname] = ""
                 else:
                     self.model[fieldname] = False
+
 
 @define
 class IronFinanceModelOutputs:
@@ -224,11 +239,14 @@ class IronFinanceModelOutputs:
             A Pandas DataFrame detailing the cost breakdown for producing iron,
             including both capital and operating expenses, as well as the impact of
             various cost factors on the overall price of iron.
+        pf (object):
+            ProFAST object.
     """
 
     sol: dict
     summary: dict
     price_breakdown: pd.DataFrame
+    pf: object
 
 
 def run_iron_finance_model(
@@ -252,27 +270,24 @@ def run_iron_finance_model(
     Returns:
         IronFinanceModelOutputs:
             Object containing detailed financial analysis results, including solution
-            metrics, summary values, price breakdown, and iron price breakdown per
-            tonne. This output is instrumental in assessing the financial performance
-            and breakeven price for the iron production facility.
+            metrics, summary values, price breakdown, iron price breakdown per
+            tonne, and the ProFAST object. This output is instrumental in assessing the
+            financial performance and breakeven price for the iron production facility.
     """
 
-    
-    finance_model = config.model['name']
-    if config.model['model_fp'] == '':
-        config.model['model_fp'] = model_locs['finance'][finance_model]['model']
-    model = importlib.import_module(config.model['model_fp'])
+    finance_model = config.model["name"]
+    if config.model["model_fp"] == "":
+        config.model["model_fp"] = model_locs["finance"][finance_model]["model"]
+    model = importlib.import_module(config.model["model_fp"])
     model_outputs = model.main(config)
 
-    sol, summary, price_breakdown = model_outputs
-    return IronFinanceModelOutputs(sol=sol,
-                                   summary=summary,
-                                   price_breakdown=price_breakdown)
+    sol, summary, price_breakdown, pf = model_outputs
+    return IronFinanceModelOutputs(sol=sol, summary=summary, price_breakdown=price_breakdown, pf=pf)
 
 
-
-def run_iron_full_model(greenheart_config: dict) -> \
-    Tuple[IronPerformanceModelOutputs, IronCostModelOutputs, IronFinanceModelOutputs]:
+def run_iron_full_model(
+    greenheart_config: dict,
+) -> tuple[IronPerformanceModelOutputs, IronCostModelOutputs, IronFinanceModelOutputs]:
     """
     Runs the full iron model, including capacity (performance), cost, and finance models.
 
@@ -285,18 +300,18 @@ def run_iron_full_model(greenheart_config: dict) -> \
     """
     # this is likely to change as we refactor to use config dataclasses, but for now
     # we'll just copy the config and modify it as needed
-    iron_config = copy.deepcopy(greenheart_config['iron'])
+    iron_config = copy.deepcopy(greenheart_config["iron"])
 
     if iron_config["costs"]["lcoh"] != iron_config["finances"]["lcoh"]:
-        raise(ValueError(
-            "iron cost LCOH and iron finance LCOH are not equal. You must specify both values or neither. \
+        raise (
+            ValueError(
+                "iron cost LCOH and iron finance LCOH are not equal. You must specify both values or neither. \
                 If neither is specified, LCOH will be calculated."
             )
         )
+    iron_product_selection = iron_config["product_selection"]
+    iron_site = iron_config["site"]
 
-    iron_product_selection = iron_config['product_selection']
-    iron_site = iron_config['site']
-    
     iron_performance_inputs = iron_config["performance"]
     performance_model = iron_config["performance_model"]
 
@@ -306,43 +321,39 @@ def run_iron_full_model(greenheart_config: dict) -> \
     iron_finance_inputs = iron_cost_inputs | iron_config["finances"]
     finance_model = iron_config["finance_model"]
 
-    iron_finance_inputs['operational_year'] = iron_cost_inputs['operational_year']
-    iron_finance_inputs['installation_years'] = iron_cost_inputs['installation_years']
-    iron_finance_inputs['plant_life'] = iron_cost_inputs['plant_life']
-    iron_finance_inputs['cost_year'] = greenheart_config['project_parameters']['cost_year']
+    iron_finance_inputs["operational_year"] = iron_cost_inputs["operational_year"]
+    iron_finance_inputs["installation_years"] = iron_cost_inputs["installation_years"]
+    iron_finance_inputs["plant_life"] = iron_cost_inputs["plant_life"]
+    iron_finance_inputs["cost_year"] = greenheart_config["project_parameters"]["cost_year"]
 
     # run iron performance model to get iron plant size
     performance_config = IronPerformanceModelConfig(
-        product_selection = iron_product_selection,
-        site = iron_site,
-        model = performance_model,
-        params = iron_performance_inputs
+        product_selection=iron_product_selection,
+        site=iron_site,
+        model=performance_model,
+        params=iron_performance_inputs,
     )
     iron_performance = run_size_iron_plant_performance(performance_config)
 
     # run iron cost model to get iron plant costs
     cost_config = IronCostModelConfig(
-        product_selection = iron_product_selection,
-        site = iron_site,
-        model = cost_model,
-        params = iron_cost_inputs,
-        performance = iron_performance
+        product_selection=iron_product_selection,
+        site=iron_site,
+        model=cost_model,
+        params=iron_cost_inputs,
+        performance=iron_performance,
     )
     iron_cost = run_iron_cost_model(cost_config)
 
     # run iron finance model to get iron plant finances
     finance_config = IronFinanceModelConfig(
-        product_selection = iron_product_selection,
-        site = iron_site,
-        model = finance_model,
-        params = iron_finance_inputs,
-        performance = iron_performance,
-        cost = iron_cost
+        product_selection=iron_product_selection,
+        site=iron_site,
+        model=finance_model,
+        params=iron_finance_inputs,
+        performance=iron_performance,
+        cost=iron_cost,
     )
     iron_finance = run_iron_finance_model(finance_config)
 
-    return (
-        iron_performance,
-        iron_cost,
-        iron_finance
-    )
+    return (iron_performance, iron_cost, iron_finance)
