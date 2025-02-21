@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Allow users to save the GreenHEARTOutput class as a yaml file and read that yaml to an instance of the output class
+- Use sentence capitalization for plot labels and legends
+- Use "metric ton" instead of "tonne" or "metric tonne" in all internal naming and plots
+
+## v0.1.4 [4 February 2025]
+
 - Adds `CoolProp` to `pyproject.toml`
 - Changes units of `lcoe_real` in `HOPPComponent` from "MW*h" to "kW*h"
 - Adds `pre-commit`, `ruff`, and `isort` checks, and CI workflow to ensure these steps aren't
@@ -13,6 +19,10 @@
 - Removes support for python 3.9
 - Add steel feedstock transport costs (lime, carbon, and iron ore pellets)
 - Allow individual debt rate, equity rate, and debt/equity ratio/split for each subsystem
+- Add initial docs focused on new GreenHEART development
+- New documentation CI pipeline to publish documentation at nrel.github.io/GreenHEART/ and test
+  that the documentation site will build on each pull request.
+- Placeholder documentation content has been removed from the site build
 
 ## v0.1.3 [1 November 2024]
 

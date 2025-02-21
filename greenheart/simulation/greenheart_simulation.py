@@ -3,17 +3,24 @@ from __future__ import annotations
 import os
 import copy
 import warnings
+from typing import Any
 from pathlib import Path
 
+import yaml
 import numpy as np
 import pandas as pd
+
+
+pd.options.mode.chained_assignment = None  # default='warn'
+
 import matplotlib.pyplot as plt
-from attrs import field, define
+from attrs import field, define, fields
 
 
 pd.options.mode.chained_assignment = None  # default='warn'
 
 from ProFAST import ProFAST
+from hopp.utilities import load_yaml
 from hopp.simulation import HoppInterface
 
 import greenheart.tools.eco.finance as he_fin
@@ -45,6 +52,54 @@ from greenheart.simulation.technologies.ammonia.ammonia import (
 from greenheart.simulation.technologies.iron.Martin_Transport.iron_transport import (
     calc_iron_ship_cost,
 )
+
+
+def convert_to_serializable(value: Any) -> float | int | str | type(None) | list | dict:
+    """Recursively converts complex types to JSON/YAML-compatible formats.
+
+    Handles:
+    - `np.ndarray` -> list
+    - `tuple` -> list
+    - `np.generic` (e.g., `np.float64`, `np.int32`) -> corresponding native Python types
+    - `pandas.DataFrame` -> list of dicts, recursively processed
+    - `pandas.Series` -> list, recursively processed
+    - `attrs` objects -> dict of serialized attributes
+    - Handles deeply nested structures
+
+    Note: this function was originally created by ChatGPT and edited manually to work as desired
+
+    Args:
+        value (Any): value to converted for output to yaml
+    Returns:
+        Union[float, int, str, type(None), list, dict]: input value in yaml-compatible format
+    """
+
+    if isinstance(value, np.generic):
+        # Handles NumPy scalar types, converting to python native types
+        return value.item()
+    if isinstance(value, (np.ndarray, tuple, list, pd.Series)):
+        # Recursively convert array-like types
+        return [convert_to_serializable(v) for v in value]
+    if isinstance(value, dict):
+        # recursively convert dictionary values
+        return {k: convert_to_serializable(v) for k, v in value.items()}
+    if isinstance(value, pd.DataFrame):
+        # Recursively convert each cell in the DataFrame
+        return [
+            {k: convert_to_serializable(v) for k, v in row.items()}
+            for row in value.to_dict(orient="records")
+        ]
+    if hasattr(value, "__attrs_attrs__"):
+        # If it's an `attrs` class, recursively convert attributes
+        return {
+            f.name: convert_to_serializable(getattr(value, f.name)) for f in fields(type(value))
+        }
+    if isinstance(value, (float, int, str, type(None))):
+        # simple native python types do not need conversion
+        return value
+
+    # Fall back to string representation for unsupported types
+    return str(value)
 
 
 @define
@@ -117,6 +172,7 @@ class GreenHeartSimulationConfig:
     user_annual_pv_kwh_prod: float | dict | None = field(default=None)
     user_life_annual_h2_kwh: float | dict | None = field(default=None)
     user_life_annual_h2_prod: float | dict | None = field(default=None)
+    save_greenheart_output: bool | None = field(default=False)
 
     # these are set in the __attrs_post_init__ method
     hopp_config: dict = field(init=False)
@@ -253,6 +309,7 @@ class GreenHeartSimulationOutput:
     remaining_power_profile: np.ndarray
 
     # optional outputs
+    hopp_config: dict | None = field(default=None)
     h2_storage_max_fill_rate_kg_hr: dict | None = field(default=None)
     h2_storage_capacity_kg: dict | None = field(default=None)
     hydrogen_storage_state_of_charge_kg: dict | None = field(default=None)
@@ -270,6 +327,79 @@ class GreenHeartSimulationOutput:
     ammonia_finance: AmmoniaFinanceModelOutputs | None = field(default=None)
 
     platform_results: dict | None = field(default=None)
+
+    def save_to_file(self, filename: str):
+        """Saves select attributes of the class to a YAML file."""
+
+        filepath = Path(filename)
+
+        ignore = [
+            "greenheart_config",  # fails: max recursion depth
+            "hopp_interface",  # fails: max recursion depth
+            "hopp_results",  # fails: max recursion depth
+            "profast_lcoe",  # fails: cannot pickle `dict_keys` object
+            "profast_lcoh",  # fails: cannot pickle `dict_keys` object
+            "profast_lcoh_grid_only",  # fails: cannot pickle `dict_keys` object
+        ]
+
+        # Convert the object to a dictionary of serializable types
+        serialized_data = {}
+        for attr in dir(self):
+            # Avoid private attributes and methods
+            if attr.startswith("_") or callable(getattr(self, attr)):
+                continue
+            if attr in ignore:
+                continue
+            try:
+                value = getattr(self, attr)
+                serialized_data[attr] = convert_to_serializable(value)
+            except AttributeError:
+                pass
+
+        with filepath.open("w") as file:
+            yaml.safe_dump(
+                serialized_data, file, default_flow_style=False, allow_unicode=True, sort_keys=False
+            )
+
+    @classmethod
+    def load_from_file(cls, filename: str) -> GreenHeartSimulationOutput:
+        """Creates an incomplete instance of GreenHeartSimulationOutput from a previously saved
+        `.yaml` file. The result is missing the following: `greenheart_config`, `hopp_interface`,
+        `profast_lcoe`, `profast_lcoh`, `profast_lcoh_grid_only`, and `hopp_results`. Note that
+        data types will not exactly match the instance of GreenHeartSimulationOutput that was
+        saved due to required data type conversions for yaml output and easy loading.
+
+        Args:
+            filename (str): Path to the file where an instance of GreenHeartSimulationOutput
+            was saved
+
+        Returns:
+            (GreenHeartSimulationOutput): An incomplete instance of GreenHeartSimulationOutput.
+        """
+
+        def convert(value):
+            """Recursively reconstruct complex types."""
+            if isinstance(value, dict) and "__tuple__" in value:
+                return tuple(convert(v) for v in value["items"])  # Reconstruct tuple
+            if isinstance(value, list):
+                return [convert(v) for v in value]
+            elif isinstance(value, dict):
+                # Heuristic for pandas DataFrame
+                if all(isinstance(k, str) and isinstance(v, list) for k, v in value.items()):
+                    return pd.DataFrame(value)
+                elif all(
+                    isinstance(k, str) and isinstance(v, (int, float, str))
+                    for k, v in value.items()
+                ):
+                    return pd.Series(value)
+                else:
+                    return {k: convert(v) for k, v in value.items()}
+            return value
+
+        data = load_yaml(filename)
+
+        kwargs = {f.name: convert(data.get(f.name)) for f in fields(cls)}
+        return cls(**kwargs)
 
 
 def setup_greenheart_simulation(config: GreenHeartSimulationConfig):
@@ -1351,7 +1481,7 @@ def run_simulation(config: GreenHeartSimulationConfig):
         else:
             return lcoe, lcoh, steel_finance, ammonia_finance
     elif config.output_level == 8:
-        return GreenHeartSimulationOutput(
+        output = GreenHeartSimulationOutput(
             config,
             hi,
             pf_lcoe,
@@ -1396,6 +1526,11 @@ def run_simulation(config: GreenHeartSimulationConfig):
         )
     elif config.output_level == 9:
         return [lcoe, lcoh, iron_finance, iron_post_finance]
+
+        if config.save_greenheart_output:
+            output.save_to_file(Path(config.output_dir).resolve() / "data/greenheart_output.yaml")
+
+        return output
 
 
 def run_sweeps(

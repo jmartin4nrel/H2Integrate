@@ -18,7 +18,6 @@ greenheart.tools.optimization.openmdao
    .. autosummary::
 
       BoundaryDistanceComponent
-      ElectrolyzerComponent
       GreenHeartComponent
       HOPPComponent
       TurbineDistanceComponent
