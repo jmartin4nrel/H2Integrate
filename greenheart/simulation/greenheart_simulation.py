@@ -134,9 +134,7 @@ class GreenHeartSimulationConfig:
         grid_connection (Optional[bool]): flag for grid connection
         run_full_simulation (bool): flag for whether to run any of GreenHEART besides the
                                 iron model or just load pickles of everything else
-        pre_iron_save (bool): flag for whether to save everything besides the iron
-                                model to pickles for future runs of just the iron model
-        pre_iron_fn (Optional[str]): filename for where to save the above pickles
+        run_full_simulation_fn (Optional[str]): filename for where to save the above pickles
         iron_out_fn (Optional[str]): filename for where to save final results
     """
 
@@ -162,8 +160,8 @@ class GreenHeartSimulationConfig:
     output_level: int = field(default=8)
     grid_connection: bool | None = field(default=None)
     run_full_simulation: bool = field(default=True)
-    save_pre_iron: bool = field(default=False)
-    pre_iron_fn: str | None = field(default=None)
+    save_physics_results: bool = field(default=False)
+    run_full_simulation_fn: str | None = field(default=None)
     iron_out_fn: str | None = field(default=None)
     iron_modular: bool = field(default=False)
     user_lcoh: float | None = field(default=None)
@@ -673,8 +671,8 @@ def setup_greenheart_simulation(config: GreenHeartSimulationConfig):
         save_plots=config.save_plots,
     )
 
-    if config.save_pre_iron:
-        gh_fio.save_pre_iron_greenheart_setup(config, wind_cost_results)
+    if config.save_physics_results:
+        gh_fio.save_physics_results_greenheart_setup(config, wind_cost_results)
 
     return config, hi, wind_cost_results
 
@@ -692,7 +690,7 @@ def setup_greenheart_simulation_for_iron(config: GreenHeartSimulationConfig):
         iron_config = copy.deepcopy(config.greenheart_config["iron"])
 
     # Identify the site resource
-    config, wind_cost_results = gh_fio.load_pre_iron_greenheart_setup(config)
+    config, wind_cost_results = gh_fio.load_physics_greenheart_setup(config)
 
     # Flip run_full_simulation back to False (was True when saved)
     config.run_full_simulation = False
@@ -1180,10 +1178,11 @@ def run_financials(
         output_dir=config.output_dir,
     )
 
+    print("about to save results")
     # save lcoh, lcoe and electrolyzer physics results
-    if config.save_pre_iron:
+    if config.save_physics_results:
         print("saving ore iron")
-        gh_fio.save_pre_iron_greenheart_simulation(
+        gh_fio.save_physics_results_greenheart_simulation(
             config,
             lcoh,
             lcoe,
@@ -1289,7 +1288,7 @@ def run_simulation(config: GreenHeartSimulationConfig):
                     electrolyzer_physics_results,
                     wind_annual_energy_kwh,
                     solar_pv_annual_energy_kwh,
-                ) = gh_fio.load_pre_iron_greenheart_simulation(config)
+                ) = gh_fio.load_physics_greenheart_simulation(config)
                 hydrogen_amount_kgpy = electrolyzer_physics_results["H2_Results"][
                     "Life: Annual H2 production [kg/year]"
                 ]
