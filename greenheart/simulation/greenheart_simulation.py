@@ -1178,10 +1178,8 @@ def run_financials(
         output_dir=config.output_dir,
     )
 
-    print("about to save results")
     # save lcoh, lcoe and electrolyzer physics results
     if config.save_physics_results:
-        print("saving ore iron")
         gh_fio.save_physics_results_greenheart_simulation(
             config,
             lcoh,
