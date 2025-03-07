@@ -49,7 +49,7 @@ from greenheart.simulation.technologies.ammonia.ammonia import (
     AmmoniaCapacityModelOutputs,
     run_ammonia_full_model,
 )
-from greenheart.simulation.technologies.iron.Martin_Transport.iron_transport import (
+from greenheart.simulation.technologies.iron.martin_transport.iron_transport import (
     calc_iron_ship_cost,
 )
 
@@ -716,8 +716,8 @@ def run_physics(config: GreenHeartSimulationConfig, hi, wind_cost_results):
         verbose=config.verbose,
     )
 
-    hopp_results["annual_energies"]["wind"]  # annual energy from wind (kWh)
-    hopp_results["annual_energies"]["pv"]  # annual energy from solar (kWh)
+    wind_annual_energy_kwh = hopp_results["annual_energies"]["wind"]  # annual energy from wind (kWh)
+    solar_pv_annual_energy_kwh = hopp_results["annual_energies"]["pv"]  # annual energy from solar (kWh)
 
     if config.design_scenario["wind_location"] == "onshore":
         wind_config = he_fin.WindCostConfig(
@@ -1099,6 +1099,8 @@ def run_physics(config: GreenHeartSimulationConfig, hi, wind_cost_results):
 
     return (
         hopp_results,
+        wind_annual_energy_kwh,
+        solar_pv_annual_energy_kwh,
         wind_cost_results,
         electrolyzer_physics_results,
         electrolyzer_cost_results,
@@ -1229,6 +1231,8 @@ def run_simulation(config: GreenHeartSimulationConfig):
 
         (
             hopp_results,
+            wind_annual_energy_kwh,
+            solar_pv_annual_energy_kwh,
             wind_cost_results,
             electrolyzer_physics_results,
             electrolyzer_cost_results,

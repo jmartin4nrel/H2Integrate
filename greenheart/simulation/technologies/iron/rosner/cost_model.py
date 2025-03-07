@@ -134,7 +134,7 @@ def main(config):
 
     # Import Peters opex model
     if config.model["refit_coeffs"]:
-        input_df = pd.read_csv(CD / "../Peters" / model_locs["cost"]["Peters"]["inputs"])
+        input_df = pd.read_csv(CD / "../peters" / model_locs["cost"]["peters"]["inputs"])
         keys = input_df.iloc[:, 0]  # Extract name
         values = input_df.iloc[:, 3:16]  # Extract values for cost re-fitting
 
@@ -155,7 +155,7 @@ def main(config):
 
     else:
         coeff_df = pd.read_csv(
-            CD / "../Peters" / model_locs["cost"]["Peters"]["coeffs"], index_col=[0, 1, 2, 3]
+            CD / "../peters" / model_locs["cost"]["peters"]["coeffs"], index_col=[0, 1, 2, 3]
         )
         Peters_coeffs = coeff_df["A"]
         Peters_coeffs_lin = Peters_coeffs.loc["Annual Operating Labor Cost", :, "lin"].values[0]
