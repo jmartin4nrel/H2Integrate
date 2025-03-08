@@ -1327,7 +1327,7 @@ def run_simulation(config: GreenHeartSimulationConfig):
 
         if any(
             i in config.greenheart_config
-            for i in ["iron", "iron_pre", "iron_pre", "iron_win", "iron_post"]
+            for i in ["iron", "iron_pre", "iron_win", "iron_post"]
         ):
             config.greenheart_config["iron_out_fn"] = config.iron_out_fn
             iron_config = copy.deepcopy(config.greenheart_config)
@@ -1438,7 +1438,6 @@ def run_simulation(config: GreenHeartSimulationConfig):
                     iron_performance = iron_post_performance
                     iron_costs = iron_post_costs
                     iron_finance = iron_post_finance
-
         else:
             iron_finance = {}
 
@@ -1465,8 +1464,6 @@ def run_simulation(config: GreenHeartSimulationConfig):
 
         else:
             ammonia_finance = {}
-
-    gh_fio.save_iron_results(config, iron_performance, iron_costs, iron_finance)
 
     ################# end OSW intermediate calculations
     if config.post_processing:
@@ -1498,21 +1495,25 @@ def run_simulation(config: GreenHeartSimulationConfig):
             verbose=config.verbose,
             output_dir=config.output_dir,
         )  # , lcoe, lcoh, lcoh_with_grid, lcoh_grid_only)
-
-    if iron_config["lca_config"]["run_lca"]:
-        lca_df = calculate_lca(
-            wind_annual_energy_kwh,
-            solar_pv_annual_energy_kwh,
-            0,
-            hydrogen_amount_kgpy,
-            hydrogen_annual_energy_kwh,
-            config.hopp_config,
-            config.greenheart_config,
-            0,
-            0,
-            plant_design_scenario_number=9,
-            incentive_option_number=1,
-        )
+    if any(
+            i in config.greenheart_config
+            for i in ["iron", "iron_pre", "iron_win", "iron_post"]
+        ):
+        gh_fio.save_iron_results(config, iron_performance, iron_costs, iron_finance)
+        if iron_config["lca_config"]["run_lca"]:
+            lca_df = calculate_lca(
+                wind_annual_energy_kwh,
+                solar_pv_annual_energy_kwh,
+                0,
+                hydrogen_amount_kgpy,
+                hydrogen_annual_energy_kwh,
+                config.hopp_config,
+                config.greenheart_config,
+                0,
+                0,
+                plant_design_scenario_number=9,
+                incentive_option_number=1,
+            )
 
     # return
     if config.output_level == 0:
