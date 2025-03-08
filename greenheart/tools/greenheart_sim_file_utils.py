@@ -1,3 +1,4 @@
+from pathlib import Path
 from greenheart.tools.data_loading_utils import (
     load_dill_pickle,
     check_create_folder,
@@ -115,6 +116,8 @@ def load_physics_greenheart_simulation(config):
 def save_iron_ore_results(
     config, iron_ore_config, iron_ore_performance, iron_ore_costs, iron_ore_finance
 ):
+    if config.iron_out_fn is None:
+        raise ValueError("config.iron_out_fn is not set. Please set the output directory.")
     # lat = config.hopp_config["site"]["data"]["lat"]
     # lon = config.hopp_config["site"]["data"]["lon"]
     year = config.hopp_config["site"]["data"]["year"]
@@ -124,23 +127,26 @@ def save_iron_ore_results(
     lon = perf_ds["Longitude"]
 
     site_res_id = f"{lat:.3f}_{lon:.3f}_{year:d}"
-    pkl_fn = site_res_id + ".pkl"
+    pkl_fn = f"{site_res_id}.pkl"
     output_names = ["iron_ore_performance", "iron_ore_costs", "iron_ore_finance"]
     output_data = [iron_ore_performance, iron_ore_costs, iron_ore_finance]
     output_data_dict = dict(zip(output_names, output_data))
     for output_name, data in output_data_dict.items():
-        path = config.iron_out_fn + "/" + output_name + "/"
+        path = Path(config.iron_out_fn) / output_name
         check_create_folder(path)
-        output_filepath = path + pkl_fn
+        output_filepath = path / pkl_fn
         dump_data_to_pickle(data, output_filepath)
 
 
 def save_iron_results(config, iron_performance, iron_costs, iron_finance, iron_CI=None):
+    if config.iron_out_fn is None:
+        raise ValueError("config.iron_out_fn is not set. Please set the output directory.")
+
     lat = config.hopp_config["site"]["data"]["lat"]
     lon = config.hopp_config["site"]["data"]["lon"]
     year = config.hopp_config["site"]["data"]["year"]
     site_res_id = f"{lat:.3f}_{lon:.3f}_{year:d}"
-    pkl_fn = site_res_id + ".pkl"
+    pkl_fn = f"{site_res_id}.pkl"
 
     output_names = ["iron_performance", "iron_costs", "iron_finance"]
     output_data = [iron_performance, iron_costs, iron_finance]
@@ -149,7 +155,7 @@ def save_iron_results(config, iron_performance, iron_costs, iron_finance, iron_C
         output_data.append(iron_CI)
     output_data_dict = dict(zip(output_names, output_data))
     for output_name, data in output_data_dict.items():
-        path = config.iron_out_fn + "/" + output_name + "/"
+        path = Path(config.iron_out_fn) / output_name
         check_create_folder(path)
-        output_filepath = path + pkl_fn
+        output_filepath = path / pkl_fn
         dump_data_to_pickle(data, output_filepath)
