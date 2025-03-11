@@ -1616,6 +1616,7 @@ def run_simulation(config: GreenHeartSimulationConfig):
             ),
             platform_results=platform_results,
         )
+        return output
     elif config.output_level == 9:
         return [lcoe, lcoh, iron_finance, iron_post_finance]
 
