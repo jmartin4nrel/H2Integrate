@@ -1,5 +1,6 @@
 import copy
 import importlib
+from typing import ClassVar
 from pathlib import Path
 
 import pandas as pd
@@ -24,14 +25,15 @@ class IronPerformanceModelConfig:
         site (dict): Contains information on the site where iron is being reduced.
         model (dict): Contains name of performance model and, if necessary, filepaths to
                         secure location passed from input if not part of public GreenHEART.
-                        Also contains 'refit_coeffs' boolean to re-do model coefficient curve fitting.
+                        Also contains 'refit_coeffs' boolean to re-do
+                        model coefficient curve fitting.
         params (dict): The rest of the parameters for the performance model. TODO: define as fields.
     """
 
     product_selection: str = ""
-    site: dict = {}
-    model: dict = {}
-    params: dict = {}
+    site: ClassVar[dict] = {}
+    model: ClassVar[dict] = {}
+    params: ClassVar[dict] = {}
 
     def __attrs_post_init__(self):
         if self.product_selection == "":
@@ -107,15 +109,16 @@ class IronCostModelConfig:
         site (dict): Contains information on the site where iron is being reduced.
         model (dict): Contains name of cost model and, if necessary, filepaths to
                         secure location passed from input if not part of public GreenHEART.
-                        Also contains 'refit_coeffs' boolean to re-do model coefficient curve fitting.
+                        Also contains 'refit_coeffs' boolean to re-do
+                        model coefficient curve fitting.
         params (dict): The rest of the parameters for the cost model. TODO: define as fields.
     """
 
     performance: IronPerformanceModelOutputs
     product_selection: str = ""
-    site: dict = {}
-    model: dict = {}
-    params: dict = {}
+    site: ClassVar[dict] = {}
+    model: ClassVar[dict] = {}
+    params: ClassVar[dict] = {}
 
     def __attrs_post_init__(self):
         if self.product_selection == "":
@@ -194,7 +197,8 @@ class IronFinanceModelConfig(IronCostModelConfig):
         site (dict): Contains information on the site where iron is being reduced.
         model (dict): Contains name of finance model and, if necessary, filepaths to
                         secure location passed from input if not part of public GreenHEART.
-                        Also contains 'refit_coeffs' boolean to re-do model coefficient curve fitting.
+                        Also contains 'refit_coeffs' boolean to re-do
+                        model coefficient curve fitting.
         params (dict): The rest of the parameters for the finance model. TODO: define as fields.
         pf (dict): Optional dictionary of the ProFAST object.
     """
@@ -202,9 +206,9 @@ class IronFinanceModelConfig(IronCostModelConfig):
     cost: IronCostModelOutputs
     performance: IronPerformanceModelOutputs
     product_selection: str = ""
-    site: dict = {}
-    model: dict = {}
-    params: dict = {}
+    site: ClassVar[dict] = {}
+    model: ClassVar[dict] = {}
+    params: ClassVar[dict] = {}
     pf: dict | None = field(init=False)
 
     def __attrs_post_init__(self):
@@ -225,7 +229,8 @@ class IronFinanceModelConfig(IronCostModelConfig):
 @define
 class IronFinanceModelOutputs:
     """
-    Represents the outputs of the iron finance model, encapsulating the results of financial analysis for iron production.
+    Represents the outputs of the iron finance model, encapsulating the
+    results of financial analysis for iron production.
 
     Attributes:
         sol (dict):
@@ -305,7 +310,8 @@ def run_iron_full_model(
     if iron_config["costs"]["lcoh"] != iron_config["finances"]["lcoh"]:
         raise (
             ValueError(
-                "iron cost LCOH and iron finance LCOH are not equal. You must specify both values or neither. \
+                "iron cost LCOH and iron finance LCOH are not equal. \
+                You must specify both values or neither. \
                 If neither is specified, LCOH will be calculated."
             )
         )
