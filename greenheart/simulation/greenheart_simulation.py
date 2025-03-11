@@ -1120,6 +1120,8 @@ def run_physics(config: GreenHeartSimulationConfig, hi, wind_cost_results):
         opex_breakdown_annual,
         platform_results,
         solver_results,
+        wind_annual_energy_kwh,
+        solar_pv_annual_energy_kwh,
     )
 
 
@@ -1252,6 +1254,8 @@ def run_simulation(config: GreenHeartSimulationConfig):
             opex_breakdown_annual,
             platform_results,
             solver_results,
+            wind_annual_energy_kwh,
+            solar_pv_annual_energy_kwh,
         ) = physics_results
 
     steel_finance = None
