@@ -1,10 +1,5 @@
 import numpy as np
-
-
-try:
-    import openmdao.api as om
-except:
-    om = False
+import openmdao.api as om
 from hopp.simulation import HoppInterface
 from shapely.geometry import Point, Polygon
 

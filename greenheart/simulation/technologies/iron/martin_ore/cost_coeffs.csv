@@ -1,4 +1,4 @@
-,Product,Name,Type,Coeff,Unit,Northshore,United,Hibbing,Minorca,Tilden 
+,Product,Name,Type,Coeff,Unit,Northshore,United,Hibbing,Minorca,Tilden
 0,std_taconite_pellets,Latitude,location,constant,deg N,47.29415278,47.34858889,47.53,47.55833333,46.48333333
 1,std_taconite_pellets,Longitude,location,constant,deg E,-91.25649444,-92.58361944,-92.91,-92.525,-87.66666667
 2,std_taconite_pellets,Crude ore processed,capacity,constant,wltpy,17000000.0,15000000.0,24000000.0,8600000.0,20500000.0

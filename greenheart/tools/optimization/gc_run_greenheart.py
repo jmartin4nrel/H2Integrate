@@ -9,12 +9,7 @@ from pathlib import Path
 import numpy as np
 
 from greenheart.tools.optimization import fileIO
-
-
-try:
-    from greenheart.tools.optimization.openmdao import GreenHeartComponent
-except:
-    GreenHeartComponent = None
+from greenheart.tools.optimization.openmdao import GreenHeartComponent
 from greenheart.tools.optimization.mpi_tools import MPI, map_comm_heirarchical
 from greenheart.simulation.greenheart_simulation import (
     GreenHeartSimulationConfig,
