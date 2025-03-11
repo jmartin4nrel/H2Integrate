@@ -49,7 +49,7 @@ from greenheart.simulation.technologies.ammonia.ammonia import (
     AmmoniaCapacityModelOutputs,
     run_ammonia_full_model,
 )
-from greenheart.simulation.technologies.iron.Martin_Transport.iron_transport import (
+from greenheart.simulation.technologies.iron.martin_transport.iron_transport import (
     calc_iron_ship_cost,
 )
 
@@ -716,10 +716,8 @@ def run_physics(config: GreenHeartSimulationConfig, hi, wind_cost_results):
         verbose=config.verbose,
     )
 
-    wind_annual_energy_kwh = hopp_results["annual_energies"][
-        "wind"
-    ]  # annual energy from wind (kWh)
-    solar_pv_annual_energy_kwh = hopp_results["annual_energies"]["pv"]
+    wind_annual_energy_kwh = hopp_results["annual_energies"]["wind"]  # annual energy from wind (kWh)
+    solar_pv_annual_energy_kwh = hopp_results["annual_energies"]["pv"]  # annual energy from solar (kWh)
 
     if config.design_scenario["wind_location"] == "onshore":
         wind_config = he_fin.WindCostConfig(
@@ -1101,6 +1099,8 @@ def run_physics(config: GreenHeartSimulationConfig, hi, wind_cost_results):
 
     return (
         hopp_results,
+        wind_annual_energy_kwh,
+        solar_pv_annual_energy_kwh,
         wind_cost_results,
         electrolyzer_physics_results,
         electrolyzer_cost_results,
@@ -1233,6 +1233,8 @@ def run_simulation(config: GreenHeartSimulationConfig):
 
         (
             hopp_results,
+            wind_annual_energy_kwh,
+            solar_pv_annual_energy_kwh,
             wind_cost_results,
             electrolyzer_physics_results,
             electrolyzer_cost_results,
@@ -1329,7 +1331,7 @@ def run_simulation(config: GreenHeartSimulationConfig):
 
         if any(
             i in config.greenheart_config
-            for i in ["iron", "iron_pre", "iron_pre", "iron_win", "iron_post"]
+            for i in ["iron", "iron_pre", "iron_win", "iron_post"]
         ):
             config.greenheart_config["iron_out_fn"] = config.iron_out_fn
             iron_config = copy.deepcopy(config.greenheart_config)
@@ -1440,7 +1442,6 @@ def run_simulation(config: GreenHeartSimulationConfig):
                     iron_performance = iron_post_performance
                     iron_costs = iron_post_costs
                     iron_finance = iron_post_finance
-
         else:
             iron_finance = {}
 
@@ -1467,8 +1468,6 @@ def run_simulation(config: GreenHeartSimulationConfig):
 
         else:
             ammonia_finance = {}
-
-    gh_fio.save_iron_results(config, iron_performance, iron_costs, iron_finance)
 
     ################# end OSW intermediate calculations
     if config.post_processing:
@@ -1500,21 +1499,25 @@ def run_simulation(config: GreenHeartSimulationConfig):
             verbose=config.verbose,
             output_dir=config.output_dir,
         )  # , lcoe, lcoh, lcoh_with_grid, lcoh_grid_only)
-
-    if iron_config["lca_config"]["run_lca"]:
-        lca_df = calculate_lca(
-            wind_annual_energy_kwh,
-            solar_pv_annual_energy_kwh,
-            0,
-            hydrogen_amount_kgpy,
-            hydrogen_annual_energy_kwh,
-            config.hopp_config,
-            config.greenheart_config,
-            0,
-            0,
-            plant_design_scenario_number=9,
-            incentive_option_number=1,
-        )
+    if any(
+            i in config.greenheart_config
+            for i in ["iron", "iron_pre", "iron_win", "iron_post"]
+        ):
+        gh_fio.save_iron_results(config, iron_performance, iron_costs, iron_finance)
+        if iron_config["lca_config"]["run_lca"]:
+            lca_df = calculate_lca(
+                wind_annual_energy_kwh,
+                solar_pv_annual_energy_kwh,
+                0,
+                hydrogen_amount_kgpy,
+                hydrogen_annual_energy_kwh,
+                config.hopp_config,
+                config.greenheart_config,
+                0,
+                0,
+                plant_design_scenario_number=9,
+                incentive_option_number=1,
+            )
 
     # return
     if config.output_level == 0:

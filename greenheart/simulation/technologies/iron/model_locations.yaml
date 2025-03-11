@@ -1,53 +1,53 @@
 performance:
-  Martin Ore:
+  martin_ore:
     compatible_tech: ['h2_dri','ng_dri']
-    model: 'greenheart.simulation.technologies.iron.Martin Ore.perf_model'
+    model: 'greenheart.simulation.technologies.iron.martin_ore.perf_model'
     inputs: 'perf_inputs.csv'
     coeffs: 'perf_coeffs.csv'
-  Rosner:
+  rosner:
     compatible_tech: ['h2_dri','ng_dri']
-    model: 'greenheart.simulation.technologies.iron.Rosner.perf_model'
+    model: 'greenheart.simulation.technologies.iron.rosner.perf_model'
     inputs: 'perf_inputs.csv'
     coeffs: 'perf_coeffs.csv'
 cost:
-  Martin Ore:
+  martin_ore:
     compatible_tech: ['h2_dri','ng_dri']
-    model: 'greenheart.simulation.technologies.iron.Martin Ore.cost_model'
+    model: 'greenheart.simulation.technologies.iron.martin_ore.cost_model'
     inputs: 'cost_inputs.csv'
     coeffs: 'cost_coeffs.csv'
-  Rosner:
+  rosner:
     compatible_tech: ['h2_dri','ng_dri']
-    model: 'greenheart.simulation.technologies.iron.Rosner.cost_model'
+    model: 'greenheart.simulation.technologies.iron.rosner.cost_model'
     inputs: 'cost_inputs.csv'
     coeffs: 'cost_coeffs.csv'
-  Stinn:
+  stinn:
     compatible_tech: ['blast_furnace', 'ng_dri', 'h2_dri', 'moe', 'ahe', 'mse']
-    model: 'greenheart.simulation.technologies.iron.Stinn.cost_model'
+    model: 'greenheart.simulation.technologies.iron.stinn.cost_model'
     inputs: 'cost_inputs.csv'
     coeffs: 'cost_coeffs.csv'
-  Peters:
+  peters:
     compatible_tech: ['blast_furnace', 'ng_dri', 'h2_dri', 'moe', 'ahe', 'mse']
-    model: 'greenheart.simulation.technologies.iron.Peters.opex_model'
+    model: 'greenheart.simulation.technologies.iron.peters.opex_model'
     inputs: 'cost_inputs.csv'
     coeffs: 'cost_coeffs.csv'
 finance:
-  Martin Ore:
+  martin_ore:
     compatible_tech: ['h2_dri','ng_dri']
-    model: 'greenheart.simulation.technologies.iron.Martin Ore.finance_model'
+    model: 'greenheart.simulation.technologies.iron.martin_ore.finance_model'
     inputs: 'cost_inputs.csv'
     coeffs: 'cost_coeffs.csv'
-  Rosner:
+  rosner:
     compatible_tech: ['h2_dri','ng_dri']
-    model: 'greenheart.simulation.technologies.iron.Rosner.finance_model'
+    model: 'greenheart.simulation.technologies.iron.rosner.finance_model'
     inputs: 'cost_inputs.csv'
     coeffs: 'cost_coeffs.csv'
-  Rosner Ore:
+  rosner_ore:
     compatible_tech: ['h2_dri','ng_dri']
-    model: 'greenheart.simulation.technologies.iron.Rosner Ore.finance_model'
+    model: 'greenheart.simulation.technologies.iron.rosner_ore.finance_model'
     inputs: 'cost_inputs.csv'
     coeffs: 'cost_coeffs.csv'
-  Rosner Override:
+  rosner_override:
     compatible_tech: ['h2_dri','ng_dri']
-    model: 'greenheart.simulation.technologies.iron.Rosner Override.finance_model'
+    model: 'greenheart.simulation.technologies.iron.rosner_override.finance_model'
     inputs: 'cost_inputs.csv'
     coeffs: 'cost_coeffs.csv'
