@@ -54,7 +54,7 @@ from greenheart.simulation.technologies.iron.martin_transport.iron_transport imp
 )
 
 
-def convert_to_serializable(value: Any) -> float | int | str | type(None) | list | dict:
+def convert_to_serializable(value: Any) -> float | int | str | type[None] | list | dict:
     """Recursively converts complex types to JSON/YAML-compatible formats.
 
     Handles:
