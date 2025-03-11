@@ -29,11 +29,11 @@ GitHub repo. Feel free to tackle any existing bugs or enhancement ideas by submi
 When contributing new features, or fixing existing capabilities, be sure to add and/or update the
 docstrings as needed to ensure the documentation site stays up to date with the latest changes.
 
-To build the documentation locally, the following command can be run in your terminal in the main
-directory of the repository.
+To build the documentation locally, the following command can be run in your terminal in the docs
+directory of the repository:
 
 ```bash
-jupyter-book build docs/
+sh build_book.sh
 ```
 
 In addition to generating the documentation, be sure to check the results by opening the following
