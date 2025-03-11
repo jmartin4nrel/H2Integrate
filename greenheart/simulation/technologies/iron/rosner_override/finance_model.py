@@ -6,6 +6,49 @@ from greenheart.tools.inflation.inflate import inflate_cpi, inflate_cepci
 
 
 def main(config):
+    """
+    Performs financial analysis for a Direct Reduced Iron (DRI) plant or
+    a Electric Arc Furnace (EAF) plant using ProFAST.
+
+    This function models the finances of a DRI and/or EAF 
+    plant based on input parameters, cost data, and plant performance metrics. It 
+    utilizes ProFAST for financial modeling, including capital costs, operational expenses, 
+    feedstock costs, and coproduct revenues.
+
+    Args:
+        config (object): Configuration object containing:
+            product_selection (str): The selected technology 
+            (e.g., "ng_dri", "h2_dri","ng_eaf", "h2_eaf").
+            performance (object): Contains plant performance data as a dataframe.
+            cost (object): Contains cost data as a dataframe.
+            params (dict): Key financial and operational parameters, including:
+                plant_capacity_mtpy (float): Plant capacity in metric tonnes per year.
+                capacity_denominator (str): Unit for capacity (e.g., "metric tonnes").
+                operational_year (int): Start year of operation.
+                installation_years (int): Number of years for plant installation.
+                plant_life (int): Expected operating life of the plant.
+                gen_inflation (float): General inflation rate.
+                cost_year (int): Year for cost normalization.
+                financial_assumptions (dict): Various financial assumptions for ProFAST.
+                pf (dict, optional): Predefined ProFAST configuration.
+
+    Returns:
+        tuple: A tuple containing:
+            - sol (float): Solved product price needed for profitability.
+            - summary (dict): Summary of key financial results.
+            - price_breakdown (dict): Cost breakdown of the plant.
+            - pf (ProFAST.ProFAST): The ProFAST model object containing full financial details.
+
+    Notes:
+        - The function reads input cost data and inflates values to the `cost_year` using CPI or CEPCI.
+        - ProFAST is used to define financial parameters, capital and operational costs, and revenue streams.
+        - Feedstock costs and coproduct revenues are incorporated based on performance metrics.
+        - The function returns the required selling price for the product to achieve the financial targets.
+
+    References:
+        - ProFAST: https://github.com/NREL/ProFAST
+    """
+
     # TODO: Get feedstock costs from input sheets
     natural_gas_prices = 3.76232  # TODO: Update to read in from greenheart_config
     natural_gas_prices_MMBTU = 4  #

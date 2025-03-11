@@ -1,9 +1,3 @@
-"""
-Direct Reduced Iron (DRI) model developed by Rosner et al.
-Energy Environ. Sci., 2023, 16, 4121
-doi.org/10.1039/d3ee01077e
-"""
-
 from pathlib import Path
 
 import numpy as np
@@ -14,6 +8,29 @@ CD = Path(__file__).parent
 
 
 def main(config):
+    """Processes product coefficients and converts units for a mining operation model.
+
+    This function either refits model coefficients using input data or loads 
+    pre-existing coefficients. It selects the relevant product and site data, 
+    performs unit conversion from long tons (LT) to dry metric tonnes (mt), 
+    and prepares a performance DataFrame.
+
+    Args:
+        config (object): Configuration object containing:
+            - model (dict): Includes `refit_coeffs` (bool) to determine 
+              whether to refit coefficients, `inputs_fp` (str) for input 
+              file path, and `coeffs_fp` (str) for coefficients file path.
+            - product_selection (str): The selected product to process.
+            - site (dict): Contains `name` (str), the site name.
+
+    Returns:
+        pandas.DataFrame: Processed DataFrame with selected product data, 
+        converted units, and filtered coefficients for performance modeling.
+    
+    Raises:
+        ValueError: If the selected product or site is not found in the 
+        coefficients data.
+    """
     # If re-fitting the model, load an inputs dataframe, otherwise, load up the coeffs
     if config.model["refit_coeffs"]:
         input_df = pd.read_csv(CD / config.model["inputs_fp"])

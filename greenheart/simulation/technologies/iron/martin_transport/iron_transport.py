@@ -15,8 +15,23 @@ CD = Path(__file__).parent
 ship_coords = pd.read_csv(CD / "shipping_coords.csv", index_col=0)
 
 
-# Compute water shipping costs
 def calc_water_ship_cost(year):
+    """Calculates waterborne shipping costs for iron transport.
+
+    This function retrieves barge shipping cost coefficients for a given year 
+    and computes the shipping cost per tonne for various destinations. It also 
+    constructs route coordinates for each shipping path.
+
+    Args:
+        year (int): The year for which shipping costs are calculated.
+
+    Returns:
+        dict: A dictionary where keys are destination names and values contain:
+            - dist_km (float): Distance in kilometers.
+            - waypts (list): List of waypoints along the route.
+            - coords (list of tuples): Latitude and longitude coordinates for each waypoint.
+            - ship_cost_tonne (float): Shipping cost per tonne for the given year.
+    """
     coeff_dict = load_top_down_coeffs(["Barge Shipping Cost"])
     year_idx = list(coeff_dict["years"]).index(year)
     ship_cost_dol_tonne_mi = coeff_dict["Barge Shipping Cost"]["values"][year_idx]
@@ -88,6 +103,22 @@ def calc_water_ship_cost(year):
 
 
 def calc_iron_ship_cost(iron_config):
+    """Computes total iron transport cost, including land and water shipping.
+
+    This function calculates the minimum cost of shipping iron from available 
+    shipping sites to the final destination, considering both water and land 
+    transportation costs.
+
+    Args:
+        iron_config (dict): Configuration dictionary containing:
+            - project_parameters (dict): Includes `cost_year` (int), the year for cost estimation.
+            - iron (dict): Contains `site` (dict) with `lat` and `lon` keys for destination coordinates.
+
+    Returns:
+        tuple:
+            - iron_transport_cost_tonne (float): Minimum transport cost per tonne.
+            - ore_profit_pct (float): Estimated ore profit margin for the given year.
+    """
     year = iron_config["project_parameters"]["cost_year"]
 
     ship_dict = calc_water_ship_cost(year)

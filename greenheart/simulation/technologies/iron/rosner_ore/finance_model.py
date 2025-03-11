@@ -6,6 +6,32 @@ from greenheart.simulation.technologies.iron.load_top_down_coeffs import load_to
 
 
 def main(config):
+    """
+    Runs a techno-economic analysis of a reduction plant using ProFAST.
+
+    This function retrieves cost data, configures ProFAST with financial assumptions,
+    and calculates the levelized cost of processed iron ore. It processes capital,
+    fixed, and variable operational costs while adjusting for inflation.
+
+    Args:
+        config (object): Configuration object containing input parameters, including:
+            cost (object): Contains cost data in a DataFrame.
+            site (dict): Contains site-specific parameters, including the site name.
+            params (dict): Contains financial and operational parameters such as:
+                - operational_year (int): The first year of plant operation.
+                - installation_years (int): Duration of installation in years.
+                - plant_life (int): Expected operational life of the plant in years.
+                - gen_inflation (float): General inflation rate.
+                - cost_year (int): The reference year for cost adjustments.
+                - financial_assumptions (dict): Key-value pairs of financial assumptions.
+
+    Returns:
+        tuple: A tuple containing:
+            - sol (dict): Solution output from ProFAST, including the levelized cost.
+            - summary (dict): Summary values from the ProFAST model.
+            - price_breakdown (dict): Cost breakdown from ProFAST.
+            - pf (ProFAST.ProFAST): The ProFAST model instance with applied parameters.
+    """
     # Get reduction plant costs into data frame/series with cost names as index
     costs = config.cost
     cost_df = costs.costs_df.set_index("Name")

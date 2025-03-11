@@ -15,6 +15,33 @@ CD = Path(__file__).parent
 
 
 def main(config):
+    """Processes and retrieves performance data for Direct Reduced Iron (DRI) modeling
+    and or Electric Arc Furnace (EAF) modeling.
+
+    This function either fits a new model by processing input data or loads precomputed 
+    coefficients from a file. It then extracts performance data for the selected product 
+    and site, and converts units from per-unit steel to per-unit iron if necessary.
+
+    Args:
+        config (object): Configuration object containing:
+            - model (dict): Model-related settings including:
+                - refit_coeffs (bool): Whether to refit coefficients from input data.
+                - inputs_fp (str): File path to input data (if refitting).
+                - coeffs_fp (str): File path to coefficient data.
+            - product_selection (str): Selected product for analysis.
+            - params (dict): Additional parameters, including:
+                - capacity_denominator (str): Determines unit conversion (e.g., "iron").
+
+    Returns:
+        pd.DataFrame: Processed performance data with relevant coefficients.
+
+    Raises:
+        ValueError: If the selected product or site is not found in the coefficient data.
+
+    References:
+        Rosner et al., "Direct Reduced Iron (DRI) Model," Energy Environ. Sci., 2023, 16, 4121.
+        DOI: `doi.org/10.1039/d3ee01077e`
+    """
     # If re-fitting the model, load an inputs dataframe, otherwise, load up the coeffs
     if config.model["refit_coeffs"]:
         input_df = pd.read_csv(CD / config.model["inputs_fp"])

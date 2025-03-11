@@ -17,6 +17,24 @@ num_label_cols = 4
 
 
 def load_top_down_coeffs(coeff_list=None, cost_year=None):
+    """Loads top-down cost coefficients from a CSV file and adjusts for inflation if needed.
+
+    Args:
+        coeff_list (list, optional): A list of coefficient names to extract. If None, all coefficients are used. Defaults to None.
+        cost_year (int, optional): The target year for cost adjustments. If provided, values with dollar-based units are 
+            adjusted for inflation using CPI. Defaults to None.
+
+    Returns:
+        dict: A dictionary containing:
+            - "years" (numpy.ndarray): Array of years corresponding to the coefficient values.
+            - Each coefficient as a key, with values:
+                - "values" (numpy.ndarray): The numerical values of the coefficient.
+                - "unit" (str): The unit of the coefficient.
+
+    Example:
+        >>> coeffs = load_top_down_coeffs(["Skilled Labor Cost"], 2015)
+        >>> print(coeffs["Skilled Labor Cost"]["values"])
+    """
     coeff_dict = {}
 
     coeff_df = pd.read_csv(CD + "/top_down_coeffs.csv")
