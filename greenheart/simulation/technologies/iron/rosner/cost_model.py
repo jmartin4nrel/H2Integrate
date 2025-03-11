@@ -106,7 +106,7 @@ def main(config):
             del array_dict["Steel Slab"]
 
             for key in array_dict:
-                y = np.log(array_dict[key]+ 1e-10)  # Add a small value to avoid log(0)
+                y = np.log(array_dict[key] + 1e-10)  # Add a small value to avoid log(0)
                 # Fit the curve
                 coeffs = np.polyfit(x, y, 1)
 

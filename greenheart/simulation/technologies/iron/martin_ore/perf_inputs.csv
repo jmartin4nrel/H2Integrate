@@ -1,4 +1,4 @@
-Product,Name,Type,Unit,Northshore,United,Hibbing,Minorca,Tilden 
+Product,Name,Type,Unit,Northshore,United,Hibbing,Minorca,Tilden
 std_taconite_pellets,Latitude,location,deg N,47.29415278,47.34858889,47.53,47.55833333,46.48333333
 std_taconite_pellets,Longitude,location,deg E,-91.25649444,-92.58361944,-92.91,-92.525,-87.66666667
 std_taconite_pellets,Crude ore processed,capacity,wltpy,17000000,15000000,24000000,8600000,20500000

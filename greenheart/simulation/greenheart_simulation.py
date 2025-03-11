@@ -716,8 +716,12 @@ def run_physics(config: GreenHeartSimulationConfig, hi, wind_cost_results):
         verbose=config.verbose,
     )
 
-    wind_annual_energy_kwh = hopp_results["annual_energies"]["wind"]  # annual energy from wind (kWh)
-    solar_pv_annual_energy_kwh = hopp_results["annual_energies"]["pv"]  # annual energy from solar (kWh)
+    wind_annual_energy_kwh = hopp_results["annual_energies"][
+        "wind"
+    ]  # annual energy from wind (kWh)
+    solar_pv_annual_energy_kwh = hopp_results["annual_energies"][
+        "pv"
+    ]  # annual energy from solar (kWh)
 
     if config.design_scenario["wind_location"] == "onshore":
         wind_config = he_fin.WindCostConfig(
@@ -1330,8 +1334,7 @@ def run_simulation(config: GreenHeartSimulationConfig):
             )
 
         if any(
-            i in config.greenheart_config
-            for i in ["iron", "iron_pre", "iron_win", "iron_post"]
+            i in config.greenheart_config for i in ["iron", "iron_pre", "iron_win", "iron_post"]
         ):
             config.greenheart_config["iron_out_fn"] = config.iron_out_fn
             iron_config = copy.deepcopy(config.greenheart_config)
@@ -1499,10 +1502,7 @@ def run_simulation(config: GreenHeartSimulationConfig):
             verbose=config.verbose,
             output_dir=config.output_dir,
         )  # , lcoe, lcoh, lcoh_with_grid, lcoh_grid_only)
-    if any(
-            i in config.greenheart_config
-            for i in ["iron", "iron_pre", "iron_win", "iron_post"]
-        ):
+    if any(i in config.greenheart_config for i in ["iron", "iron_pre", "iron_win", "iron_post"]):
         gh_fio.save_iron_results(config, iron_performance, iron_costs, iron_finance)
         if iron_config["lca_config"]["run_lca"]:
             lca_df = calculate_lca(

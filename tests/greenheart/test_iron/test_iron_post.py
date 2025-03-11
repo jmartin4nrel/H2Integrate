@@ -1,19 +1,21 @@
 import copy
+
 from pytest import approx, fixture
 
 from greenheart.simulation.technologies.iron import iron
 
+
 @fixture
 def iron_post():
     iron_post = {
-        "project_parameters":{
-            "cost_year":2022,
+        "project_parameters": {
+            "cost_year": 2022,
             "project_lifetime": 30,
             "grid_connection": False,
             "ppa_price": 0.025,
             "hybrid_electricity_estimated_cf": 0.492,
             "atb_year": 2030,
-            "installation_time": 36
+            "installation_time": 36,
         },
         "iron": {
             "site": {
@@ -36,7 +38,7 @@ def iron_post():
             },
             "performance": {
                 "plant_capacity_mtpy": 1000000,
-                "capacity_denominator": "iron", # Alternative: 'steel'
+                "capacity_denominator": "iron",  # Alternative: 'steel'
             },
             "costs": {
                 "lcoh": 2.80,
@@ -58,117 +60,150 @@ def iron_post():
                     "debt interest rate": 0.050049,
                 },
             },
-        }
+        },
     }
     return iron_post
 
-def test_ng_eaf(iron_post,subtests):
-    performance, cost, finance =iron.run_iron_full_model(iron_post)
+
+def test_ng_eaf(iron_post, subtests):
+    performance, cost, finance = iron.run_iron_full_model(iron_post)
     perf_df = performance.performances_df
     cost_df = cost.costs_df
 
     with subtests.test("performance model: NG"):
         # TODO: verify conversion is correct
-        assert perf_df.loc[perf_df["Name"] == "Natural Gas", "Model"].values[0] == approx(1.80, 1e-2)
+        assert perf_df.loc[perf_df["Name"] == "Natural Gas", "Model"].values[0] == approx(
+            1.80, 1e-2
+        )
     with subtests.test("performance model: H2"):
         # TODO: verify conversion is correct
         assert perf_df.loc[perf_df["Name"] == "Hydrogen", "Model"].values[0] == approx(0, 1e-3)
     with subtests.test("cost model"):
-        #TODO: verify value - just copied result
-        assert cost_df.loc[cost_df["Name"] == "EAF & Casting","Mid WI"].values[0] == approx(175125136, 1e-3)
+        # TODO: verify value - just copied result
+        assert cost_df.loc[cost_df["Name"] == "EAF & Casting", "Mid WI"].values[0] == approx(
+            175125136, 1e-3
+        )
     with subtests.test("finance model"):
-        #TODO: verify value - just copied result
+        # TODO: verify value - just copied result
         assert finance.sol["lco"] == approx(119.38, 1e-3)
 
-def test_h2_eaf(iron_post,subtests):
+
+def test_h2_eaf(iron_post, subtests):
     iron_post_copy = copy.deepcopy(iron_post)
     iron_post_copy["iron"]["product_selection"] = "h2_eaf"
-    performance, cost, finance =iron.run_iron_full_model(iron_post_copy)
+    performance, cost, finance = iron.run_iron_full_model(iron_post_copy)
     perf_df = performance.performances_df
     cost_df = cost.costs_df
 
     with subtests.test("performance model: NG"):
         # TODO: verify conversion is correct
-        assert perf_df.loc[perf_df["Name"] == "Natural Gas", "Model"].values[0] == approx(0.079, 1e-2)
+        assert perf_df.loc[perf_df["Name"] == "Natural Gas", "Model"].values[0] == approx(
+            0.079, 1e-2
+        )
     with subtests.test("performance model: H2"):
         # TODO: verify conversion is correct
         assert perf_df.loc[perf_df["Name"] == "Hydrogen", "Model"].values[0] == approx(0, 1e-2)
     with subtests.test("cost model"):
-        #TODO: verify value - just copied result
-        assert cost_df.loc[cost_df["Name"] == "EAF & Casting","Mid WI"].values[0] == approx(177009717, 1e-3)
+        # TODO: verify value - just copied result
+        assert cost_df.loc[cost_df["Name"] == "EAF & Casting", "Mid WI"].values[0] == approx(
+            177009717, 1e-3
+        )
     with subtests.test("finance model"):
-        #TODO: verify value - just copied result
+        # TODO: verify value - just copied result
         assert finance.sol["lco"] == approx(124.68, 1e-3)
 
-def test_steel_capacity_denominator(iron_post,subtests):
+
+def test_steel_capacity_denominator(iron_post, subtests):
     iron_post_copy = copy.deepcopy(iron_post)
     iron_post_copy["iron"]["performance"]["capacity_denominator"] = "steel"
     iron_post_copy["iron"]["product_selection"] = "h2_eaf"
-    performance, cost, finance =iron.run_iron_full_model(iron_post_copy)
+    performance, cost, finance = iron.run_iron_full_model(iron_post_copy)
     perf_df = performance.performances_df
     cost_df = cost.costs_df
 
     with subtests.test("performance model: NG"):
-        assert perf_df.loc[perf_df["Name"] == "Natural Gas", "Model"].values[0] == approx(0.0942, 1e-2)
+        assert perf_df.loc[perf_df["Name"] == "Natural Gas", "Model"].values[0] == approx(
+            0.0942, 1e-2
+        )
     with subtests.test("performance model: H2"):
         assert perf_df.loc[perf_df["Name"] == "Hydrogen", "Model"].values[0] == approx(0, 1e-2)
     with subtests.test("cost model"):
-        #TODO: verify value - just copied result
-        assert cost_df.loc[cost_df["Name"] == "EAF & Casting","Mid WI"].values[0] == approx(191769218, 1e-3)
+        # TODO: verify value - just copied result
+        assert cost_df.loc[cost_df["Name"] == "EAF & Casting", "Mid WI"].values[0] == approx(
+            191769218, 1e-3
+        )
     with subtests.test("finance model"):
-        #TODO: verify value - just copied result
+        # TODO: verify value - just copied result
         assert finance.sol["lco"] == approx(138.31, 1e-3)
 
-def test_rosner_override(iron_post,subtests):
+
+def test_rosner_override(iron_post, subtests):
     iron_post_copy = copy.deepcopy(iron_post)
     iron_post_copy["iron"]["finance_model"]["name"] = "rosner_override"
-    performance, cost, finance =iron.run_iron_full_model(iron_post_copy)
+    performance, cost, finance = iron.run_iron_full_model(iron_post_copy)
     perf_df = performance.performances_df
     cost_df = cost.costs_df
 
     with subtests.test("performance model: NG"):
-        assert perf_df.loc[perf_df["Name"] == "Natural Gas", "Model"].values[0] == approx(1.80, 1e-2)
+        assert perf_df.loc[perf_df["Name"] == "Natural Gas", "Model"].values[0] == approx(
+            1.80, 1e-2
+        )
     with subtests.test("performance model: H2"):
         assert perf_df.loc[perf_df["Name"] == "Hydrogen", "Model"].values[0] == approx(0, 1e-2)
     with subtests.test("cost model"):
-        #TODO: verify value - just copied result
-        assert cost_df.loc[cost_df["Name"] == "EAF & Casting","Mid WI"].values[0] == approx(175125136, 1e-3)
+        # TODO: verify value - just copied result
+        assert cost_df.loc[cost_df["Name"] == "EAF & Casting", "Mid WI"].values[0] == approx(
+            175125136, 1e-3
+        )
     with subtests.test("finance model"):
-        #TODO: verify value - just copied result
+        # TODO: verify value - just copied result
         assert finance.sol["lco"] == approx(119.0, 1e-3)
 
-def test_refit_coefficients(iron_post,subtests):
+
+def test_refit_coefficients(iron_post, subtests):
     # Non-refit coefficients
-    performance, cost, finance =iron.run_iron_full_model(iron_post)
+    performance, cost, finance = iron.run_iron_full_model(iron_post)
     perf_df = performance.performances_df
     cost_df = cost.costs_df
 
     # Refit coefficients performance model
     iron_post_copy = copy.deepcopy(iron_post)
     iron_post_copy["iron"]["performance_model"]["refit_coeffs"] = True
-    performance2, cost2, finance2 =iron.run_iron_full_model(iron_post_copy)
+    performance2, cost2, finance2 = iron.run_iron_full_model(iron_post_copy)
     perf_df2 = performance2.performances_df
     cost_df2 = cost2.costs_df
     with subtests.test("performance model: NG"):
-        assert perf_df2.loc[perf_df2["Name"] == "Natural Gas", "Model"].values[0] == approx(perf_df.loc[perf_df["Name"] == "Natural Gas", "Model"].values[0], 1e-3)
+        assert perf_df2.loc[perf_df2["Name"] == "Natural Gas", "Model"].values[0] == approx(
+            perf_df.loc[perf_df["Name"] == "Natural Gas", "Model"].values[0], 1e-3
+        )
     with subtests.test("performance model: H2"):
-        assert perf_df2.loc[perf_df2["Name"] == "Hydrogen", "Model"].values[0] == approx(perf_df.loc[perf_df["Name"] == "Hydrogen", "Model"].values[0], 1e-3)
+        assert perf_df2.loc[perf_df2["Name"] == "Hydrogen", "Model"].values[0] == approx(
+            perf_df.loc[perf_df["Name"] == "Hydrogen", "Model"].values[0], 1e-3
+        )
     with subtests.test("cost model"):
-        assert cost_df2.loc[cost_df2["Name"] == "EAF & Casting","Mid WI"].values[0] == approx(cost_df.loc[cost_df["Name"] == "EAF & Casting","Mid WI"].values[0], 1e-3)
+        assert cost_df2.loc[cost_df2["Name"] == "EAF & Casting", "Mid WI"].values[0] == approx(
+            cost_df.loc[cost_df["Name"] == "EAF & Casting", "Mid WI"].values[0], 1e-3
+        )
     with subtests.test("finance model"):
         assert finance.sol["lco"] == approx(finance.sol["lco"], 1e-3)
 
     # Refit coefficients cost model
     iron_post_copy = copy.deepcopy(iron_post)
     iron_post_copy["iron"]["cost_model"]["refit_coeffs"] = True
-    performance2, cost2, finance2 =iron.run_iron_full_model(iron_post_copy)
+    performance2, cost2, finance2 = iron.run_iron_full_model(iron_post_copy)
     perf_df2 = performance2.performances_df
     cost_df2 = cost2.costs_df
     with subtests.test("performance model: NG"):
-        assert perf_df2.loc[perf_df2["Name"] == "Natural Gas", "Model"].values[0] == approx(perf_df.loc[perf_df["Name"] == "Natural Gas", "Model"].values[0], 1e-3)
+        assert perf_df2.loc[perf_df2["Name"] == "Natural Gas", "Model"].values[0] == approx(
+            perf_df.loc[perf_df["Name"] == "Natural Gas", "Model"].values[0], 1e-3
+        )
     with subtests.test("performance model: H2"):
-        assert perf_df2.loc[perf_df2["Name"] == "Hydrogen", "Model"].values[0] == approx(perf_df.loc[perf_df["Name"] == "Hydrogen", "Model"].values[0], 1e-3)
+        assert perf_df2.loc[perf_df2["Name"] == "Hydrogen", "Model"].values[0] == approx(
+            perf_df.loc[perf_df["Name"] == "Hydrogen", "Model"].values[0], 1e-3
+        )
     with subtests.test("cost model"):
-        assert cost_df2.loc[cost_df2["Name"] == "EAF & Casting","Mid WI"].values[0] == approx(cost_df.loc[cost_df["Name"] == "EAF & Casting","Mid WI"].values[0], 1e-3)
+        assert cost_df2.loc[cost_df2["Name"] == "EAF & Casting", "Mid WI"].values[0] == approx(
+            cost_df.loc[cost_df["Name"] == "EAF & Casting", "Mid WI"].values[0], 1e-3
+        )
     with subtests.test("finance model"):
         assert finance.sol["lco"] == approx(finance.sol["lco"], 1e-3)

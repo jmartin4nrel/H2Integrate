@@ -8,22 +8,7 @@ import warnings
 from pathlib import Path
 
 import numpy as np
-
-
-try:
-    import openmdao.api as om
-except:
-    om = False
-
-try:
-    from greenheart.tools.optimization.openmdao import (
-        TurbineDistanceComponent,
-        BoundaryDistanceComponent,
-    )
-except:
-    TurbineDistanceComponent = None
-    BoundaryDistanceComponent = None
-
+import openmdao.api as om
 from hopp.simulation import HoppInterface
 
 from greenheart.tools.optimization.openmdao import (
