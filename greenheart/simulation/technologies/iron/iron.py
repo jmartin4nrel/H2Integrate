@@ -1,10 +1,10 @@
 import copy
 import importlib
-from typing import ClassVar
 from pathlib import Path
+from dataclasses import field
 
 import pandas as pd
-from attrs import field, define
+from attrs import define
 from pandas import DataFrame
 from hopp.utilities import load_yaml
 
@@ -31,9 +31,9 @@ class IronPerformanceModelConfig:
     """
 
     product_selection: str = ""
-    site: ClassVar[dict] = {}
-    model: ClassVar[dict] = {}
-    params: ClassVar[dict] = {}
+    site: dict = field(default_factory=dict)
+    model: dict = field(default_factory=dict)
+    params: dict = field(default_factory=dict)
 
     def __attrs_post_init__(self):
         if self.product_selection == "":
@@ -116,9 +116,9 @@ class IronCostModelConfig:
 
     performance: IronPerformanceModelOutputs
     product_selection: str = ""
-    site: ClassVar[dict] = {}
-    model: ClassVar[dict] = {}
-    params: ClassVar[dict] = {}
+    site: dict = field(default_factory=dict)
+    model: dict = field(default_factory=dict)
+    params: dict = field(default_factory=dict)
 
     def __attrs_post_init__(self):
         if self.product_selection == "":
@@ -206,9 +206,9 @@ class IronFinanceModelConfig(IronCostModelConfig):
     cost: IronCostModelOutputs
     performance: IronPerformanceModelOutputs
     product_selection: str = ""
-    site: ClassVar[dict] = {}
-    model: ClassVar[dict] = {}
-    params: ClassVar[dict] = {}
+    site: dict = field(default_factory=dict)
+    model: dict = field(default_factory=dict)
+    params: dict = field(default_factory=dict)
     pf: dict | None = field(init=False)
 
     def __attrs_post_init__(self):
