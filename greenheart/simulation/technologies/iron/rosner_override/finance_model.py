@@ -10,14 +10,14 @@ def main(config):
     Performs financial analysis for a Direct Reduced Iron (DRI) plant or
     a Electric Arc Furnace (EAF) plant using ProFAST.
 
-    This function models the finances of a DRI and/or EAF 
-    plant based on input parameters, cost data, and plant performance metrics. It 
-    utilizes ProFAST for financial modeling, including capital costs, operational expenses, 
+    This function models the finances of a DRI and/or EAF
+    plant based on input parameters, cost data, and plant performance metrics. It
+    utilizes ProFAST for financial modeling, including capital costs, operational expenses,
     feedstock costs, and coproduct revenues.
 
     Args:
         config (object): Configuration object containing:
-            product_selection (str): The selected technology 
+            product_selection (str): The selected technology
             (e.g., "ng_dri", "h2_dri","ng_eaf", "h2_eaf").
             performance (object): Contains plant performance data as a dataframe.
             cost (object): Contains cost data as a dataframe.
@@ -40,10 +40,13 @@ def main(config):
             - pf (ProFAST.ProFAST): The ProFAST model object containing full financial details.
 
     Notes:
-        - The function reads input cost data and inflates values to the `cost_year` using CPI or CEPCI.
-        - ProFAST is used to define financial parameters, capital and operational costs, and revenue streams.
+        - The function reads input cost data and inflates values to the
+            `cost_year` using CPI or CEPCI.
+        - ProFAST is used to define financial parameters, capital
+            and operational costs, and revenue streams.
         - Feedstock costs and coproduct revenues are incorporated based on performance metrics.
-        - The function returns the required selling price for the product to achieve the financial targets.
+        - The function returns the required selling price for the product to
+        achieve the financial targets.
 
     References:
         - ProFAST: https://github.com/NREL/ProFAST

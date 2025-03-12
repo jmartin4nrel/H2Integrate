@@ -26,15 +26,17 @@ def main(config):
     """Calculates the capital, fixed O&M, and owner's costs for a Direct Reduced Iron (DRI) plant or
     a Electric Arc Furnace (EAF) plant.
 
-    This function processes economic and performance data to estimate the total capital cost, 
-    fixed operational expenses, and other costs associated with a DRI and/or EAF plant based on the 
-    methodology presented by Rosner et al. (Energy Environ. Sci., 2023, 16, 4121, doi:10.1039/d3ee01077e). 
+    This function processes economic and performance data to estimate the total capital cost,
+    fixed operational expenses, and other costs associated with a DRI and/or EAF plant based on the
+    methodology presented by Rosner et al.
+    (Energy Environ. Sci., 2023, 16, 4121, doi:10.1039/d3ee01077e).
 
-    The function utilizes predefined coefficients and refits cost models if needed. It also considers 
-    various cost components, including labor, maintenance, property tax, installation, and consumables.
+    The function utilizes predefined coefficients and refits cost models if needed.
+    It also considers various cost components, including labor, maintenance,
+    property tax, installation, and consumables.
 
     Args:
-        config (Config): A configuration object containing parameters such as plant capacity, 
+        config (Config): A configuration object containing parameters such as plant capacity,
             operational year, plant life, product selection, site information, and performance data.
 
     Returns:

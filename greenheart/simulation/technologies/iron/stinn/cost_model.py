@@ -21,9 +21,9 @@ def main(config):
     Calculates the total direct capital cost of an electrowinning system in 2018 US dollars.
 
     The cost estimation is based on the methodology from:
-    "Estimating the Capital Costs of Electrowinning Processes"  
-    by Caspar Stinn and Antoine Allanore (2020).  
-    *Electrochem. Soc. Interface*, 29, 44.  
+    "Estimating the Capital Costs of Electrowinning Processes"
+    by Caspar Stinn and Antoine Allanore (2020).
+    *Electrochem. Soc. Interface*, 29, 44.
     DOI: https://iopscience.iop.org/article/10.1149/2.F06202IF
 
     Args:
@@ -37,7 +37,8 @@ def main(config):
             current_density (float): Current density in amperes per square meter (A/m²).
             electrode_area (float): Electrode area in square meters (m²).
             current_efficiency (float): Current efficiency (dimensionless, fraction).
-            molar_mass (float): Molar mass of the electrolysis product in kilograms per mole (kg/mol).
+            molar_mass (float): Molar mass of the electrolysis product
+                in kilograms per mole (kg/mol).
             installed_capacity (float): Installed power capacity in megawatts (MW).
             cell_voltage (float): Cell operating voltage in volts (V).
             rectifier_lines (int): Number of rectifier lines.
@@ -45,7 +46,8 @@ def main(config):
     Returns:
         dict: A dictionary containing:
             pre_costs (float): Pre-costs related to pressure and system preparation.
-            electrowinning_costs (float): Costs associated with electrolysis and power rectification.
+            electrowinning_costs (float): Costs associated with electrolysis
+                and power rectification.
             total_costs (float): Sum of pre-costs and electrowinning costs.
     """
     # Load coefficients

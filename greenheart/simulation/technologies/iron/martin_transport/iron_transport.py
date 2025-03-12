@@ -18,8 +18,8 @@ ship_coords = pd.read_csv(CD / "shipping_coords.csv", index_col=0)
 def calc_water_ship_cost(year):
     """Calculates waterborne shipping costs for iron transport.
 
-    This function retrieves barge shipping cost coefficients for a given year 
-    and computes the shipping cost per tonne for various destinations. It also 
+    This function retrieves barge shipping cost coefficients for a given year
+    and computes the shipping cost per tonne for various destinations. It also
     constructs route coordinates for each shipping path.
 
     Args:
@@ -105,14 +105,15 @@ def calc_water_ship_cost(year):
 def calc_iron_ship_cost(iron_config):
     """Computes total iron transport cost, including land and water shipping.
 
-    This function calculates the minimum cost of shipping iron from available 
-    shipping sites to the final destination, considering both water and land 
+    This function calculates the minimum cost of shipping iron from available
+    shipping sites to the final destination, considering both water and land
     transportation costs.
 
     Args:
         iron_config (dict): Configuration dictionary containing:
             - project_parameters (dict): Includes `cost_year` (int), the year for cost estimation.
-            - iron (dict): Contains `site` (dict) with `lat` and `lon` keys for destination coordinates.
+            - iron (dict): Contains `site` (dict) with `lat`
+                and `lon` keys for destination coordinates.
 
     Returns:
         tuple:

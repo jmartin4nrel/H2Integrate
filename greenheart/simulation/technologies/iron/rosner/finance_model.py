@@ -10,14 +10,14 @@ def main(config):
     """Performs financial analysis for a Direct Reduced Iron (DRI) plant or
     a Electric Arc Furnace (EAF) plant using ProFAST.
 
-    This function models the finances of a DRI and/or EAF 
-    plant based on input parameters, cost data, and plant performance metrics. It 
-    utilizes ProFAST for financial modeling, including capital costs, operational expenses, 
+    This function models the finances of a DRI and/or EAF
+    plant based on input parameters, cost data, and plant performance metrics. It
+    utilizes ProFAST for financial modeling, including capital costs, operational expenses,
     feedstock costs, and coproduct revenues.
 
     Args:
-        config (Config): Configuration object containing plant parameters, cost data, performance metrics, 
-            and financial assumptions.
+        config (Config): Configuration object containing plant parameters,
+            cost data, performance metrics, and financial assumptions.
 
     Returns:
         tuple: A tuple containing the following elements:

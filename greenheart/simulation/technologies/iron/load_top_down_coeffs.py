@@ -20,8 +20,10 @@ def load_top_down_coeffs(coeff_list=None, cost_year=None):
     """Loads top-down cost coefficients from a CSV file and adjusts for inflation if needed.
 
     Args:
-        coeff_list (list, optional): A list of coefficient names to extract. If None, all coefficients are used. Defaults to None.
-        cost_year (int, optional): The target year for cost adjustments. If provided, values with dollar-based units are 
+        coeff_list (list, optional): A list of coefficient names to extract.
+            If None, all coefficients are used. Defaults to None.
+        cost_year (int, optional): The target year for cost adjustments.
+            If provided, values with dollar-based units are
             adjusted for inflation using CPI. Defaults to None.
 
     Returns:

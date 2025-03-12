@@ -22,9 +22,9 @@ model_locs = load_yaml(model_locs_fp)
 def main(config):
     """Loads and processes Direct Reduced Grade (DR-Grade) iron ore cost coefficients.
 
-    This function imports "top-down" costs, loads coefficients for a specified 
-    iron ore product and site, and converts units from wet long tons to dry 
-    metric tonnes. If refitting the model, it loads an input dataframe and saves 
+    This function imports "top-down" costs, loads coefficients for a specified
+    iron ore product and site, and converts units from wet long tons to dry
+    metric tonnes. If refitting the model, it loads an input dataframe and saves
     the updated coefficients. Otherwise, it loads pre-existing coefficients.
 
     Args:
@@ -37,7 +37,7 @@ def main(config):
             - site (dict): Contains `name` (str), the site name.
 
     Returns:
-        pd.DataFrame: DataFrame containing processed cost coefficients for the 
+        pd.DataFrame: DataFrame containing processed cost coefficients for the
         selected product and site.
 
     Raises:

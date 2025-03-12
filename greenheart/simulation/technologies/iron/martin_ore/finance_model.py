@@ -6,17 +6,17 @@ from greenheart.simulation.technologies.iron.load_top_down_coeffs import load_to
 
 
 def main(config):
-    """Sets up a ProFAST financial model for a reduction plant, including costs, 
+    """Sets up a ProFAST financial model for a reduction plant, including costs,
     production capacity, and economic assumptions.
 
-    This function initializes and configures a ProFAST financial model using 
-    cost data, site-specific parameters, and inflation adjustments. It categorizes 
-    costs into capital, fixed operational expenses, and variable operational expenses, 
+    This function initializes and configures a ProFAST financial model using
+    cost data, site-specific parameters, and inflation adjustments. It categorizes
+    costs into capital, fixed operational expenses, and variable operational expenses,
     including both model-defined and top-down costs.
 
     Args:
         config (object): Configuration object containing:
-            - cost (object): Includes `costs_df` (DataFrame) with cost names, types, 
+            - cost (object): Includes `costs_df` (DataFrame) with cost names, types,
               units, and site-specific costs.
             - site (dict): Contains `name` (str), the site name.
             - params (dict): Contains various financial and operational parameters, including:

@@ -18,8 +18,8 @@ def main(config):
     """Processes and retrieves performance data for Direct Reduced Iron (DRI) modeling
     and or Electric Arc Furnace (EAF) modeling.
 
-    This function either fits a new model by processing input data or loads precomputed 
-    coefficients from a file. It then extracts performance data for the selected product 
+    This function either fits a new model by processing input data or loads precomputed
+    coefficients from a file. It then extracts performance data for the selected product
     and site, and converts units from per-unit steel to per-unit iron if necessary.
 
     Args:
