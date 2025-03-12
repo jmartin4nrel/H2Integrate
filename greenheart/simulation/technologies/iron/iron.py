@@ -27,7 +27,7 @@ class IronPerformanceModelConfig:
                         secure location passed from input if not part of public GreenHEART.
                         Also contains 'refit_coeffs' boolean to re-do
                         model coefficient curve fitting.
-        params (dict): The rest of the parameters for the performance model. TODO: define as fields.
+        params (dict): The rest of the parameters for the performance model.
     """
 
     product_selection: str = ""
@@ -111,7 +111,7 @@ class IronCostModelConfig:
                         secure location passed from input if not part of public GreenHEART.
                         Also contains 'refit_coeffs' boolean to re-do
                         model coefficient curve fitting.
-        params (dict): The rest of the parameters for the cost model. TODO: define as fields.
+        params (dict): The rest of the parameters for the cost model.
     """
 
     performance: IronPerformanceModelOutputs
@@ -199,7 +199,7 @@ class IronFinanceModelConfig(IronCostModelConfig):
                         secure location passed from input if not part of public GreenHEART.
                         Also contains 'refit_coeffs' boolean to re-do
                         model coefficient curve fitting.
-        params (dict): The rest of the parameters for the finance model. TODO: define as fields.
+        params (dict): The rest of the parameters for the finance model.
         pf (dict): Optional dictionary of the ProFAST object.
     """
 

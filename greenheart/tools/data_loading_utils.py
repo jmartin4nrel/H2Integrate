@@ -20,6 +20,8 @@ def dump_data_to_pickle(data, filepath):
 
 
 def load_dill_pickle(filepath):
+    if isinstance(filepath, str):
+        filepath = Path(filepath)
     with Path.open(filepath, "rb") as f:
         data = dill.load(f)
     return data

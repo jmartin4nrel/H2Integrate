@@ -94,11 +94,6 @@ def calc_water_ship_cost(year):
         rte_dict["ship_cost_tonne"] = ship_cost_tonne
         ship_dict[key] = rte_dict
 
-        # site_res_id = f"{lat:.3f}_{lon:.3f}_{year:d}"
-        # pkl_fn = site_res_id + ".pkl"
-        # output_path = CD/'../data_library/geography/ship_cost'
-        # dump_data_to_pickle(ship_cost_tonne, output_path/pkl_fn)
-
     return ship_dict
 
 

@@ -78,13 +78,6 @@ def main(config):
     gen_inflation_pct = coeff_dict["Inflation Rate"]["values"][indices].astype(float)
     gen_inflation = np.mean(gen_inflation_pct) / 100
 
-    # TODO figure out oxygen sales...
-    # oxygen_market_price = 0.03
-    # if config.product_selection in ['ng_eaf','h2_eaf']:
-    #     excess_oxygen = 0
-    # else:
-    #     excess_oxygen = 395
-
     # Choose whether to override top-down electricity, hydrogen, and TODO: natural gas
     electricity_cost_kwh = config.params["lcoe"]  # Originally in $/kWh
     lcoe_dollar_MWH = electricity_cost_kwh * 1000
@@ -259,14 +252,6 @@ def main(config):
         cost=slag_disposal_unitcost_tonne,
         escalation=gen_inflation,
     )
-
-    # pf.add_coproduct(
-    #     name=f"{module_label}: Oxygen sales",
-    #     usage=excess_oxygen,
-    #     unit="kg O2 per metric tonne of iron",
-    #     cost=oxygen_market_price,
-    #     escalation=gen_inflation,
-    # )
 
     # ------------------------------ Set up outputs ---------------------------
 
