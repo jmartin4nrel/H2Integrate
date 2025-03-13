@@ -1,0 +1,86 @@
+$schema: "http://json-schema.org/draft-07/schema#"
+$id: driver_config_schema_v01
+title: Driver Configuration Schema
+description: Schema to validate driver configurations GreenHEART
+type: object
+properties:
+  name:
+    type: string
+    description: Name of the configuration
+  description:
+    type: string
+    description: Description of the configuration
+  general:
+    type: object
+    properties:
+      folder_output:
+        type: string
+        description: Name of the folder for output files
+        default: "output"
+  driver:
+    type: object
+    properties:
+      optimization:
+        type: object
+        properties:
+          flag:
+            type: boolean
+            default: false
+          tol:
+            type: number
+            description: Tolerance for the optimizer
+            default: 1.e-5
+          max_iter:
+            type: integer
+            description: Maximum number of iterations
+            default: 100
+          solver:
+            type: string
+            description: Optimization solver to use
+          step_size:
+            type: number
+            description: Step size for the optimizer
+            default: 1.e-3
+          form:
+            type: string
+            description: Derivative form for optimization
+            default: "forward"
+          debug_print:
+            type: boolean
+            description: Debug print flag
+            default: false
+  design_variables:
+    type: object
+    additionalProperties:
+      type: object
+      additionalProperties:
+        type: object
+        required: ["flag", "units"]
+        properties:
+          flag:
+            type: boolean
+            description: Activates as a design variable or constraint
+          lower:
+            type: number
+            description: Lower bound for the variable
+            default: null
+          upper:
+            type: number
+            description: Upper bound for the variable
+            default: null
+          units:
+            type: string
+            description: Units of the variable
+  objective:
+    type: object
+    properties:
+      name:
+        type: string
+        description: Name of the objective function
+      ref:
+        type: number
+        description: Reference value for normalization
+required:
+  - name
+  - description
+  - general
