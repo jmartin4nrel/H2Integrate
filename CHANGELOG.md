@@ -8,7 +8,11 @@
 - Use sentence capitalization for plot labels and legends
 - Use "metric ton" instead of "tonne" or "metric tonne" in all internal naming and plots
 - Fix bug in hydrogen dispatch plotting by storing time series of hydrogen demand by hour
-- Added iron ore, direct reduction, transport models and necessary framework to support these models [PR 90](https://github.com/NREL/GreenHEART/pull/90)
+- Added iron processing framework and capabilities [PR 90](https://github.com/NREL/GreenHEART/pull/90)
+- Added Martin and Rosner iron ore models, performance and cost for each [PR 90](https://github.com/NREL/GreenHEART/pull/90)
+- Added Rosner direct reduction iron (DRI) model, performance and cost [PR 90](https://github.com/NREL/GreenHEART/pull/90)
+- Added Martin transport module for performance and cost of iron [PR 90](https://github.com/NREL/GreenHEART/pull/90)
+- Added generalized Stinn cost model for electrolysis of arbitrary materials [PR 90](https://github.com/NREL/GreenHEART/pull/90)
 
 ## v0.1.4 [4 February 2025]
 
