@@ -1,23 +1,27 @@
 """
 This file is based on the WISDEM file of the same name: https://github.com/WISDEM/WISDEM
-and also based off of the GreenHeart file of the same name originally adapted by Jared Thomas.
+and also based off of the GreenHEART file of the same name originally adapted by Jared Thomas.
 """
 
-import os
 import warnings
+from pathlib import Path
 
 import openmdao.api as om
 
 
 class PoseOptimization:
-    """This class contains a collection of methods for setting up an openmdao optimization problem for a greenheart simulation.
+    """
+    This class contains a collection of methods for setting up an OpenMDAO
+    optimization problem for a GreenHEART simulation.
 
     Args:
-        config: instance of a greenheart config containing all desired simulation set up
+        config: instance of a GreenHEART config containing all desired simulation set up
     """
 
     def __init__(self, config):
-        """This method primarily establishes lists of optimization methods available through different optimization drivers"""
+        """
+        This method primarily establishes lists of optimization methods
+        available through different optimization drivers"""
 
         self.config = config
 
@@ -34,7 +38,9 @@ class PoseOptimization:
         ]
 
     def get_number_design_variables(self):
-        """This method counts the number of design variables required given the provided set up and returns the result
+        """
+        This method counts the number of design variables required given
+        the provided set up and returns the result
 
         Returns:
             int: number of design variables
@@ -63,7 +69,9 @@ class PoseOptimization:
         return n_DV
 
     def _get_step_size(self):
-        """If a step size for the driver-level finite differencing is provided, use that step size. Otherwise use a default value.
+        """
+        If a step size for the driver-level finite differencing is provided,
+        use that step size. Otherwise use a default value.
 
         Returns:
             step size (float): step size for optimization
@@ -72,8 +80,10 @@ class PoseOptimization:
         if "step_size" not in self.config["driver"]["optimization"]:
             step_size = 1.0e-6
             warnings.warn(
-                f"Step size was not specified, setting step size to {step_size}. Step size may be set in the greenheart \
-                          config file under opt_options/driver/optimization/step_size and should be of type float",
+                f"Step size was not specified, setting step size to {step_size}. \
+                Step size may be set in the greenheart \
+                config file under opt_options/driver/optimization/step_size \
+                and should be of type float",
                 UserWarning,
             )
         else:
@@ -91,14 +101,20 @@ class PoseOptimization:
 
         Args:
             opt_prob (OpenMDAO problem object):  The hybrid plant OpenMDAO problem object.
-            options_keys (list, optional): List of keys for driver opt_settings to be set. Defaults to [].
-            opt_settings_keys (list, optional): List of keys for driver options to be set. Defaults to [].
-            mapped_keys (dict, optional): Key pairs where the yaml name differs from what's expected
-                                          by the driver. Specifically, the key is what's given in the yaml
-                                          and the value is what's expected by the driver. Defaults to {}.
+            options_keys (list, optional): List of keys for driver opt_settings
+                to be set. Defaults to [].
+            opt_settings_keys (list, optional): List of keys for driver options
+                to be set. Defaults to [].
+            mapped_keys (dict, optional): Key pairs where the yaml name differs
+                from what's expected
+                                          by the driver. Specifically, the key
+                                          is what's given in the yaml
+                                          and the value is what's expected by
+                                          the driver. Defaults to {}.
 
         Returns:
-            opt_prob (OpenMDAO problem object): The updated openmdao problem object with driver settings applied.
+            opt_prob (OpenMDAO problem object): The updated openmdao problem
+                object with driver settings applied.
         """
 
         opt_options = self.config["driver"]["optimization"]
@@ -125,17 +141,23 @@ class PoseOptimization:
         """set which optimization driver to use and set options
 
         Args:
-            opt_prob (openmdao problem instance): openmdao problem class instance for current optimization problem
+            opt_prob (openmdao problem instance): openmdao problem class instance
+                for current optimization problem
 
         Raises:
-            ImportError: An optimization algorithm from pyoptsparse was selected, but pyoptsparse is not installed
-            ImportError: An optimization algorithm from pyoptsparse was selected, but the algorithm code is not currently installed within pyoptsparse
-            ImportError: An optimization algorithm was requested from NLopt, but NLopt is not currently installed.
+            ImportError: An optimization algorithm from pyoptsparse was selected,
+                but pyoptsparse is not installed
+            ImportError: An optimization algorithm from pyoptsparse was selected,
+                but the algorithm code is not currently installed within pyoptsparse
+            ImportError: An optimization algorithm was requested from NLopt, but
+                NLopt is not currently installed.
             ValueError: The selected optimizer is not yet supported.
-            Exception: The specified generator type for the OpenMDAO design of experiments is unsupported.
+            Exception: The specified generator type for the OpenMDAO design
+                of experiments is unsupported.
 
         Returns:
-            opt_prob (openmdao problem instance): openmdao problem class instance, edited from input with desired driver and driver options
+            opt_prob (openmdao problem instance): openmdao problem class instance,
+                edited from input with desired driver and driver options
         """
 
         folder_output = self.config["general"]["folder_output"]
@@ -180,21 +202,26 @@ class PoseOptimization:
             elif opt_options["solver"] in self.pyoptsparse_methods:
                 try:
                     from openmdao.api import pyOptSparseDriver
-                except:
+                except RuntimeError:
                     raise ImportError(
-                        f"You requested the optimization solver {opt_options['solver']}, but you have not installed pyOptSparse. Please do so and rerun."
-                    )
+                        f"You requested the optimization solver {opt_options['solver']}, \
+                        but you have not installed pyOptSparse. \
+                        Please do so and rerun."
+                    ) from None
                 opt_prob.driver = pyOptSparseDriver(gradient_method=opt_options["gradient_method"])
 
                 try:
                     opt_prob.driver.options["optimizer"] = opt_options["solver"]
-                except:
+                except ImportError:
                     raise ImportError(
-                        f"You requested the optimization solver {opt_options['solver']}, but you have not installed it within pyOptSparse. Please build {opt_options['solver']} and rerun."
-                    )
+                        f"You requested the optimization solver {opt_options['solver']}, \
+                        but you have not installed it within pyOptSparse. \
+                        Please build {opt_options['solver']} and rerun."
+                    ) from None
 
                 # Most of the pyOptSparse options have special syntax when setting them,
-                # so here we set them by hand instead of using `_set_optimizer_properties` for SNOPT and CONMIN.
+                # so here we set them by hand instead of using
+                # `_set_optimizer_properties` for SNOPT and CONMIN.
                 if opt_options["solver"] == "CONMIN":
                     opt_prob.driver.opt_settings["ITMAX"] = opt_options["max_iter"]
 
@@ -231,11 +258,11 @@ class PoseOptimization:
                     )
                     if "time_limit" in opt_options:
                         opt_prob.driver.opt_settings["Time limit"] = int(opt_options["time_limit"])
-                    opt_prob.driver.opt_settings["Summary file"] = os.path.join(
-                        folder_output, "SNOPT_Summary_file.txt"
+                    opt_prob.driver.opt_settings["Summary file"] = (
+                        Path(folder_output) / "SNOPT_Summary_file.txt"
                     )
-                    opt_prob.driver.opt_settings["Print file"] = os.path.join(
-                        folder_output, "SNOPT_Print_file.txt"
+                    opt_prob.driver.opt_settings["Print file"] = (
+                        Path(folder_output) / "SNOPT_Print_file.txt"
                     )
                     if "hist_file_name" in opt_options:
                         opt_prob.driver.hist_file = opt_options["hist_file_name"]
@@ -269,7 +296,8 @@ class PoseOptimization:
 
             else:
                 raise ValueError(
-                    f"The {self.config['driver']['optimization']['solver']} optimizer is not yet supported!"
+                    f"The {self.config['driver']['optimization']['solver']} \
+                        optimizer is not yet supported!"
                 )
 
             if opt_options["debug_print"]:
@@ -321,10 +349,11 @@ class PoseOptimization:
                 opt_prob.driver.options["run_parallel"] = doe_options["run_parallel"]
 
         else:
-            print(
-                "WARNING: Design variables are set to be optimized or studied, but no driver is selected."
+            warnings.warn(
+                "Design variables are set to be optimized or studied, but no driver is selected. "
+                "If you want to run an optimization, please enable a driver.",
+                UserWarning,
             )
-            print("         If you want to run an optimization, please enable a driver.")
 
         return opt_prob
 
@@ -332,12 +361,13 @@ class PoseOptimization:
         """Set merit figure. Each objective has its own scaling.  Check first for user override
 
         Args:
-            opt_prob (openmdao problem instance): openmdao problem instance for current optimization problem
+            opt_prob (openmdao problem instance): openmdao problem instance for
+                current optimization problem
 
         Returns:
-            opt_prob (openmdao problem instance): openmdao problem instance for current optimization problem with objective set
+            opt_prob (openmdao problem instance): openmdao problem instance for
+                current optimization problem with objective set
         """
-        #
         if self.config.get("objective", False):
             opt_prob.model.add_objective(
                 self.config["objective"]["name"], ref=self.config["objective"]["ref"]
@@ -349,11 +379,12 @@ class PoseOptimization:
         """Set optimization design variables.
 
         Args:
-            opt_prob (openmdao problem instance): openmdao problem instance for current optimization problem
-            config (GreenHeartSimulationConfig): data class containing modeling, simulation, and optimization settings
+            opt_prob (openmdao problem instance): openmdao problem instance for
+                current optimization problem
 
         Returns:
-            opt_prob (openmdao problem instance): openmdao problem instance for current optimization problem with design variables set
+            opt_prob (openmdao problem instance): openmdao problem instance for
+                current optimization problem with design variables set
         """
 
         design_variables_dict = {}
@@ -373,13 +404,16 @@ class PoseOptimization:
         """sets up optimization constraints for the greenheart optimization problem
 
         Args:
-            opt_prob (openmdao problem instance): openmdao problem instance for current optimization problem
+            opt_prob (openmdao problem instance): openmdao problem instance for
+                current optimization problem
 
         Raises:
-            Exception: all design variables must have at least one of an upper and lower bound specified
+            Exception: all design variables must have at least one of an upper
+                and lower bound specified
 
         Returns:
-            opt_prob (openmdao problem instance): openmdao problem instance for current optimization problem edited to include constraint setup
+            opt_prob (openmdao problem instance): openmdao problem instance for
+                current optimization problem edited to include constraint setup
         """
         pass
 
@@ -387,19 +421,19 @@ class PoseOptimization:
         """sets up a recorder for the openmdao problem as desired in the input yaml
 
         Args:
-            opt_prob (openmdao problem instance): openmdao problem instance for current optimization problem
+            opt_prob (openmdao problem instance): openmdao problem instance
+                for current optimization problem
 
         Returns:
-            opt_prob (openmdao problem instance): openmdao problem instance for current optimization problem edited to include a set up recorder
+            opt_prob (openmdao problem instance): openmdao problem instance for
+                current optimization problem edited to include a set up recorder
         """
         folder_output = self.config["general"]["folder_output"]
 
         # Set recorder on the OpenMDAO driver level using the `optimization_log`
         # filename supplied in the optimization yaml
         if self.config["recorder"]["flag"]:
-            recorder = om.SqliteRecorder(
-                os.path.join(folder_output, self.config["recorder"]["file_name"])
-            )
+            recorder = om.SqliteRecorder(Path(folder_output) / self.config["recorder"]["file_name"])
             opt_prob.driver.add_recorder(recorder)
             opt_prob.add_recorder(recorder)
 
@@ -414,10 +448,13 @@ class PoseOptimization:
         return opt_prob
 
     def set_restart(self, opt_prob):
-        """prepares to restart from last recorded iteration if the original problem was set up for warm start
+        """
+        Prepares to restart from last recorded iteration if the original
+        problem was set up for warm start
 
         Args:
-            opt_prob (openmdao problem instance): openmdao problem instance for current optimization problem
+            opt_prob (openmdao problem instance): openmdao problem instance for
+            current optimization problem
 
         Returns:
             opt_prob (openmdao problem instance): openmdao problem instance
