@@ -71,13 +71,12 @@ def run_hopp(hi, project_lifetime, verbose=True):
     except AttributeError:
         pass
 
+    grid_outputs = hi.system.grid._system_model.Outputs
     # store results for later use
     hopp_results = {
         "hopp_interface": hi,
         "hybrid_plant": hi.system,
-        "combined_hybrid_power_production_hopp": hi.system.grid._system_model.Outputs.system_pre_interconnect_kwac[
-            0:8760
-        ],
+        "combined_hybrid_power_production_hopp": grid_outputs.system_pre_interconnect_kwac[0:8760],
         "combined_hybrid_curtailment_hopp": hi.system.grid.generation_curtailed,
         "energy_shortfall_hopp": hi.system.grid.missed_load,
         "annual_energies": hi.system.annual_energies,
