@@ -1413,6 +1413,12 @@ def run_simulation(config: GreenHeartSimulationConfig):
                 iron_transport_cost_tonne, ore_profit_pct = calc_iron_ship_cost(iron_win_config)
 
                 ### DRI ----------------------------------------------------------------------------
+                if iron_win_config["iron"]["product_selection"] not in ["ng_dri", "h2_dri"]:
+                    raise ValueError(
+                        "The product selection for the iron win module must be either \
+                        'ng_dri' or 'h2_dri'"
+                    )
+
                 iron_win_config["iron"]["finances"]["ore_profit_pct"] = ore_profit_pct
                 iron_win_config["iron"]["costs"]["iron_transport_tonne"] = iron_transport_cost_tonne
                 iron_win_config["iron"]["costs"]["lco_iron_ore_tonne"] = iron_ore_finance.sol["lco"]
@@ -1427,6 +1433,11 @@ def run_simulation(config: GreenHeartSimulationConfig):
                     iron_finance = iron_win_finance
 
                 else:
+                    if iron_win_config["iron"]["product_selection"] not in ["ng_eaf", "h2_eaf"]:
+                        raise ValueError(
+                            "The product selection for the iron win module must be either \
+                            'ng_eaf' or 'h2_eaf'"
+                        )
                     pf_config = rev_pf_tools.make_pf_config_from_profast(
                         iron_win_finance.pf
                     )  # dictionary of profast objects
