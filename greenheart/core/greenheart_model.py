@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import yaml
 import numpy as np
 import openmdao.api as om
@@ -12,7 +14,7 @@ from greenheart.core.pose_optimization import PoseOptimization
 
 try:
     import pyxdsm
-except:
+except ImportError:
     pyxdsm = None
 
 
@@ -48,7 +50,8 @@ class GreenHEARTModel:
         self.create_driver_model()
 
     def load_config(self, config_file):
-        with open(config_file) as file:
+        config_path = Path(config_file)
+        with config_path.open() as file:
             config = yaml.safe_load(file)
 
         self.name = config.get("name")
@@ -279,7 +282,8 @@ class GreenHEARTModel:
 
                 # Check if the transport type is a combiner
                 if "combiner" in dest_tech:
-                    # Connect the source technology to the connection component with specific input names
+                    # Connect the source technology to the connection component
+                    # with specific input names
                     if dest_tech not in combiner_counts:
                         combiner_counts[dest_tech] = 1
                     else:

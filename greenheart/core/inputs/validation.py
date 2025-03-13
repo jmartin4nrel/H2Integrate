@@ -2,9 +2,9 @@
 Code adapted from NREL's WISDEM tool.
 """
 
-import os
 import copy
 import operator
+from pathlib import Path
 from functools import reduce
 
 import numpy as np
@@ -13,9 +13,9 @@ import ruamel.yaml as ry
 from hopp.utilities import load_yaml
 
 
-fschema_tech = os.path.join(os.path.dirname(os.path.realpath(__file__)), "tech_schema.yaml")
-fschema_plant = os.path.join(os.path.dirname(os.path.realpath(__file__)), "plant_schema.yaml")
-fschema_driver = os.path.join(os.path.dirname(os.path.realpath(__file__)), "driver_schema.yaml")
+fschema_tech = Path(__file__).parent / "tech_schema.yaml"
+fschema_plant = Path(__file__).parent / "plant_schema.yaml"
+fschema_driver = Path(__file__).parent / "driver_schema.yaml"
 
 
 def write_yaml(instance: dict, foutput: str) -> None:
@@ -37,7 +37,7 @@ def write_yaml(instance: dict, foutput: str) -> None:
     yaml.width = float("inf")
     yaml.indent(mapping=4, sequence=6, offset=3)
     yaml.allow_unicode = False
-    with open(foutput, "w", encoding="utf-8") as f:
+    with Path(foutput).open("w", encoding="utf-8") as f:
         yaml.dump(instance, f)
 
 
@@ -100,7 +100,8 @@ def simple_types(indict: dict) -> dict:
         indict (dict): The dictionary to process.
 
     Returns:
-        dict: The processed dictionary with numpy arrays converted to lists and unsupported types to empty strings.
+        dict: The processed dictionary with numpy arrays converted to lists and
+            unsupported types to empty strings.
     """
 
     def convert(value):
@@ -111,7 +112,7 @@ def simple_types(indict: dict) -> dict:
         elif isinstance(value, (list, tuple, set)):
             return [convert(item) for item in value]  # treat all as list
         elif isinstance(value, (np.generic)):
-            return value.item()  # convert numpy primatives to python primative underlying
+            return value.item()  # convert numpy primitives to python primitive underlying
         elif isinstance(value, (float, int, bool, str)):
             return value  # this should be the end case
         else:
@@ -126,9 +127,9 @@ def extend_with_default(validator_class):
     validate_properties = validator_class.VALIDATORS["properties"]
 
     def set_defaults(validator, properties, instance, schema):
-        for property, subschema in properties.items():
+        for prop, subschema in properties.items():
             if "default" in subschema:
-                instance.setdefault(property, subschema["default"])
+                instance.setdefault(prop, subschema["default"])
 
         yield from validate_properties(validator, properties, instance, schema)
 
@@ -217,7 +218,8 @@ def remove_numpy(fst_vt: dict) -> dict:
         fst_vt (dict): The dictionary to process.
 
     Returns:
-        dict: The processed dictionary with numpy arrays converted to lists and unsupported types to simple types.
+        dict: The processed dictionary with numpy arrays converted to lists
+            and unsupported types to simple types.
     """
 
     def get_dict(vartree, branch):

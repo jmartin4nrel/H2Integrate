@@ -8,7 +8,8 @@ from greenheart.converters.solar.solar_baseclass import SolarPerformanceBaseClas
 
 @define
 class PYSAMSolarPlantPerformanceModelSiteConfig(BaseConfig):
-    """Configuration class for the location of the solar pv plant PYSAMSolarPlantPerformanceComponentSite.
+    """Configuration class for the location of the solar pv plant
+        PYSAMSolarPlantPerformanceComponentSite.
 
     Args:
         latitude (float): Latitude of wind plant location.

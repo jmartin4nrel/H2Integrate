@@ -10,11 +10,9 @@ from greenheart.converters.hydrogen.electrolyzer_baseclass import (
     ElectrolyzerFinanceBaseClass,
     ElectrolyzerPerformanceBaseClass,
 )
+from greenheart.simulation.technologies.hydrogen.electrolysis import PEM_H2_Clusters
 from greenheart.simulation.technologies.hydrogen.electrolysis.PEM_costs_Singlitico_model import (
     PEMCostsSingliticoModel,
-)
-from greenheart.simulation.technologies.hydrogen.electrolysis.PEM_H2_LT_electrolyzer_Clusters import (
-    PEM_H2_Clusters,
 )
 
 
