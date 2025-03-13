@@ -17,9 +17,11 @@ class ReverseOsmosisPerformanceModelConfig(BaseConfig):
     """Configuration class for the ReverseOsmosisDesalinationPerformanceModel.
 
     Args:
-        freshwater_kg_per_hour (float): Desalination plant capacity represented as maximum freshwater requirements of system [kg/hr]
+        freshwater_kg_per_hour (float): Desalination plant capacity represented
+            as maximum freshwater requirements of system [kg/hr]
         salinity (str): "seawater" >18,000 ppm or "brackish" <18,000 ppm
-        freshwater_density (float): Density of the output freshwater [kg/m**3]. Default = 997.
+        freshwater_density (float): Density of the output freshwater [kg/m**3].
+            Default = 997.
     """
 
     freshwater_kg_per_hour: float = field(validator=gt_zero)
@@ -107,8 +109,10 @@ class ReverseOsmosisCostModelConfig(BaseConfig):
     """Configuration class for the ReverseOsmosisDesalinationCostModel.
 
     Args:
-        freshwater_kg_per_hour (float): Desalination plant capacity represented as maximum freshwater requirements of system [kg/hr]
-        freshwater_density (float): Density of the output freshwater [kg/m**3]. Default = 997.
+        freshwater_kg_per_hour (float): Desalination plant capacity represented as
+            maximum freshwater requirements of system [kg/hr]
+        freshwater_density (float): Density of the output freshwater [kg/m**3].
+            Default = 997.
     """
 
     freshwater_kg_per_hour: float = field(validator=gt_zero)

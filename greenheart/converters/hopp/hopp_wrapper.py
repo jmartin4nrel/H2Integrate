@@ -1,5 +1,5 @@
-import os
 import hashlib
+from pathlib import Path
 
 import dill
 import numpy as np
@@ -46,14 +46,16 @@ class HOPPComponent(om.ExplicitComponent):
         ]
 
         # Create a cache directory if it doesn't exist
-        if not os.path.exists("cache"):
-            os.makedirs("cache")
+        cache_dir = Path("cache")
+        if not cache_dir.exists():
+            cache_dir.mkdir(parents=True)
         cache_file = f"cache/{config_hash}.pkl"
 
         # Check if the results for the current configuration are already cached
-        if os.path.exists(cache_file):
+        if Path(cache_file).exists():
             # Load the cached results
-            with open(cache_file, "rb") as f:
+            cache_path = Path(cache_file)
+            with cache_path.open("rb") as f:
                 subset_of_hopp_results = dill.load(f)
         else:
             electrolyzer_rating = None
@@ -73,7 +75,8 @@ class HOPPComponent(om.ExplicitComponent):
             # Extract the subset of results we are interested in
             subset_of_hopp_results = {key: hopp_results[key] for key in keys_of_interest}
             # Cache the results for future use
-            with open(cache_file, "wb") as f:
+            cache_path = Path(cache_file)
+            with cache_path.open("wb") as f:
                 dill.dump(subset_of_hopp_results, f)
 
         # Set the outputs from the cached or newly computed results

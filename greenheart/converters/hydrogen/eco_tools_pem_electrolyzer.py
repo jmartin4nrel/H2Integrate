@@ -83,7 +83,8 @@ class ECOElectrolyzerPerformanceModel(ElectrolyzerPerformanceBaseClass):
         # # IF GRID CONNECTED
         # if plant_config["plant"]["grid_connection"]:
         #     # NOTE: if grid-connected, it assumes that hydrogen demand is input and there is not
-        #     # multi-cluster control strategies. This capability exists at the cluster level, not at the
+        #     # multi-cluster control strategies.
+        # This capability exists at the cluster level, not at the
         #     # system level.
         #     if config["sizing"]["hydrogen_dmd"] is not None:
         #         grid_connection_scenario = "grid-only"

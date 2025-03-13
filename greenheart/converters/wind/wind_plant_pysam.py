@@ -13,7 +13,8 @@ class PYSAMWindPlantPerformanceModelConfig(BaseConfig):
 
 @define
 class PYSAMWindPlantPerformanceModelSiteConfig(BaseConfig):
-    """Configuration class for the location of the wind plant PYSAMWindPlantPerformanceComponentSite.
+    """Configuration class for the location of the wind plant
+        PYSAMWindPlantPerformanceComponentSite.
 
     Args:
         latitude (float): Latitude of wind plant location.
