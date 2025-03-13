@@ -10,7 +10,7 @@ from greenheart.converters.hydrogen.electrolyzer_baseclass import (
     ElectrolyzerFinanceBaseClass,
     ElectrolyzerPerformanceBaseClass,
 )
-from greenheart.simulation.technologies.hydrogen.electrolysis import PEM_H2_Clusters
+from greenheart.simulation.technologies.hydrogen.electrolysis import PEM_H2_LT_electrolyzer_Clusters
 from greenheart.simulation.technologies.hydrogen.electrolysis.PEM_costs_Singlitico_model import (
     PEMCostsSingliticoModel,
 )
@@ -37,7 +37,7 @@ class ElectrolyzerPerformanceModel(ElectrolyzerPerformanceBaseClass):
         self.config = ElectrolyzerPerformanceModelConfig.from_dict(
             merge_shared_performance_inputs(self.options["tech_config"]["model_inputs"])
         )
-        self.electrolyzer = PEM_H2_Clusters(
+        self.electrolyzer = PEM_H2_LT_electrolyzer_Clusters(
             self.config.cluster_size_mw,
             self.config.plant_life,
             self.config.eol_eff_percent_loss,
