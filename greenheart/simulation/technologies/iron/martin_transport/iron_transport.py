@@ -143,6 +143,4 @@ def calc_iron_ship_cost(iron_config):
 
     ore_profit_pct = coeff_dict["Ore Profit Margin"]["values"][year_idx]
 
-    # asdf
-
     return iron_transport_cost_tonne, ore_profit_pct

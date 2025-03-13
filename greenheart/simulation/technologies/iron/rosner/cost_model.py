@@ -31,7 +31,7 @@ def main(config):
     methodology presented by Rosner et al.
     (Energy Environ. Sci., 2023, 16, 4121, doi:10.1039/d3ee01077e).
 
-    The function utilizes predefined coefficients and refits cost models if needed.
+    The function uses predefined coefficients and refits cost models if needed.
     It also considers various cost components, including labor, maintenance,
     property tax, installation, and consumables.
 

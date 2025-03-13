@@ -6,7 +6,7 @@ from greenheart.simulation.technologies.iron.load_top_down_coeffs import load_to
 
 
 def main(config):
-    """Sets up a ProFAST financial model for a reduction plant, including costs,
+    """Sets up a ProFAST financial model for an iron reduction plant, including costs,
     production capacity, and economic assumptions.
 
     This function initializes and configures a ProFAST financial model using
@@ -33,10 +33,6 @@ def main(config):
             - summary (dict): Summary of key financial outputs from ProFAST.
             - price_breakdown (dict): Detailed breakdown of cost components.
             - pf (ProFAST.ProFAST): The ProFAST model instance used for the calculations.
-
-    Raises:
-        ValueError: If cost data is not available for the given site.
-        IndexError: If the analysis start year is not found in top-down input costs.
     """
     # Get reduction plant costs into data frame/series with cost names as index
     costs = config.cost

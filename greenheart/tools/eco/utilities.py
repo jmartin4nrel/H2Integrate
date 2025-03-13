@@ -17,7 +17,7 @@ from hopp.tools.dispatch import plot_tools
 from hopp.simulation.technologies.resource.greet_data import GREETData
 from hopp.simulation.technologies.resource.cambium_data import CambiumData
 
-from greenheart.tools.data_loading_utils import load_dill_pickle
+from greenheart.tools.greenheart_sim_file_utils import load_dill_pickle
 
 from .finance import adjust_orbit_costs
 

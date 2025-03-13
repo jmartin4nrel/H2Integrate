@@ -9,8 +9,6 @@ import numpy as np
 import pandas as pd
 from hopp.utilities import load_yaml
 
-from greenheart.simulation.technologies.iron.load_top_down_coeffs import load_top_down_coeffs
-
 
 CD = Path(__file__).parent
 
@@ -47,8 +45,6 @@ def main(config):
         Direct Reduced Grade (DR-Grade) iron ore model developed by Jonathan Martin at NREL
         in conjunction with UMN-Duluth's NRRI (Brett Spigarelli, Rod Johnson, Matt Aro)
     """
-    # Import 'top-down' costs
-    load_top_down_coeffs()
 
     # --------------- capital items ----------------
     # If re-fitting the model, load an inputs dataframe, otherwise, load up the coeffs
