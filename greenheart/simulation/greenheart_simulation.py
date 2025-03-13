@@ -1433,9 +1433,9 @@ def run_simulation(config: GreenHeartSimulationConfig):
                     iron_finance = iron_win_finance
 
                 else:
-                    if iron_win_config["iron"]["product_selection"] not in ["ng_eaf", "h2_eaf"]:
+                    if iron_post_config["iron"]["product_selection"] not in ["ng_eaf", "h2_eaf"]:
                         raise ValueError(
-                            "The product selection for the iron win module must be either \
+                            "The product selection for the iron post module must be either \
                             'ng_eaf' or 'h2_eaf'"
                         )
                     pf_config = rev_pf_tools.make_pf_config_from_profast(

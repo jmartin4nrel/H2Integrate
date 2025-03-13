@@ -32,9 +32,9 @@ def save_pickle_data(output_data_dict, config, pkl_fn):
         pkl_fn (str): Filename for the pickle file.
     """
     for output_name, data in output_data_dict.items():
-        path = Path(config.run_full_simulation_fn + "/" + output_name + "/")
+        path = Path(config.run_full_simulation_fn) / Path(output_name)
         path.mkdir(parents=True, exist_ok=True)
-        filepath = Path(path + pkl_fn)
+        filepath = path / Path(pkl_fn)
         with Path.open(filepath, "wb") as f:
             dill.dump(data, f)
 
