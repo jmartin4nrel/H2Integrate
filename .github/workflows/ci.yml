@@ -4,11 +4,10 @@ on: [ push, pull_request ]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11"]
+        python-version: ["3.10", "3.11"]
 
     steps:
       - uses: actions/checkout@v3
@@ -22,8 +21,6 @@ jobs:
         run: |
           sudo apt-get update && sudo apt-get install -y libglpk-dev glpk-utils coinor-cbc
           python -m pip install --upgrade pip
-          pip install electrolyzer@git+https://github.com/jaredthomas68/electrolyzer.git@smoothing
-          pip install ProFAST@git+https://github.com/NREL/ProFAST.git
           pip install ".[develop]"
       - name: Create env file
         run: |
