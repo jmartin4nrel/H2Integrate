@@ -1,0 +1,19 @@
+name: "technology_config"
+description: "This hybrid plant produces steel"
+
+technologies:
+  methanol:
+    performance_model:
+      model: "smr_methanol_performance"
+    cost_model:
+      model: "smr_methanol_cost"
+    financial_model:
+      model: "smr_methanol_finance"
+    model_inputs:
+      performance_parameters:
+        lng_consumption: 0.4
+      cost_parameters:
+        lng_cost: 2.0
+      shared_parameters:
+        lng: 1000000
+        plant_capacity_kgpy: 2500000

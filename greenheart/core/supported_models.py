@@ -33,6 +33,11 @@ from greenheart.converters.hydrogen.eco_tools_pem_electrolyzer import (
     ECOElectrolyzerCostModel,
     ECOElectrolyzerPerformanceModel,
 )
+from greenheart.converters.methanol.smr_methanol import (
+    MethanolPerformanceModel,
+    MethanolCostModel,
+    MethanolFinanceModel,
+)
 
 
 supported_models = {
@@ -65,4 +70,7 @@ supported_models = {
     # Storage
     "hydrogen_tank_performance": HydrogenTankPerformanceModel,
     "hydrogen_tank_cost": HydrogenTankCostModel,
+    "smr_methanol_performance": MethanolPerformanceModel,
+    "smr_methanol_cost": MethanolCostModel,
+    "smr_methanol_finance": MethanolFinanceModel,
 }
