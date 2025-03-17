@@ -6,21 +6,19 @@ from greenheart.core.utilities import (
     merge_shared_performance_inputs,
 )
 from greenheart.converters.methanol.methanol_baseclass import (
-    MethanolPerformanceBaseConfig,
     MethanolPerformanceBaseClass,
-    MethanolCostBaseConfig,
     MethanolCostBaseClass,
     MethanolFinanceBaseClass,
 )
 from greenheart.simulation.technologies.methanol.smr import (
-    run_performance_model,
-    run_cost_model,
-    run_finance_model,
+    SMR_methanol,
+    SMR_methanol_cost,
+    SMR_methanol_finance,
 )
 
 
 @define
-class MethanolPerformanceConfig(MethanolPerformanceBaseConfig):
+class MethanolPerformanceConfig(BaseConfig):
     lng: float = field()
     lng_consumption: float = field()
 
@@ -36,20 +34,29 @@ class MethanolPerformanceModel(MethanolPerformanceBaseClass):
         self.config = MethanolPerformanceConfig.from_dict(
             merge_shared_performance_inputs(self.options["tech_config"]["model_inputs"])
         )
-        self.add_input("lng", val=self.config.lng, shape_by_conn=False, units="kg/h")
-        
+        self.methanol = SMR_methanol()
+        self.add_input("lng", val=self.config.lng, shape_by_conn=False, units="kg/year")
+        self.add_input(
+            "lng_consumption",
+            val=self.config.lng_consumption,
+            shape_by_conn=False,
+            units="kg/year"
+        )
+
     def compute(self, inputs, outputs):
         
         # Run the SMR methanol model using the input lng signal
-        methanol_production_kgpy = run_performance_model(
+        methanol_production_kgpy = self.methanol.run_performance_model(
             inputs["lng"],
-            self.config.lng_consumption,
+            inputs["lng_consumption"],
         )
         outputs["methanol"] = methanol_production_kgpy
 
 
 @define
-class MethanolCostConfig(MethanolCostBaseConfig):
+class MethanolCostConfig(BaseConfig):
+    plant_capacity_kgpy: float = field()
+    capex_factor: float = field()
     lng: float = field()
     lng_cost: float = field()
 
@@ -64,29 +71,50 @@ class MethanolCostModel(MethanolCostBaseClass):
         self.config = MethanolCostConfig.from_dict(
             merge_shared_cost_inputs(self.options["tech_config"]["model_inputs"])
         )
-        self.add_input("lng", val=self.config.lng, shape_by_conn=False, units="kg/h")
+        self.cost_model = SMR_methanol_cost(self.config.plant_capacity_kgpy)
+        self.add_input(
+            "plant_capacity_kgpy",
+            val=self.config.plant_capacity_kgpy,
+            shape_by_conn=False,
+            units="kg/year"
+        )
+        self.add_input(
+            "capex_factor",
+            val=self.config.capex_factor,
+            shape_by_conn=False,
+            units="USD/kg/year"
+        )
+        self.add_input("lng", val=self.config.lng, shape_by_conn=False, units="kg/year")
+        self.add_input("lng_cost", val=self.config.lng_cost, shape_by_conn=False, units="USD/kg")
 
     def compute(self, inputs, outputs):
         
         # Call the cost model to compute costs
-        costs = run_cost_model(
+        cost_model = self.cost_model
+        costs = cost_model.run_cost_model(
             inputs["plant_capacity_kgpy"],
+            inputs["capex_factor"],
             inputs["lng"],
-            self.config.lng_cost,
+            inputs["lng_cost"],
             )
         (capex, opex) = costs
 
-        outputs["CapEx"] = capex * 1.0e-6  # Convert to MUSD
-        outputs["OpEx"] = opex * 1.0e-6  # Convert to MUSD
+        outputs["CapEx"] = capex
+        outputs["OpEx"] = opex
 
 
 class MethanolFinanceModel(MethanolFinanceBaseClass):
     """
-    Placeholder for the financial model of the methanol plant.
+    An OpenMDAO component that computes the financials of an SMR methanol plant.
     """
 
+    def setup(self):
+        super().setup()
+        self.finance_model = SMR_methanol_finance(0,0)
+        
     def compute(self, inputs, outputs):
-        CAPEX = inputs["CapEX"]
-        OPEX = inputs["OpEX"]
+        CAPEX = inputs["CapEx"]
+        OPEX = inputs["OpEx"]
         kgpy = inputs["methanol"]
-        outputs["LCOM"] = run_finance_model(CAPEX,OPEX,kgpy)
+        finance_model = self.finance_model
+        outputs["LCOM"] = finance_model.run_finance_model(CAPEX,OPEX,kgpy)

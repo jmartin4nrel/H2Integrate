@@ -8,12 +8,13 @@ technologies:
     cost_model:
       model: "smr_methanol_cost"
     financial_model:
-      model: "smr_methanol_finance"
+      model: "smr_methanol"
     model_inputs:
+      shared_parameters:
+        lng: 10000000
       performance_parameters:
         lng_consumption: 0.4
       cost_parameters:
+        capex_factor: 100
+        plant_capacity_kgpy: 25000000
         lng_cost: 2.0
-      shared_parameters:
-        lng: 1000000
-        plant_capacity_kgpy: 2500000

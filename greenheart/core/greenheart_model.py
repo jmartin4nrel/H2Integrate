@@ -226,6 +226,9 @@ class GreenHEARTModel:
                 commodity_type = "steel"
             elif "electrolyzer" in tech_configs:
                 commodity_type = "hydrogen"
+            elif "methanol" in tech_configs:
+                commodity_type = "methanol"
+                from greenheart.converters.methanol.smr_methanol import MethanolFinanceModel
             else:
                 commodity_type = "electricity"
 
@@ -244,11 +247,14 @@ class GreenHEARTModel:
             )
 
             # Add profast component
-            profast_comp = ProFastComp(
-                tech_config=tech_configs,
-                plant_config=self.plant_config,
-                commodity_type=commodity_type,
-            )
+            if commodity_type == "methanol":
+                profast_comp = MethanolFinanceModel()
+            else:
+                profast_comp = ProFastComp(
+                    tech_config=tech_configs,
+                    plant_config=self.plant_config,
+                    commodity_type=commodity_type,
+                )
             financial_group.add_subsystem("profast_comp", profast_comp, promotes=["*"])
 
             self.plant.add_subsystem(f"financials_group_{group_id}", financial_group)

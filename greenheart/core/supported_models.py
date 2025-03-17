@@ -72,5 +72,5 @@ supported_models = {
     "hydrogen_tank_cost": HydrogenTankCostModel,
     "smr_methanol_performance": MethanolPerformanceModel,
     "smr_methanol_cost": MethanolCostModel,
-    "smr_methanol_finance": MethanolFinanceModel,
+    "smr_methanol_financial": MethanolFinanceModel,
 }
