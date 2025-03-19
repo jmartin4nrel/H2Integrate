@@ -41,8 +41,10 @@ def test_iron_simulation(subtests):
     lcoi = iron_finance.sol["price"]
 
     with subtests.test("LCOE"):
-        assert lcoe * 1e3 == approx(56.5, 1e-3)
+        assert lcoe * 1e3 == approx(56.51311, 1e-6)
     with subtests.test("LCOH"):
-        assert lcoh == approx(7.58, 1e-3)
+        assert lcoh == approx(7.583575, 1e-6)
     with subtests.test("LCOI"):
-        assert lcoi == approx(534.24, 1e-3)
+        assert lcoi == approx(534.2434, 1e-6)
+    with subtests.test("CI"):
+        assert iron_ci == approx(5109.271, 1e-6)
