@@ -49,6 +49,9 @@ from greenheart.simulation.technologies.ammonia.ammonia import (
     AmmoniaCapacityModelOutputs,
     run_ammonia_full_model,
 )
+from greenheart.simulation.technologies.hydrogen.electrolysis.pem_cost_tools import (
+    ElectrolyzerLCOHInputConfig,
+)
 from greenheart.simulation.technologies.iron.martin_transport.iron_transport import (
     calc_iron_ship_cost,
 )
@@ -208,6 +211,17 @@ class GreenHeartSimulationConfig:
 
         # if design_scenario["h2_storage_location"] == "turbine":
         #     plant_config["h2_storage"]["type"] = "turbine"
+        if "analysis_start_year" not in self.greenheart_config["finance_parameters"]:
+            analysis_start_year = self.greenheart_config["project_parameters"]["atb_year"] + 2
+            self.greenheart_config["finance_parameters"].update(
+                {"analysis_start_year": analysis_start_year}
+            )
+
+            msg = (
+                "analysis_start_year not provided in greenheart input file."
+                f"Setting analysis_start_year to {analysis_start_year}."
+            )
+            warnings.warn(msg, UserWarning)
 
         if self.electrolyzer_rating_mw is not None:
             self.greenheart_config["electrolyzer"]["flag"] = True
@@ -482,9 +496,26 @@ def setup_greenheart_simulation(config: GreenHeartSimulationConfig):
         wind_cost_results = he_fin.run_wind_cost_model(
             wind_cost_inputs=wind_config, verbose=config.verbose
         )
+        if "installation_time" not in config.greenheart_config["project_parameters"].keys():
+            config.greenheart_config["project_parameters"].update(
+                {"installation_time": wind_cost_results.installation_time}
+            )
+            msg = (
+                "installation_time not provided in greenheart input file."
+                "Updating installation_time from Orbit results "
+                f"({wind_cost_results.installation_time} months)."
+            )
+            warnings.warn(msg, UserWarning)
     else:
         wind_cost_results = None
 
+    if "installation_time" not in config.greenheart_config["project_parameters"].keys():
+        config.greenheart_config["project_parameters"].update({"installation_time": 0})
+        msg = (
+            "installation_time not provided in greenheart input file."
+            "Setting installation_time to 0 months."
+        )
+        warnings.warn(msg, UserWarning)
     # override individual fin_model values with cost_info values
     if "wind" in config.hopp_config["technologies"]:
         if ("wind_om_per_kw" in config.hopp_config["config"]["cost_info"]) and (
@@ -1078,7 +1109,7 @@ def run_physics(config: GreenHeartSimulationConfig, hi, wind_cost_results):
     )
 
     # TODO double check full-system OPEX
-    opex_annual, opex_breakdown_annual = he_fin.run_opex(
+    opex_annual, opex_breakdown_annual = he_fin.run_fixed_opex(
         hopp_results,
         wind_cost_results,
         electrolyzer_cost_results,
@@ -1093,6 +1124,8 @@ def run_physics(config: GreenHeartSimulationConfig, hi, wind_cost_results):
         verbose=config.verbose,
         total_export_system_cost=capex_breakdown["electrical_export_system"],
     )
+
+    he_fin.run_variable_opex(electrolyzer_cost_results, config.greenheart_config)
 
     if config.verbose:
         print(
@@ -1154,10 +1187,18 @@ def run_financials(
         save_plots=config.save_plots,
         output_dir=config.output_dir,
     )
+    electrolyzer_performance_results = ElectrolyzerLCOHInputConfig(
+        electrolyzer_physics_results=electrolyzer_physics_results,
+        electrolyzer_config=config.greenheart_config["electrolyzer"],
+        analysis_start_year=config.greenheart_config["finance_parameters"]["analysis_start_year"],
+        installation_period_months=config.greenheart_config["project_parameters"][
+            "installation_time"
+        ],
+    )
     lcoh_grid_only, pf_grid_only = he_fin.run_profast_grid_only(
         config.greenheart_config,
         wind_cost_results,
-        electrolyzer_physics_results,
+        electrolyzer_performance_results,
         capex_breakdown,
         opex_breakdown_annual,
         hopp_results,
@@ -1172,7 +1213,7 @@ def run_financials(
     lcoh, pf_lcoh = he_fin.run_profast_full_plant_model(
         config.greenheart_config,
         wind_cost_results,
-        electrolyzer_physics_results,
+        electrolyzer_performance_results,
         capex_breakdown,
         opex_breakdown_annual,
         hopp_results,
