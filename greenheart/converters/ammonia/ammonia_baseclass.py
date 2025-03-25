@@ -37,10 +37,10 @@ class Feedstocks(BaseConfig):
     """
 
     electricity_cost: float = field()
-    hydrogen_cost: float = field()
     cooling_water_cost: float = field()
     iron_based_catalyst_cost: float = field()
     oxygen_cost: float = field()
+    hydrogen_cost: float = field(default=None)
     electricity_consumption: float = field(default=0.1207 / 1000)
     hydrogen_consumption: float = field(default=0.197284403)
     cooling_water_consumption: float = field(default=0.049236824)
@@ -130,7 +130,13 @@ class AmmoniaCostModel(om.ExplicitComponent):
             merge_shared_cost_inputs(self.options["tech_config"]["model_inputs"])
         )
 
+        if self.cost_config.feedstocks.hydrogen_cost is None:
+            self.add_input("LCOH", val=0.0, units="USD/kg", desc="Levelized cost of hydrogen")
+
     def compute(self, inputs, outputs):
+        if self.cost_config.feedstocks.hydrogen_cost is None:
+            self.cost_config.feedstocks.hydrogen_cost = inputs["LCOH"]
+
         cost_model_outputs = run_ammonia_cost_model(self.cost_config)
 
         outputs["CapEx"] = cost_model_outputs.capex_total
