@@ -14,7 +14,13 @@ from greenheart.simulation.technologies.hydrogen.electrolysis.run_h2_PEM import 
 from greenheart.simulation.technologies.hydrogen.electrolysis.H2_cost_model import (
     basic_H2_cost_model,
 )
+from greenheart.simulation.technologies.hydrogen.electrolysis.pem_cost_tools import (
+    calc_electrolyzer_variable_om,
+)
 from greenheart.simulation.technologies.hydrogen.electrolysis.PEM_BOP.PEM_BOP import pem_bop
+from greenheart.simulation.technologies.hydrogen.electrolysis.PEM_costs_custom import (
+    calc_custom_electrolysis_capex_fom,
+)
 from greenheart.simulation.technologies.hydrogen.electrolysis.pem_mass_and_footprint import (
     mass as run_electrolyzer_mass,
     footprint as run_electrolyzer_footprint,
@@ -63,9 +69,24 @@ def run_electrolyzer_physics(
         )
 
     n_pem_clusters = int(
-        ceildiv(electrolyzer_size_mw, greenheart_config["electrolyzer"]["cluster_rating_MW"])
+        ceildiv(
+            round(electrolyzer_size_mw, 1), greenheart_config["electrolyzer"]["cluster_rating_MW"]
+        )
     )
 
+    electrolyzer_real_capacity_kW = (
+        n_pem_clusters * greenheart_config["electrolyzer"]["cluster_rating_MW"] * 1e3
+    )
+
+    if np.abs(electrolyzer_real_capacity_kW - (electrolyzer_size_mw * 1e3)) > 1.0:
+        electrolyzer_real_capacity_mw = electrolyzer_real_capacity_kW / 1e3
+        cluster_cap_mw = greenheart_config["electrolyzer"]["cluster_rating_MW"]
+        msg = (
+            f"setting electrolyzer capacity to {electrolyzer_real_capacity_mw} MW. "
+            f"Input value of {electrolyzer_size_mw:.2f} MW is not a "
+            f"multiple of cluster capacity ({cluster_cap_mw} MW)"
+        )
+        warnings.warn(msg, UserWarning)
     ## run using greensteel model
     pem_param_dict = {
         "eol_eff_percent_loss": greenheart_config["electrolyzer"]["eol_eff_percent_loss"],
@@ -105,6 +126,7 @@ def run_electrolyzer_physics(
     footprint_m2 = run_electrolyzer_footprint(electrolyzer_size_mw)
 
     # store results for return
+    H2_Results.update({"system capacity [kW]": electrolyzer_real_capacity_kW})
     electrolyzer_physics_results = {
         "H2_Results": H2_Results,
         "capacity_factor": H2_Results["Life: Capacity Factor"],
@@ -277,16 +299,35 @@ def run_electrolyzer_cost(
     verbose=False,
 ):
     # unpack inputs
+    electrolyzer_cost_model = greenheart_config["electrolyzer"][
+        "cost_model"
+    ]  # can be "basic" or "singlitico2021" or "basic_custom"
+
+    electrolyzer_size_kW = electrolyzer_physics_results["H2_Results"]["system capacity [kW]"]
+    electrolyzer_size_mw = electrolyzer_size_kW / 1e3
+    if electrolyzer_cost_model == "basic_custom":
+        (electrolyzer_total_capital_cost, electrolyzer_OM_cost) = (
+            calc_custom_electrolysis_capex_fom(
+                electrolyzer_size_kW, greenheart_config["electrolyzer"]
+            )
+        )
+
+        electrolyzer_vom_cost = calc_electrolyzer_variable_om(
+            electrolyzer_physics_results, greenheart_config
+        )
+
+        electrolyzer_cost_results = {
+            "electrolyzer_total_capital_cost": electrolyzer_total_capital_cost,
+            "electrolyzer_OM_cost_annual": electrolyzer_OM_cost,
+            "electrolyzer_variable_OM_annual": electrolyzer_vom_cost,
+        }
+        return electrolyzer_cost_results
+
     H2_Results = electrolyzer_physics_results["H2_Results"]
-    electrolyzer_size_mw = greenheart_config["electrolyzer"]["rating"]
     useful_life = greenheart_config["project_parameters"]["project_lifetime"]
     atb_year = greenheart_config["project_parameters"]["atb_year"]
     electrical_generation_timeseries = electrolyzer_physics_results["power_to_electrolyzer_kw"]
     nturbines = hopp_config["technologies"]["wind"]["num_turbines"]
-
-    electrolyzer_cost_model = greenheart_config["electrolyzer"][
-        "cost_model"
-    ]  # can be "basic" or "singlitico2021"
 
     # run hydrogen production cost model - from hopp examples
     if design_scenario["electrolyzer_location"] == "onshore":
@@ -389,10 +430,15 @@ def run_electrolyzer_cost(
             )
             raise ValueError(msg)
 
+    electrolyzer_vom_cost = calc_electrolyzer_variable_om(
+        electrolyzer_physics_results, greenheart_config
+    )
+
     # package outputs for return
     electrolyzer_cost_results = {
         "electrolyzer_total_capital_cost": electrolyzer_total_capital_cost,
         "electrolyzer_OM_cost_annual": electrolyzer_OM_cost,
+        "electrolyzer_variable_OM_annual": electrolyzer_vom_cost,
     }
 
     # print some results if desired
