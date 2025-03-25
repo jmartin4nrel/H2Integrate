@@ -20,7 +20,7 @@ site: #!include flatirons_site.yaml
   wind_resource_file: "../../../../resource_files/wind/47.5233_-92.5366_windtoolkit_2013_60min_100m_120m.srw"
   wave_resource_file: ""
   grid_resource_file: ""
-  hub_height: 80.0
+  hub_height: 115.0
   capacity_hours: []
   solar: true
   wind: true
@@ -32,10 +32,11 @@ technologies:
   wind:
     num_turbines: 216
     turbine_rating_kw: 6000.0
-    model_name: pysam
-    # timestep: [0, 8760]
-    # floris_config: input_files/floris/floris_input_lbw_6MW.yaml
+    model_name: floris
+    timestep: [0, 8760]
+    floris_config: input_files/floris/floris_input_lbw_6MW.yaml
     fin_model: !include default_fin_config.yaml
+    hub_height: 115.0
   pv:
     system_capacity_kw: 100000
     dc_degradation: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
