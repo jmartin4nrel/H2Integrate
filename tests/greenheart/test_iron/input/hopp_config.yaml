@@ -20,7 +20,7 @@ site: #!include flatirons_site.yaml
   wind_resource_file: "../../../../resource_files/wind/47.5233_-92.5366_windtoolkit_2013_60min_100m_120m.srw"
   wave_resource_file: ""
   grid_resource_file: ""
-  hub_height: 115.0
+  hub_height: 80.0
   capacity_hours: []
   solar: true
   wind: true

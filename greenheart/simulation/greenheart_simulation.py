@@ -1125,7 +1125,14 @@ def run_physics(config: GreenHeartSimulationConfig, hi, wind_cost_results):
         total_export_system_cost=capex_breakdown["electrical_export_system"],
     )
 
-    he_fin.run_variable_opex(electrolyzer_cost_results, config.greenheart_config)
+    vopex_breakdown_annual = he_fin.run_variable_opex(
+        electrolyzer_cost_results, config.greenheart_config
+    )
+
+    opex_breakdown_total = {
+        "fixed_om": opex_breakdown_annual,
+        "variable_om": vopex_breakdown_annual,
+    }
 
     if config.verbose:
         print(
@@ -1154,7 +1161,7 @@ def run_physics(config: GreenHeartSimulationConfig, hi, wind_cost_results):
         capex,
         capex_breakdown,
         opex_annual,
-        opex_breakdown_annual,
+        opex_breakdown_total,
         platform_results,
         solver_results,
         wind_annual_energy_kwh,
@@ -1168,12 +1175,13 @@ def run_financials(
     wind_cost_results,
     electrolyzer_physics_results,
     capex_breakdown,
-    opex_breakdown_annual,
+    opex_breakdown_total,
     total_accessory_power_renewable_kw,
     total_accessory_power_grid_kw,
     wind_annual_energy_kwh,
     solar_pv_annual_energy_kwh,
 ):
+    opex_breakdown_annual = opex_breakdown_total["fixed_om"]
     lcoe, pf_lcoe = he_fin.run_profast_lcoe(
         config.greenheart_config,
         wind_cost_results,
@@ -1200,7 +1208,7 @@ def run_financials(
         wind_cost_results,
         electrolyzer_performance_results,
         capex_breakdown,
-        opex_breakdown_annual,
+        opex_breakdown_total,
         hopp_results,
         config.design_scenario,
         total_accessory_power_renewable_kw,
@@ -1215,7 +1223,7 @@ def run_financials(
         wind_cost_results,
         electrolyzer_performance_results,
         capex_breakdown,
-        opex_breakdown_annual,
+        opex_breakdown_total,
         hopp_results,
         config.incentive_option,
         config.design_scenario,
@@ -1296,12 +1304,13 @@ def run_simulation(config: GreenHeartSimulationConfig):
             capex,
             capex_breakdown,
             opex_annual,
-            opex_breakdown_annual,
+            opex_breakdown_total,
             platform_results,
             solver_results,
             wind_annual_energy_kwh,
             solar_pv_annual_energy_kwh,
         ) = physics_results
+        opex_breakdown_annual = opex_breakdown_total["fixed_om"]
 
     steel_finance = None
     iron_finance = None
@@ -1324,7 +1333,7 @@ def run_simulation(config: GreenHeartSimulationConfig):
                 wind_cost_results,
                 electrolyzer_physics_results,
                 capex_breakdown,
-                opex_breakdown_annual,
+                opex_breakdown_total,
                 total_accessory_power_renewable_kw,
                 total_accessory_power_grid_kw,
                 wind_annual_energy_kwh,
