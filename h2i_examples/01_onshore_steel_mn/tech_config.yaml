@@ -41,7 +41,6 @@ technologies:
 
       financial_parameters:
         replacement_cost_percent: 0.15 # percent of capex - H2A default case
-
   h2_storage:
     performance_model:
       model: "eco_h2_storage"
@@ -49,13 +48,14 @@ technologies:
       model: "eco_h2_storage"
     financial_model:
       group: 1
-    details:
-      rating: 1125.165 # MW
-      size_capacity_from_demand:
-        flag: True # If True, then storage is sized to provide steady-state storage
-      capacity_from_max_on_turbine_storage: False # if True, then days of storage is ignored and storage capacity is based on how much h2 storage fits on the turbines in the plant using Kottenstete 2003.
-      type: "lined_rock_cavern" # can be one of ["none", "pipe", "turbine", "pressure_vessel", "salt_cavern", "lined_rock_cavern"]
-      days: 0 #how many days worth of production we should be able to store (this is ignored if `capacity_from_max_on_turbine_storage` is set to True)
+    model_inputs:
+      shared_parameters:
+        rating: 1125.165
+        size_capacity_from_demand:
+          flag: True # If True, then storage is sized to provide steady-state storage
+        capacity_from_max_on_turbine_storage: False # if True, then days of storage is ignored and storage capacity is based on how much h2 storage fits on the turbines in the plant using Kottenstete 2003.
+        type: "lined_rock_cavern" # can be one of ["none", "pipe", "turbine", "pressure_vessel", "salt_cavern", "lined_rock_cavern"]
+        days: 0 #how many days worth of production we should be able to store (this is ignored if `capacity_from_max_on_turbine_storage` is set to True)
   steel:
     performance_model:
       model: "steel_performance"

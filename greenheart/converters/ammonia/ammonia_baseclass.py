@@ -68,20 +68,15 @@ class AmmoniaPerformanceModel(om.ExplicitComponent):
         self.config = AmmoniaPerformanceModelConfig.from_dict(
             merge_shared_performance_inputs(self.options["tech_config"]["model_inputs"])
         )
-        self.add_input(
-            "electricity", val=0.0, shape_by_conn=True, copy_shape="hydrogen", units="kW"
-        )
-        self.add_input("hydrogen", val=0.0, shape_by_conn=True, copy_shape="hydrogen", units="kg/h")
-        self.add_output(
-            "ammonia", val=0.0, shape_by_conn=True, copy_shape="electricity", units="kg/h"
-        )
+        self.add_input("hydrogen", val=0.0, shape_by_conn=True, copy_shape="ammonia", units="kg/h")
+        self.add_output("ammonia", val=0.0, shape_by_conn=True, copy_shape="hydrogen", units="kg/h")
 
     def compute(self, inputs, outputs):
         ammonia_production_kgpy = run_ammonia_model(
             self.config.plant_capacity_kgpy,
             self.config.plant_capacity_factor,
         )
-        outputs["ammonia"] = ammonia_production_kgpy / len(inputs["electricity"])
+        outputs["ammonia"] = ammonia_production_kgpy / len(inputs["hydrogen"])
 
 
 @define

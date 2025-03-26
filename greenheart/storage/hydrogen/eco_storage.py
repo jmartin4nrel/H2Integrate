@@ -1,5 +1,8 @@
 import numpy as np
 import openmdao.api as om
+from attrs import field, define
+
+from greenheart.core.utilities import BaseConfig, merge_shared_performance_inputs
 
 
 # TODO: fix import structure in future refactor
@@ -10,6 +13,15 @@ from greenheart.simulation.technologies.hydrogen.h2_storage.salt_cavern.salt_cav
 from greenheart.simulation.technologies.hydrogen.h2_storage.lined_rock_cavern.lined_rock_cavern import LinedRockCavernStorage  # noqa: E501  # fmt: skip  # isort:skip
 
 
+@define
+class H2StorageModelConfig(BaseConfig):
+    rating: float = field(default=640)
+    size_capacity_from_demand: dict = field(default={"flag": True})
+    capacity_from_max_on_turbine_storage: bool = field(default=False)
+    type: str = field(default="salt_cavern")
+    days: int = field(default=0)
+
+
 class H2Storage(om.ExplicitComponent):
     def initialize(self):
         self.options.declare("tech_config", types=dict)
@@ -17,14 +29,17 @@ class H2Storage(om.ExplicitComponent):
         self.options.declare("verbose", types=bool, default=True)
 
     def setup(self):
+        self.config = H2StorageModelConfig.from_dict(
+            merge_shared_performance_inputs(self.options["tech_config"]["model_inputs"])
+        )
         self.add_input("hydrogen", val=0.0, shape_by_conn=True, units="kg/h")
         self.add_input("efficiency", val=0.0, desc="Average efficiency of the electrolyzer")
+
         self.add_output("CapEx", val=0.0, units="USD", desc="Capital expenditure")
         self.add_output("OpEx", val=0.0, units="USD/year", desc="Operational expenditure")
 
     def compute(self, inputs, outputs):
-        tech_config = self.options["tech_config"]
-        self.options["plant_config"]
+        self.options["tech_config"]
         ########### initialize output dictionary ###########
         h2_storage_results = {}
 
@@ -32,12 +47,12 @@ class H2Storage(om.ExplicitComponent):
 
         ########### get hydrogen storage size in kilograms ###########
         ##################### no hydrogen storage
-        if tech_config["details"]["type"] == "none":
+        if self.config.type == "none":
             h2_storage_capacity_kg = 0.0
             storage_max_fill_rate = 0.0
 
         ##################### get storage capacity from hydrogen storage demand
-        elif tech_config["details"]["size_capacity_from_demand"]["flag"]:
+        elif self.config.size_capacity_from_demand["flag"]:
             hydrogen_storage_demand = np.mean(
                 inputs["hydrogen"]
             )  # TODO: update demand based on end-use needs
@@ -52,7 +67,7 @@ class H2Storage(om.ExplicitComponent):
                 hydrogen_storage_soc,
             ) = hydrogen_storage_capacity(
                 results_dict,
-                tech_config["details"]["rating"],
+                self.config.rating,
                 hydrogen_storage_demand,
             )
             h2_storage_capacity_kg = hydrogen_storage_capacity_kg
@@ -61,21 +76,21 @@ class H2Storage(om.ExplicitComponent):
 
         ##################### get storage capacity based on storage days in config
         else:
-            storage_hours = tech_config["details"]["days"] * 24
+            storage_hours = self.config.days * 24
             h2_storage_capacity_kg = round(storage_hours * storage_max_fill_rate)
 
         h2_storage_results["h2_storage_capacity_kg"] = h2_storage_capacity_kg
         h2_storage_results["h2_storage_max_fill_rate_kg_hr"] = storage_max_fill_rate
 
         ########### run specific hydrogen storage models for costs and energy use ###########
-        if tech_config["details"]["type"] == "none":
+        if self.config.type == "none":
             h2_storage_results["storage_capex"] = 0.0
             h2_storage_results["storage_opex"] = 0.0
             h2_storage_results["storage_energy"] = 0.0
 
             h2_storage = None
 
-        elif tech_config["details"]["type"] == "salt_cavern":
+        elif self.config.type == "salt_cavern":
             # initialize dictionary for salt cavern storage parameters
             storage_input = {}
 
@@ -96,7 +111,7 @@ class H2Storage(om.ExplicitComponent):
             h2_storage_results["storage_opex"] = h2_storage.output_dict["salt_cavern_storage_opex"]
             h2_storage_results["storage_energy"] = 0.0
 
-        elif tech_config["details"]["type"] == "lined_rock_cavern":
+        elif self.config.type == "lined_rock_cavern":
             # initialize dictionary for salt cavern storage parameters
             storage_input = {}
 
