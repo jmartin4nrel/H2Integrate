@@ -32,9 +32,22 @@ class H2Storage(om.ExplicitComponent):
         self.config = H2StorageModelConfig.from_dict(
             merge_shared_performance_inputs(self.options["tech_config"]["model_inputs"])
         )
-        self.add_input("hydrogen", val=0.0, shape_by_conn=True, units="kg/h")
+        self.add_input(
+            "hydrogen_input",
+            val=0.0,
+            shape_by_conn=True,
+            copy_shape="hydrogen_output",
+            units="kg/h",
+        )
         self.add_input("efficiency", val=0.0, desc="Average efficiency of the electrolyzer")
 
+        self.add_output(
+            "hydrogen_output",
+            val=0.0,
+            shape_by_conn=True,
+            copy_shape="hydrogen_input",
+            units="kg/h",
+        )
         self.add_output("CapEx", val=0.0, units="USD", desc="Capital expenditure")
         self.add_output("OpEx", val=0.0, units="USD/year", desc="Operational expenditure")
 
@@ -43,7 +56,7 @@ class H2Storage(om.ExplicitComponent):
         ########### initialize output dictionary ###########
         h2_storage_results = {}
 
-        storage_max_fill_rate = np.max(inputs["hydrogen"])
+        storage_max_fill_rate = np.max(inputs["hydrogen_input"])
 
         ########### get hydrogen storage size in kilograms ###########
         ##################### no hydrogen storage
@@ -54,10 +67,10 @@ class H2Storage(om.ExplicitComponent):
         ##################### get storage capacity from hydrogen storage demand
         elif self.config.size_capacity_from_demand["flag"]:
             hydrogen_storage_demand = np.mean(
-                inputs["hydrogen"]
+                inputs["hydrogen_input"]
             )  # TODO: update demand based on end-use needs
             results_dict = {
-                "Hydrogen Hourly Production [kg/hr]": inputs["hydrogen"],
+                "Hydrogen Hourly Production [kg/hr]": inputs["hydrogen_input"],
                 "Sim: Average Efficiency [%-HHV]": inputs["efficiency"],
             }
             (
@@ -157,3 +170,6 @@ class H2Storage(om.ExplicitComponent):
 
         outputs["CapEx"] = h2_storage_results["storage_capex"]
         outputs["OpEx"] = h2_storage_results["storage_opex"]
+
+        # For now, pass through hydrogen
+        outputs["hydrogen_output"] = inputs["hydrogen_input"]

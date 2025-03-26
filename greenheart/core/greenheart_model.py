@@ -275,10 +275,18 @@ class GreenHEARTModel:
                 # Add the connection component to the model
                 self.plant.add_subsystem(connection_name, connection_component)
 
-                # Connect the source technology to the connection component
-                self.plant.connect(
-                    f"{source_tech}.{transport_item}", f"{connection_name}.{transport_item}_input"
-                )
+                if "storage" in source_tech:
+                    # Connect the source technology to the connection component
+                    self.plant.connect(
+                        f"{source_tech}.{transport_item}_output",
+                        f"{connection_name}.{transport_item}_input",
+                    )
+                else:
+                    # Connect the source technology to the connection component
+                    self.plant.connect(
+                        f"{source_tech}.{transport_item}",
+                        f"{connection_name}.{transport_item}_input",
+                    )
 
                 # Check if the transport type is a combiner
                 if "combiner" in dest_tech:
@@ -293,6 +301,13 @@ class GreenHEARTModel:
                     self.plant.connect(
                         f"{connection_name}.{transport_item}_output",
                         f"{dest_tech}.electricity_input{combiner_counts[dest_tech]}",
+                    )
+
+                elif "storage" in dest_tech:
+                    # Connect the connection component to the destination technology
+                    self.plant.connect(
+                        f"{connection_name}.{transport_item}_output",
+                        f"{dest_tech}.{transport_item}_input",
                     )
 
                 else:
