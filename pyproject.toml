@@ -12,7 +12,7 @@ requires-python = ">=3.9, <3.12"
 license = {file = "LICENSE"}
 dependencies = [
     "Cython",
-    "NREL-PySAM==4.2.0",
+    "NREL-PySAM==6.0.1",
     "Pillow",
     "Plotly",
     "Pyomo>=6.1.2",
@@ -51,7 +51,7 @@ dependencies = [
     "openpyxl",
     "attrs",
     "utm",
-    "hopp>=3.1.1",
+    "hopp>=3.2",
     "orbit-nrel>=1.1",
     "openmdao[all]",
     "ProFAST",

@@ -1,6 +1,6 @@
 turbine_type: 'lbw_6MW'
 rotor_diameter: 196.0
-turbine_rating: 6 #MW
+turbine_rating: 6.015407114 #MW
 hub_height: 115.0
 TSR: 9.0
 power_thrust_table:
@@ -51,7 +51,7 @@ power_thrust_table:
     - 6015.40698
     - 6015.40709
     - 6015.407093
-    - 6015.407114
+    - 6015.407114000001
     - 6015.407067
     - 6015.407052
     - 2887.395408
