@@ -1,17 +1,12 @@
-def make_pf_config_from_profast(pf):
-    pf_config = {
-        "params": pf.vals,
-        "capital_items": pf.capital_items,
-        "fixed_costs": pf.fixed_costs,
-        "feedstocks": pf.feedstocks,
-        "incentives": pf.incentives,
-        "coproducts": pf.coproducts,
-        "LCO": pf.LCO,
-    }
-    return pf_config
-
-
 def convert_pf_res_to_pf_config(pf_config):
+    """Convert dictionary of profast objects to dictionary with embedded dictionaries.
+
+    Args:
+        pf_config (dict): values are profast objects.
+
+    Returns:
+        dict: dictionary of ProFAST input file.
+    """
     pf_config_new = {}
     config_keys = list(pf_config.keys())
     pf_config_new.update({"params": {}})
@@ -112,3 +107,25 @@ def convert_pf_res_to_pf_config(pf_config):
             coproducts.update({i: dict(zip(coproduct_keys, vals))})
         pf_config_new.update({"coproducts": coproducts})
     return pf_config_new
+
+
+def make_pf_config_from_profast(pf):
+    """Convert ProFAST object into dictionary
+
+    Args:
+        pf (ProFAST object): ProFAST object that has been initialized and populated
+
+    Returns:
+        dict: dictionary of ProFAST inputs, can be used to recreate replcia of ProFAST simulation.
+    """
+    pf_res = {
+        "params": pf.vals,
+        "capital_items": pf.capital_items,
+        "fixed_costs": pf.fixed_costs,
+        "feedstocks": pf.feedstocks,
+        "incentives": pf.incentives,
+        "coproducts": pf.coproducts,
+        "LCO": pf.LCO,
+    }
+    pf_config = convert_pf_res_to_pf_config(pf_res)
+    return pf_config

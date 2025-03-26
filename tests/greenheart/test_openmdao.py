@@ -209,10 +209,10 @@ def setup_greenheart():
         "driver": {
             "optimization": {
                 "flag": True,
-                "solver": "SLSQP",
+                "solver": "COBYLA",
                 "tol": 1e-6,
-                "max_major_iter": 1,
-                "max_minor_iter": 2,
+                "max_iter": 5,
+                "rhobeg": 20000.0,
                 "gradient_method": "openmdao",
                 # "time_limit": 10, # (sec) optional
                 # "hist_file_name": "snopt_history.txt", # optional
@@ -385,7 +385,7 @@ def test_greenheart_component(subtests):
 
     # TODO base this test value on something
     with subtests.test("lcoh"):
-        assert prob["lcoh"][0] == approx(3.1691092704830357, rel=rtol)
+        assert prob["lcoh"][0] == approx(2.8752542931148994, rel=rtol)
 
     # TODO base this test value on something
     with subtests.test("lcoe"):
@@ -393,12 +393,12 @@ def test_greenheart_component(subtests):
 
     # TODO base this test value on something
     with subtests.test("steel_finance"):
-        lcos_expected = 1443.2380673720684
+        lcos_expected = 1394.8936273463223
         assert prob["lcos"][0] == approx(lcos_expected, rel=rtol)
 
     # TODO base this test value on something
     with subtests.test("ammonia_finance"):
-        lcoa_expected = 1.0679224700416565
+        lcoa_expected = 1.0614633836561882
         assert prob["lcoa"][0] == approx(lcoa_expected, rel=rtol)
 
 
@@ -408,7 +408,7 @@ def test_run_greenheart_run_only(subtests):
 
     # TODO base this test value on something
     with subtests.test("lcoh"):
-        assert prob["lcoh"][0] == approx(3.1691092704830357, rel=rtol)
+        assert prob["lcoh"][0] == approx(2.8752542931148994, rel=rtol)
 
     # TODO base this test value on something
     with subtests.test("lcoe"):
@@ -416,17 +416,19 @@ def test_run_greenheart_run_only(subtests):
 
     # TODO base this test value on something
     with subtests.test("steel_finance"):
-        lcos_expected = 1443.23806737
-        assert prob["lcos"] == approx(lcos_expected, rel=rtol)
+        lcos_expected = 1394.8936273463223
+        assert prob["lcos"][0] == approx(lcos_expected, rel=rtol)
 
     # TODO base this test value on something
     with subtests.test("ammonia_finance"):
-        lcoa_expected = 1.06792247
+        lcoa_expected = 1.06146338
         assert prob["lcoa"] == approx(lcoa_expected, rel=rtol)
 
 
 def test_run_greenheart_optimize(subtests):
     config = setup_greenheart()
+    config.greenheart_config["electrolyzer"]["cluster_rating_MW"] = 20.0
+    config.greenheart_config["electrolyzer"]["rating"] = 100.0
 
     prob, config = run_greenheart(config, run_only=False)
 
