@@ -9,6 +9,8 @@
 - Use "metric ton" instead of "tonne" or "metric tonne" in all internal naming and plots
 - Fix bug in hydrogen dispatch plotting by storing time series of hydrogen demand by hour
 - Update the PEM efficiency to 51.0 kWh/kg from 54.6 kWh/kg
+- Bumped PySAM version to 6+ and HOPP to 3.2.0
+- Removed defunct conda build and upload scripts
 - Added iron processing framework and capabilities [PR 90](https://github.com/NREL/GreenHEART/pull/90)
 - Added Martin and Rosner iron ore models, performance and cost for each [PR 90](https://github.com/NREL/GreenHEART/pull/90)
 - Added Rosner direct reduction iron (DRI) model, performance and cost [PR 90](https://github.com/NREL/GreenHEART/pull/90)
