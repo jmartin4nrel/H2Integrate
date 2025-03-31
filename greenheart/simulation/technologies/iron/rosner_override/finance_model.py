@@ -1,8 +1,8 @@
 import numpy as np
 import ProFAST
 
-import greenheart.tools.profast_tools as pf_tools
-from greenheart.tools.inflation.inflate import inflate_cpi, inflate_cepci
+import h2integrate.tools.profast_tools as pf_tools
+from h2integrate.tools.inflation.inflate import inflate_cpi, inflate_cepci
 
 
 def main(config):
@@ -53,7 +53,7 @@ def main(config):
     """
 
     # TODO: Get feedstock costs from input sheets
-    natural_gas_prices = 3.76232  # TODO: Update to read in from greenheart_config
+    natural_gas_prices = 3.76232  # TODO: Update to read in from h2integrate_config
     natural_gas_prices_MMBTU = 4  #
     natural_gas_prices = natural_gas_prices_MMBTU * 1.05506  # Convert to GJ
     lime_unitcost = 100.0

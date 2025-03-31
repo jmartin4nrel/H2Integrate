@@ -1,8 +1,8 @@
 import numpy as np
 import ProFAST
 
-from greenheart.tools.inflation.inflate import inflate_cpi
-from greenheart.simulation.technologies.iron.load_top_down_coeffs import load_top_down_coeffs
+from h2integrate.tools.inflation.inflate import inflate_cpi
+from h2integrate.simulation.technologies.iron.load_top_down_coeffs import load_top_down_coeffs
 
 
 def main(config):

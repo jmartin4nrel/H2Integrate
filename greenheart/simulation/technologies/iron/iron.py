@@ -24,7 +24,7 @@ class IronPerformanceModelConfig:
         product_selection (str): The particular iron product selected.
         site (dict): Contains information on the site where iron is being reduced.
         model (dict): Contains name of performance model and, if necessary, filepaths to
-                        secure location passed from input if not part of public GreenHEART.
+                        secure location passed from input if not part of public H2Integrate.
                         Also contains 'refit_coeffs' boolean to re-do
                         model coefficient curve fitting.
         params (dict): The rest of the parameters for the performance model.
@@ -108,7 +108,7 @@ class IronCostModelConfig:
         product_selection (str): The particular iron product selected.
         site (dict): Contains information on the site where iron is being reduced.
         model (dict): Contains name of cost model and, if necessary, filepaths to
-                        secure location passed from input if not part of public GreenHEART.
+                        secure location passed from input if not part of public H2Integrate.
                         Also contains 'refit_coeffs' boolean to re-do
                         model coefficient curve fitting.
         params (dict): The rest of the parameters for the cost model.
@@ -196,7 +196,7 @@ class IronFinanceModelConfig(IronCostModelConfig):
         product_selection (str): The particular iron product selected.
         site (dict): Contains information on the site where iron is being reduced.
         model (dict): Contains name of finance model and, if necessary, filepaths to
-                        secure location passed from input if not part of public GreenHEART.
+                        secure location passed from input if not part of public H2Integrate.
                         Also contains 'refit_coeffs' boolean to re-do
                         model coefficient curve fitting.
         params (dict): The rest of the parameters for the finance model.
@@ -291,13 +291,13 @@ def run_iron_finance_model(
 
 
 def run_iron_full_model(
-    greenheart_config: dict,
+    h2integrate_config: dict,
 ) -> tuple[IronPerformanceModelOutputs, IronCostModelOutputs, IronFinanceModelOutputs]:
     """
     Runs the full iron model, including capacity (performance), cost, and finance models.
 
     Args:
-        greenheart_config (dict): The configuration for the greenheart model.
+        h2integrate_config (dict): The configuration for the h2integrate model.
 
     Returns:
         Tuple[IronPerformanceModelOutputs, IronCostModelOutputs, IronFinanceModelOutputs]:
@@ -305,7 +305,7 @@ def run_iron_full_model(
     """
     # this is likely to change as we refactor to use config dataclasses, but for now
     # we'll just copy the config and modify it as needed
-    iron_config = copy.deepcopy(greenheart_config["iron"])
+    iron_config = copy.deepcopy(h2integrate_config["iron"])
 
     if iron_config["costs"]["lcoh"] != iron_config["finances"]["lcoh"]:
         raise (
@@ -330,7 +330,7 @@ def run_iron_full_model(
     iron_finance_inputs["operational_year"] = iron_cost_inputs["operational_year"]
     iron_finance_inputs["installation_years"] = iron_cost_inputs["installation_years"]
     iron_finance_inputs["plant_life"] = iron_cost_inputs["plant_life"]
-    iron_finance_inputs["cost_year"] = greenheart_config["project_parameters"]["cost_year"]
+    iron_finance_inputs["cost_year"] = h2integrate_config["project_parameters"]["cost_year"]
 
     # run iron performance model to get iron plant size
     performance_config = IronPerformanceModelConfig(

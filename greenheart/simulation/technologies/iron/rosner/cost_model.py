@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 from hopp.utilities import load_yaml
 
-from greenheart.simulation.technologies.iron.load_top_down_coeffs import load_top_down_coeffs
+from h2integrate.simulation.technologies.iron.load_top_down_coeffs import load_top_down_coeffs
 
 
 CD = Path(__file__).parent

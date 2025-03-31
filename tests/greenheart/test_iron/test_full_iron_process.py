@@ -2,7 +2,10 @@ from pathlib import Path
 
 from pytest import approx
 
-from greenheart.simulation.greenheart_simulation import GreenHeartSimulationConfig, run_simulation
+from h2integrate.simulation.h2integrate_simulation import (
+    H2IntegrateSimulationConfig,
+    run_simulation,
+)
 
 
 INPUTS = Path(__file__).parent / "input"
@@ -16,11 +19,11 @@ def test_iron_simulation(subtests):
     filename_turbine_config = INPUT_PATH / f"turbines/{turbine_model}.yaml"
     filename_floris_config = INPUT_PATH / f"floris/floris_input_{turbine_model}.yaml"
     filename_hopp_config = INPUTS / "hopp_config.yaml"
-    filename_greenheart_config = INPUTS / "greenheart_config_modular.yaml"
+    filename_h2integrate_config = INPUTS / "h2integrate_config_modular.yaml"
 
-    config = GreenHeartSimulationConfig(
+    config = H2IntegrateSimulationConfig(
         filename_hopp_config,
-        filename_greenheart_config,
+        filename_h2integrate_config,
         filename_turbine_config,
         filename_floris_config,
         verbose=False,

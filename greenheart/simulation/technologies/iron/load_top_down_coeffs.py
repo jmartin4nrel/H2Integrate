@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from greenheart.tools.inflation.inflate import inflate_cpi
+from h2integrate.tools.inflation.inflate import inflate_cpi
 
 
 CD = str(Path(__file__).parent.resolve())

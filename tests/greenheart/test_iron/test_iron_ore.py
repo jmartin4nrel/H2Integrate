@@ -2,7 +2,7 @@ import copy
 
 from pytest import approx, fixture
 
-from greenheart.simulation.technologies.iron import iron
+from h2integrate.simulation.technologies.iron import iron
 
 
 @fixture
