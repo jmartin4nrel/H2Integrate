@@ -271,6 +271,9 @@ class GreenHeartSimulationOutput:
     profast_lcoe: ProFAST
     profast_lcoh: ProFAST
     profast_lcoh_grid_only: ProFAST
+    profast_sol_lcoe: dict
+    profast_sol_lcoh: dict
+    profast_sol_lcoh_grid_only: dict
 
     # high-level results
     lcoe: float
@@ -1068,7 +1071,7 @@ def run_simulation(config: GreenHeartSimulationConfig):
     ammonia_finance = None
 
     if config.use_profast:
-        lcoe, pf_lcoe = he_fin.run_profast_lcoe(
+        lcoe, pf_lcoe, sol_lcoe = he_fin.run_profast_lcoe(
             config.greenheart_config,
             wind_cost_results,
             capex_breakdown,
@@ -1093,7 +1096,7 @@ def run_simulation(config: GreenHeartSimulationConfig):
             ],
         )
 
-        lcoh_grid_only, pf_grid_only = he_fin.run_profast_grid_only(
+        lcoh_grid_only, pf_grid_only, sol_grid_only = he_fin.run_profast_grid_only(
             config.greenheart_config,
             wind_cost_results,
             electrolyzer_performance_results,
@@ -1108,7 +1111,7 @@ def run_simulation(config: GreenHeartSimulationConfig):
             save_plots=config.save_plots,
             output_dir=config.output_dir,
         )
-        lcoh, pf_lcoh = he_fin.run_profast_full_plant_model(
+        lcoh, pf_lcoh, sol_lcoh = he_fin.run_profast_full_plant_model(
             config.greenheart_config,
             wind_cost_results,
             electrolyzer_performance_results,
@@ -1253,6 +1256,9 @@ def run_simulation(config: GreenHeartSimulationConfig):
             pf_lcoe,
             pf_lcoh,
             pf_grid_only,
+            sol_lcoe,
+            sol_lcoh,
+            sol_grid_only,
             lcoe,
             lcoh,
             lcoh_grid_only,
