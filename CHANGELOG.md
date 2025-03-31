@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Allow users to save the GreenHEARTOutput class as a yaml file and read that yaml to an instance of the output class
+- Allow users to save the H2IntegrateOutput class as a yaml file and read that yaml to an instance of the output class
 - Include new plotting capabilities: (1) hydrogen storage, production, and dispatch; (2) electricity and hydrogen dispatch
 - Remove reference_plants from examples. Reference plants can now be found in the [ReferenceHybridSystemDesigns](https://github.com/NREL/ReferenceHybridSystemDesigns) repository.
 - Use sentence capitalization for plot labels and legends
@@ -12,6 +12,7 @@
 - Bumped PySAM version to 6+ and HOPP to 3.2.0
 - Removed defunct conda build and upload scripts
 - Return full solution dictionary from ProFAST, allowing access to CRF and WACC
+- Renamed code from GreenHEART to H2Integrate
 
 ## v0.1.4 [4 February 2025]
 
@@ -26,8 +27,8 @@
 - Removes support for python 3.9
 - Add steel feedstock transport costs (lime, carbon, and iron ore pellets)
 - Allow individual debt rate, equity rate, and debt/equity ratio/split for each subsystem
-- Add initial docs focused on new GreenHEART development
-- New documentation CI pipeline to publish documentation at nrel.github.io/GreenHEART/ and test
+- Add initial docs focused on new H2Integrate development
+- New documentation CI pipeline to publish documentation at nrel.github.io/H2Integrate/ and test
   that the documentation site will build on each pull request.
 - Placeholder documentation content has been removed from the site build
 
@@ -36,13 +37,13 @@
 - Replaces the git ProFAST installation with a PyPI installation.
 - Removed dependence on external electrolyzer repo
 - Updated CI to use conda environments with reproducible environment artifacts
-- Rename logger from "wisdem/weis" to "greenheart"
+- Rename logger from "wisdem/weis" to "h2integrate"
 - Remove unsupported optimization algorithms
 
 ## v0.1.2 [28 October 2024]
 
 - Minor updates to examples for NAWEA workshop.
-- Adds `environment.yml` for easy environment creation and GreenHEART installation.
+- Adds `environment.yml` for easy environment creation and H2Integrate installation.
 
 ## v0.1.1 [22 October 2024]
 
@@ -50,4 +51,4 @@
 
 ## v0.1 [16 October 2024]
 
-- Project has been separated from HOPP and moved into GreenHEART, removing all HOPP infrastructure.
+- Project has been separated from HOPP and moved into H2Integrate, removing all HOPP infrastructure.
