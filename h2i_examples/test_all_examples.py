@@ -1,0 +1,125 @@
+"""
+This script is designed to test run scripts located in a specified directory.
+It uses Python's unittest framework to dynamically generate test cases for each
+script that begins with 'run_' and ends with '.py'.
+"""
+
+import os
+import unittest
+import subprocess
+from pathlib import Path
+
+
+class RunScriptTest(unittest.TestCase):
+    """
+    A test case class that uses unittest to run and test scripts with a timeout.
+
+    ...
+
+    Attributes
+    ----------
+    base_directory : str
+        The base directory where the run scripts are located.
+    run_files : list
+        A list of paths to run scripts found in the base directory.
+
+    Methods
+    -------
+    setUpClass()
+        Class method to find all run scripts before tests are run.
+    find_run_files(base_dir)
+        Finds and returns all run scripts in the specified directory.
+    run_script(script_path)
+        Attempts to run a script with a timeout and handles errors.
+    test_run_scripts()
+        Generates a test for each run script with a timeout.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        """
+        Class method to set up the test case class by finding all run scripts.
+
+        This method is called once before starting the tests and is used to
+        populate the 'run_files' attribute with a list of run scripts.
+        """
+        base_directory = Path(__file__).resolve().parent.parent / "."
+        cls.run_files = cls.find_run_files(base_directory)
+
+    @staticmethod
+    def find_run_files(base_dir):
+        """
+        Find and return a list of run scripts in the specified directory.
+
+        Parameters
+        ----------
+        base_dir : str
+            The directory to search for run scripts.
+
+        Returns
+        -------
+        list
+            A list of pathlib.Path objects pointing to the run scripts.
+        """
+        run_files = []
+        for root, _, files in os.walk(base_dir):
+            run_files.extend(
+                Path(root) / file
+                for file in files
+                if file.startswith("run_") and file.endswith(".py") and "examples" in root
+            )
+
+        # Print all found examples
+        print("Found the following run scripts:")
+        for run_file in run_files:
+            print(run_file)
+
+        return run_files
+
+    def run_script(self, script_path, max_allowable_time=500):
+        """
+        Attempt to run a script with a 500-second timeout and handle errors.
+
+        Parameters
+        ----------
+        script_path : pathlib.Path
+            The path to the script to be run.
+
+        Raises
+        ------
+        Exception
+            Any exception other than ImportError or TimeoutExpired that occurs
+            while running the script.
+        """
+        original_cwd = Path.cwd()
+        os.chdir(script_path.parent)
+        try:
+            with Path(os.devnull).open("w") as devnull:
+                proc = subprocess.Popen(
+                    ["python", script_path.name], stdout=devnull, stderr=subprocess.PIPE
+                )
+                proc.wait(timeout=max_allowable_time)
+                (stdout, stderr) = proc.communicate()
+        finally:
+            os.chdir(original_cwd)
+
+        if proc.returncode != 0:
+            if "ImportError" in str(stderr):
+                self.skipTest(f"Skipped {script_path.name} due to ImportError")
+            else:
+                raise Exception(f"Error running {script_path.name}:\n{stderr.decode('utf-8')}")
+
+    def test_run_scripts(self):
+        """
+        Test each run script to ensure it executes without error.
+
+        This method generates a subtest for each script in 'run_files'.
+        Each script is tested to ensure it runs without errors.
+        """
+        for script_path in self.run_files:
+            with self.subTest(script=script_path.name):
+                self.run_script(script_path)
+
+
+if __name__ == "__main__":
+    unittest.main()
