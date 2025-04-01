@@ -1714,15 +1714,15 @@ def calculate_lca(
     ]  # GHG Emissions Intensity of supplying Lime to processes accounting for limestone mining,
     # lime production, lime processing, and lime transportation assuming 20 miles via Diesel engines
     # (kg CO2e/kg lime)
-    # ------------------------------------------------------------------------------
-    # Carbon Coke
-    # ------------------------------------------------------------------------------
-    coke_supply_EI = greet_data_dict[
-        "coke_supply_EI"
-    ]  # GHG Emissions Intensity of supplying Coke to processes accounting for combustion
-    # and non-combustion emissions of coke production
-    # (kg CO2e/kg Coke)
-    # ------------------------------------------------------------------------------
+    # # ------------------------------------------------------------------------------
+    # # Carbon Coke
+    # # ------------------------------------------------------------------------------
+    # coke_supply_EI = greet_data_dict[
+    #     "coke_supply_EI"
+    # ]  # GHG Emissions Intensity of supplying Coke to processes accounting for combustion
+    # # and non-combustion emissions of coke production
+    # # (kg CO2e/kg Coke)
+    # # ------------------------------------------------------------------------------
     # Renewable infrastructure embedded emission intensities
     # ------------------------------------------------------------------------------
     # NOTE: HOPP/H2Integrate version at time of dev can only model PEM electrolysis
@@ -1933,12 +1933,14 @@ def calculate_lca(
     ng_dri_eaf_H2O_consume = np.nan
     h2_dri_steel_prod = np.nan
     h2_dri_pigiron_prod = np.nan
+    h2_dri_H2_consume = np.nan
     h2_dri_iron_ore_consume = np.nan
     h2_dri_NG_consume = np.nan
     h2_dri_electricity_consume = np.nan
     h2_dri_H2O_consume = np.nan
     h2_dri_eaf_steel_prod = np.nan
     h2_dri_eaf_pigiron_prod = np.nan
+    h2_dri_eaf_H2_consume = np.nan
     h2_dri_eaf_iron_ore_consume = np.nan
     h2_dri_eaf_lime_consume = np.nan
     h2_dri_eaf_coke_consume = np.nan
@@ -1946,7 +1948,7 @@ def calculate_lca(
     h2_dri_eaf_electricity_consume = np.nan
     h2_dri_eaf_H2O_consume = np.nan
     # Pull iron_performance values
-    if iron_performance["Product"] == "ng_dri":
+    if iron_performance["Product"].values[0] == "ng_dri":
         # Note to Dakota from Jonathan - the denominator has been corrected,
         # we're now getting performance per unit pig iron, not per unit steel
         # Leave this code in though, I want to be able to build an option to
@@ -1985,7 +1987,7 @@ def calculate_lca(
             * steel_to_pigiron_ratio
         )
         # metric tonne H2O consumed per metric tonne pig iron produced
-    if iron_performance["Product"] == "ng_dri_eaf":
+    if iron_performance["Product"].values[0] == "ng_dri_eaf":
         ng_dri_eaf_steel_prod = iron_performance.loc[
             iron_performance["Name"] == "Steel Production", "Model"
         ].item()
@@ -2015,7 +2017,7 @@ def calculate_lca(
             * steel_to_pigiron_ratio
         )
         # MWh electricity consumed per metric tonne pig iron produced
-        ng_dri_eaf_coke_consume = (
+        (
             iron_performance.loc[iron_performance["Name"] == "Carbon (Coke)", "Model"].item()
             * steel_to_pigiron_ratio
         )
@@ -2030,7 +2032,7 @@ def calculate_lca(
             * steel_to_pigiron_ratio
         )
         # metric tonne H2O consumed per metric tonne pig iron produced
-    if iron_performance["Product"] == "h2_dri":
+    if iron_performance["Product"].values[0] == "h2_dri":
         h2_dri_steel_prod = iron_performance.loc[
             iron_performance["Name"] == "Steel Production", "Model"
         ].item()
@@ -2070,7 +2072,7 @@ def calculate_lca(
             * steel_to_pigiron_ratio
         )
         # metric tonne H2O consume per metric tonne pig iron produced
-    if iron_performance["Product"] == "h2_dri_eaf":
+    if iron_performance["Product"].values[0] == "h2_dri_eaf":
         h2_dri_eaf_steel_prod = iron_performance.loc[
             iron_performance["Name"] == "Steel Production", "Model"
         ].item()
@@ -2105,7 +2107,7 @@ def calculate_lca(
             * steel_to_pigiron_ratio
         )
         # MWh electricity consumed per metric tonne pig iron produced
-        h2_dri_eaf_coke_consume = (
+        (
             iron_performance.loc[iron_performance["Name"] == "Carbon (Coke)", "Model"].item()
             * steel_to_pigiron_ratio
         )
@@ -2381,7 +2383,7 @@ def calculate_lca(
                 + (h2_dri_eaf_iron_ore_consume * iron_ore_mining_EI_per_MT_ore)
                 + (h2_dri_eaf_iron_ore_consume * iron_ore_pelletizing_EI_per_MT_ore)
                 + (h2_dri_eaf_lime_consume * MT_to_kg * lime_supply_EI)
-                + (h2_dri_eaf_coke_consume * MT_to_kg * coke_supply_EI)
+                + (h2_dri_eaf_coke_consume * MT_to_kg * 0)  # coke_supply_EI)
                 + (h2_dri_eaf_NG_consume * NG_supply_EI)
                 + (h2_dri_eaf_H2O_consume * (H2O_supply_EI / gal_H2O_to_MT))
                 + (
@@ -2431,7 +2433,7 @@ def calculate_lca(
                 (ng_dri_eaf_iron_ore_consume * iron_ore_mining_EI_per_MT_ore)
                 + (ng_dri_eaf_iron_ore_consume * iron_ore_pelletizing_EI_per_MT_ore)
                 + (ng_dri_eaf_lime_consume * MT_to_kg * lime_supply_EI)
-                + (ng_dri_eaf_coke_consume * MT_to_kg * coke_supply_EI)
+                + (ng_dri_eaf_coke_consume * MT_to_kg * 0)  # coke_supply_EI)
                 + (ng_dri_eaf_NG_consume * NG_supply_EI)
                 + (ng_dri_eaf_H2O_consume * (H2O_supply_EI / gal_H2O_to_MT))
                 + (
@@ -2557,7 +2559,7 @@ def calculate_lca(
                 + (h2_dri_eaf_iron_ore_consume * iron_ore_mining_EI_per_MT_ore)
                 + (h2_dri_eaf_iron_ore_consume * iron_ore_pelletizing_EI_per_MT_ore)
                 + (h2_dri_eaf_lime_consume * MT_to_kg * lime_supply_EI)
-                + (h2_dri_eaf_coke_consume * MT_to_kg * coke_supply_EI)
+                + (h2_dri_eaf_coke_consume * MT_to_kg * 0)  # coke_supply_EI)
                 + (h2_dri_eaf_NG_consume * NG_supply_EI)
                 + (h2_dri_eaf_H2O_consume * (H2O_supply_EI / gal_H2O_to_MT))
                 + (
@@ -2892,7 +2894,7 @@ def calculate_lca(
                 (ng_dri_eaf_iron_ore_consume * iron_ore_mining_EI_per_MT_ore)
                 + (ng_dri_eaf_iron_ore_consume * iron_ore_pelletizing_EI_per_MT_ore)
                 + (ng_dri_eaf_lime_consume * MT_to_kg * lime_supply_EI)
-                + (ng_dri_eaf_coke_consume * MT_to_kg * coke_supply_EI)
+                + (ng_dri_eaf_coke_consume * MT_to_kg * 0)  # coke_supply_EI)
                 + (ng_dri_eaf_NG_consume * NG_supply_EI)
                 + (ng_dri_eaf_H2O_consume * (H2O_supply_EI / gal_H2O_to_MT))
                 + (
@@ -3014,7 +3016,7 @@ def calculate_lca(
                 + (h2_dri_eaf_iron_ore_consume * iron_ore_mining_EI_per_MT_ore)
                 + (h2_dri_eaf_iron_ore_consume * iron_ore_pelletizing_EI_per_MT_ore)
                 + (h2_dri_eaf_lime_consume * MT_to_kg * lime_supply_EI)
-                + (h2_dri_eaf_coke_consume * MT_to_kg * coke_supply_EI)
+                + (h2_dri_eaf_coke_consume * MT_to_kg * 0)  # coke_supply_EI)
                 + (h2_dri_eaf_NG_consume * NG_supply_EI)
                 + (h2_dri_eaf_H2O_consume * (H2O_supply_EI / gal_H2O_to_MT))
                 + (
@@ -3062,7 +3064,7 @@ def calculate_lca(
                 (ng_dri_eaf_iron_ore_consume * iron_ore_mining_EI_per_MT_ore)
                 + (ng_dri_eaf_iron_ore_consume * iron_ore_pelletizing_EI_per_MT_ore)
                 + (ng_dri_eaf_lime_consume * MT_to_kg * lime_supply_EI)
-                + (ng_dri_eaf_coke_consume * MT_to_kg * coke_supply_EI)
+                + (ng_dri_eaf_coke_consume * MT_to_kg * 0)  # coke_supply_EI)
                 + (ng_dri_eaf_NG_consume * NG_supply_EI)
                 + (ng_dri_eaf_H2O_consume * (H2O_supply_EI / gal_H2O_to_MT))
                 + (
@@ -3429,6 +3431,13 @@ def post_process_simulation(
     verbose=False,
     output_dir="./output/",
 ):  # , lcoe, lcoh, lcoh_with_grid, lcoh_grid_only):
+    if any(i in h2integrate_config for i in ["iron", "iron_pre", "iron_win", "iron_post"]):
+        msg = (
+            "Post processing not yet implemented for iron model. LCA can still be set up through "
+            "h2integrate_config.yaml -> lca_config"
+        )
+        raise NotImplementedError(msg)
+
     if isinstance(output_dir, str):
         output_dir = Path(output_dir).resolve()
     # colors (official NREL color palette https://brand.nrel.gov/content/index/guid/color_palette?parent=61)

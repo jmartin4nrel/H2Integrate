@@ -1574,19 +1574,20 @@ def run_simulation(config: H2IntegrateSimulationConfig):
             verbose=config.verbose,
             output_dir=config.output_dir,
         )  # , lcoe, lcoh, lcoh_with_grid, lcoh_grid_only)
+    # For iron model - save outputs and run LCA outside of post-processing step
     if any(i in config.h2integrate_config for i in ["iron", "iron_pre", "iron_win", "iron_post"]):
         gh_fio.save_iron_results(config, iron_performance, iron_costs, iron_finance)
         if iron_config["lca_config"]["run_lca"]:
             lca_df = calculate_lca(
-                wind_annual_energy_kwh = wind_annual_energy_kwh,
-                solar_pv_annual_energy_kwh = solar_pv_annual_energy_kwh,
-                energy_shortfall_hopp = 0,
-                h2_annual_prod_kg = hydrogen_amount_kgpy,
-                energy_to_electrolyzer_kwh = hydrogen_annual_energy_kwh,
-                hopp_config = config.hopp_config,
-                greenheart_config = config.greenheart_config,
-                total_accessory_power_renewable_kw = 0,
-                total_accessory_power_grid_kw = 0,
+                wind_annual_energy_kwh=wind_annual_energy_kwh,
+                solar_pv_annual_energy_kwh=solar_pv_annual_energy_kwh,
+                energy_shortfall_hopp=0,
+                h2_annual_prod_kg=hydrogen_amount_kgpy,
+                energy_to_electrolyzer_kwh=hydrogen_annual_energy_kwh,
+                hopp_config=config.hopp_config,
+                h2integrate_config=config.h2integrate_config,
+                total_accessory_power_renewable_kw=0,
+                total_accessory_power_grid_kw=0,
                 plant_design_scenario_number=9,
                 incentive_option_number=1,
             )

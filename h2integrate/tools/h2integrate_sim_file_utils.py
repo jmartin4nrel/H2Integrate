@@ -89,8 +89,8 @@ def load_physics_h2integrate_setup(config):
 
     # Read in outputs from previously-saved .pkls
     pkl_fn = site_res_id + ".pkl"
-    config_fpath = config.run_full_simulation_fn + "/" + "config" + "/" + pkl_fn
-    wind_cost_fpath = config.run_full_simulation_fn + "/" + "wind_cost_results" + "/" + pkl_fn
+    config_fpath = config.run_full_simulation_fn / "config" / pkl_fn
+    wind_cost_fpath = config.run_full_simulation_fn / "wind_cost_results" / pkl_fn
     config = load_dill_pickle(config_fpath)
     wind_cost_results = load_dill_pickle(wind_cost_fpath)
 
@@ -171,13 +171,11 @@ def load_physics_h2integrate_simulation(config):
 
     # Read in outputs from previously-saved .pkls
     pkl_fn = site_res_id + ".pkl"
-    lcoh_fpath = config.run_full_simulation_fn + "/" + "lcoh" + "/" + pkl_fn
-    lcoe_fpath = config.run_full_simulation_fn + "/" + "lcoe" + "/" + pkl_fn
-    elec_phys_fpath = (
-        config.run_full_simulation_fn + "/" + "electrolyzer_physics_results" + "/" + pkl_fn
-    )
-    wind_fpath = config.run_full_simulation_fn + "/" + "wind_annual_energy_kwh" + "/" + pkl_fn
-    solar_fpath = config.run_full_simulation_fn + "/" + "solar_pv_annual_energy_kwh" + "/" + pkl_fn
+    lcoh_fpath = config.run_full_simulation_fn / "lcoh" / pkl_fn
+    lcoe_fpath = config.run_full_simulation_fn / "lcoe" / pkl_fn
+    elec_phys_fpath = config.run_full_simulation_fn / "electrolyzer_physics_results" / pkl_fn
+    wind_fpath = config.run_full_simulation_fn / "wind_annual_energy_kwh" / pkl_fn
+    solar_fpath = config.run_full_simulation_fn / "solar_pv_annual_energy_kwh" / pkl_fn
     lcoh = load_dill_pickle(lcoh_fpath)
     lcoe = load_dill_pickle(lcoe_fpath)
     electrolyzer_physics_results = load_dill_pickle(elec_phys_fpath)
