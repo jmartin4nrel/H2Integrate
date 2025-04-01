@@ -16,7 +16,7 @@ dependencies = [
     "Plotly",
     "Pyomo>=6.1.2",
     "fastkml",
-    "floris",
+    "floris==4.3",
     "future",
     "global_land_mask",
     "hybridbosse",
