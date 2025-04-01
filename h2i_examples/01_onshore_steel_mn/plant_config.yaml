@@ -26,7 +26,7 @@ site:
 technology_interconnections: [
   ["hopp", "electrolyzer", "electricity", "cable"],
   ["electrolyzer", "h2_storage", "efficiency"],
-  ["electrolyzer", "h2_storage", "hydrogen"],
+  ["electrolyzer", "h2_storage", "hydrogen", "pipe"],
   ["financials_group_1", "steel", "LCOH"],
   ["hopp", "steel", "electricity", "cable"],
   # etc
