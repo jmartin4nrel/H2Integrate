@@ -1,8 +1,8 @@
-from greenheart.core.greenheart_model import GreenHEARTModel
+from h2integrate.core.h2integrate_model import H2IntegrateModel
 
 
-# Create a GreenHEART model
-gh = GreenHEARTModel("02_texas_ammonia.yaml")
+# Create a H2Integrate model
+gh = H2IntegrateModel("02_texas_ammonia.yaml")
 
 # Run the model
 gh.run()

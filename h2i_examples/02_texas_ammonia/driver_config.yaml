@@ -1,5 +1,5 @@
 name: "driver_config"
-description: "This analysis runs a hybrid plant to match the first example in GreenHEART"
+description: "This analysis runs a hybrid plant to match the first example in H2Integrate"
 
 general:
   folder_output: outputs
