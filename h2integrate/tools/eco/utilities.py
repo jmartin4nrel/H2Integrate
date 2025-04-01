@@ -1497,8 +1497,9 @@ def calculate_lca(
     Args:
         wind_annual_energy_kwh (float): Annual energy from wind power (kWh)
         solar_pv_annual_energy_kwh (float): Annual energy from solar pv power (kWh)
-        energy_shortfall_hopp: Total electricity to electrolyzer and peripherals from grid power (kWh)
-        h2_annual_prod_kg: Lifetime average annual H2 production accounting for electrolyzer degradation (kg H2/year)
+        energy_shortfall_hopp: Total electricity to electrolyzer & peripherals from grid power (kWh)
+        h2_annual_prod_kg: Lifetime average annual H2 production accounting for electrolyzer
+            degradation (kg H2/year)
         energy_to_electrolyzer_kwh: Total electricity to electrolyzer from grid power (kWh)
         hopp_config (dict): HOPP configuration inputs based on input files
         h2integrate_config (H2IntegrateSimulationConfig): all inputs to the h2integrate simulation
@@ -1643,7 +1644,7 @@ def calculate_lca(
         "steel_atr",
         "steel_atr_ccs",
         "ng_dri",
-        "ng_dri_eaf"
+        "ng_dri_eaf",
         "h2_electrolysis_dri",
         "h2_electrolysis_dri_eaf",
     ]
@@ -3007,7 +3008,7 @@ def calculate_lca(
                 + EI_values["h2_electrolysis_dri_Scope3_EI"]
             )
 
-            # Calculate H2 DRI EAF emissions via off grid electrolysis (kg CO2e/metric tonne pig iron)
+            # Calculate H2 DRI EAF emissions via off grid electrolysis (kg CO2e/tonne pig iron)
             EI_values["h2_electrolysis_dri_eaf_Scope3_EI"] = (
                 (h2_dri_eaf_H2_consume * MT_to_kg * EI_values["electrolysis_Total_EI"])
                 + (h2_dri_eaf_iron_ore_consume * iron_ore_mining_EI_per_MT_ore)
