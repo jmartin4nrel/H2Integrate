@@ -13,7 +13,7 @@ from h2integrate.tools.optimization.openmdao import H2IntegrateComponent
 from h2integrate.tools.optimization.mpi_tools import MPI, map_comm_heirarchical
 from h2integrate.simulation.h2integrate_simulation import (
     H2IntegrateSimulationConfig,
-    setup_h2integrate_simulation,
+    setup_simulation,
 )
 from h2integrate.tools.optimization.gc_PoseOptimization import PoseOptimization
 
@@ -147,7 +147,7 @@ def run_h2integrate(config: H2IntegrateSimulationConfig, overridden_values=None,
 
         # If at least one of the design variables is active, setup an optimization
         if not run_only and config.h2integrate_config["opt_options"]["opt_flag"]:
-            config, hi, _ = setup_h2integrate_simulation(config)
+            config, hi, _ = setup_simulation(config)
             prob = myopt.set_driver(prob)
             prob = myopt.set_objective(prob)
             prob = myopt.set_design_variables(prob, config, hi)
