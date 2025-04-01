@@ -31,7 +31,7 @@ def test_iron_simulation(subtests):
         save_plots=False,
         use_profast=True,
         post_processing=False,
-        run_full_simulation=False,
+        run_full_simulation=True,
         iron_modular=True,
         run_full_simulation_fn=OUTPUTS,
         iron_out_fn=OUTPUTS,

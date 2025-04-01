@@ -1714,15 +1714,15 @@ def calculate_lca(
     ]  # GHG Emissions Intensity of supplying Lime to processes accounting for limestone mining,
     # lime production, lime processing, and lime transportation assuming 20 miles via Diesel engines
     # (kg CO2e/kg lime)
-    # # ------------------------------------------------------------------------------
-    # # Carbon Coke
-    # # ------------------------------------------------------------------------------
-    # coke_supply_EI = greet_data_dict[
-    #     "coke_supply_EI"
-    # ]  # GHG Emissions Intensity of supplying Coke to processes accounting for combustion
-    # # and non-combustion emissions of coke production
-    # # (kg CO2e/kg Coke)
-    # # ------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------------
+    # Carbon Coke
+    # ------------------------------------------------------------------------------
+    coke_supply_EI = greet_data_dict[
+        "coke_supply_EI"
+    ]  # GHG Emissions Intensity of supplying Coke to processes accounting for combustion
+    # and non-combustion emissions of coke production
+    # (kg CO2e/kg Coke)
+    # ------------------------------------------------------------------------------
     # Renewable infrastructure embedded emission intensities
     # ------------------------------------------------------------------------------
     # NOTE: HOPP/H2Integrate version at time of dev can only model PEM electrolysis
@@ -2383,7 +2383,7 @@ def calculate_lca(
                 + (h2_dri_eaf_iron_ore_consume * iron_ore_mining_EI_per_MT_ore)
                 + (h2_dri_eaf_iron_ore_consume * iron_ore_pelletizing_EI_per_MT_ore)
                 + (h2_dri_eaf_lime_consume * MT_to_kg * lime_supply_EI)
-                + (h2_dri_eaf_coke_consume * MT_to_kg * 0)  # coke_supply_EI)
+                + (h2_dri_eaf_coke_consume * MT_to_kg * coke_supply_EI)
                 + (h2_dri_eaf_NG_consume * NG_supply_EI)
                 + (h2_dri_eaf_H2O_consume * (H2O_supply_EI / gal_H2O_to_MT))
                 + (
@@ -2433,7 +2433,7 @@ def calculate_lca(
                 (ng_dri_eaf_iron_ore_consume * iron_ore_mining_EI_per_MT_ore)
                 + (ng_dri_eaf_iron_ore_consume * iron_ore_pelletizing_EI_per_MT_ore)
                 + (ng_dri_eaf_lime_consume * MT_to_kg * lime_supply_EI)
-                + (ng_dri_eaf_coke_consume * MT_to_kg * 0)  # coke_supply_EI)
+                + (ng_dri_eaf_coke_consume * MT_to_kg * coke_supply_EI)
                 + (ng_dri_eaf_NG_consume * NG_supply_EI)
                 + (ng_dri_eaf_H2O_consume * (H2O_supply_EI / gal_H2O_to_MT))
                 + (
@@ -2559,7 +2559,7 @@ def calculate_lca(
                 + (h2_dri_eaf_iron_ore_consume * iron_ore_mining_EI_per_MT_ore)
                 + (h2_dri_eaf_iron_ore_consume * iron_ore_pelletizing_EI_per_MT_ore)
                 + (h2_dri_eaf_lime_consume * MT_to_kg * lime_supply_EI)
-                + (h2_dri_eaf_coke_consume * MT_to_kg * 0)  # coke_supply_EI)
+                + (h2_dri_eaf_coke_consume * MT_to_kg * coke_supply_EI)
                 + (h2_dri_eaf_NG_consume * NG_supply_EI)
                 + (h2_dri_eaf_H2O_consume * (H2O_supply_EI / gal_H2O_to_MT))
                 + (
@@ -2894,7 +2894,7 @@ def calculate_lca(
                 (ng_dri_eaf_iron_ore_consume * iron_ore_mining_EI_per_MT_ore)
                 + (ng_dri_eaf_iron_ore_consume * iron_ore_pelletizing_EI_per_MT_ore)
                 + (ng_dri_eaf_lime_consume * MT_to_kg * lime_supply_EI)
-                + (ng_dri_eaf_coke_consume * MT_to_kg * 0)  # coke_supply_EI)
+                + (ng_dri_eaf_coke_consume * MT_to_kg * coke_supply_EI)
                 + (ng_dri_eaf_NG_consume * NG_supply_EI)
                 + (ng_dri_eaf_H2O_consume * (H2O_supply_EI / gal_H2O_to_MT))
                 + (
@@ -3016,7 +3016,7 @@ def calculate_lca(
                 + (h2_dri_eaf_iron_ore_consume * iron_ore_mining_EI_per_MT_ore)
                 + (h2_dri_eaf_iron_ore_consume * iron_ore_pelletizing_EI_per_MT_ore)
                 + (h2_dri_eaf_lime_consume * MT_to_kg * lime_supply_EI)
-                + (h2_dri_eaf_coke_consume * MT_to_kg * 0)  # coke_supply_EI)
+                + (h2_dri_eaf_coke_consume * MT_to_kg * coke_supply_EI)
                 + (h2_dri_eaf_NG_consume * NG_supply_EI)
                 + (h2_dri_eaf_H2O_consume * (H2O_supply_EI / gal_H2O_to_MT))
                 + (
@@ -3064,7 +3064,7 @@ def calculate_lca(
                 (ng_dri_eaf_iron_ore_consume * iron_ore_mining_EI_per_MT_ore)
                 + (ng_dri_eaf_iron_ore_consume * iron_ore_pelletizing_EI_per_MT_ore)
                 + (ng_dri_eaf_lime_consume * MT_to_kg * lime_supply_EI)
-                + (ng_dri_eaf_coke_consume * MT_to_kg * 0)  # coke_supply_EI)
+                + (ng_dri_eaf_coke_consume * MT_to_kg * coke_supply_EI)
                 + (ng_dri_eaf_NG_consume * NG_supply_EI)
                 + (ng_dri_eaf_H2O_consume * (H2O_supply_EI / gal_H2O_to_MT))
                 + (
