@@ -1,11 +1,13 @@
 from __future__ import annotations
+
 import numpy as np
 
 
 class SMR_methanol:
-    '''
+    """
     Create an instance of a Steam Methane Reforming plant.
-    '''
+    """
+
     def __init__(
         self,
     ):
@@ -29,16 +31,19 @@ class SMR_methanol:
 
 
 class SMR_methanol_cost:
-    '''
+    """
     Create an instance of a Steam Methane Reforming plant cost model.
-    '''
+    """
+
     def __init__(
         self,
         plant_capacity_kgpy,
     ):
         self.plant_capacity_kgpy = plant_capacity_kgpy
 
-    def run_cost_model(self, plant_capacity_kgpy: float, capex_factor: float, lng: float, lng_cost: float):
+    def run_cost_model(
+        self, plant_capacity_kgpy: float, capex_factor: float, lng: float, lng_cost: float
+    ):
         """
         Calculates the various costs associated with methanol production, including
         capital expenditures (CapEx), operating expenditures (OpEx), and credits from
@@ -54,16 +59,17 @@ class SMR_methanol_cost:
             capex (float): The capital expenses of methanol production in USD.
             opex (float): Operating expenses of methanol production in USD/yr.
         """
-        capex = plant_capacity_kgpy*capex_factor
-        opex = lng*lng_cost
+        capex = plant_capacity_kgpy * capex_factor
+        opex = lng * lng_cost
 
         return capex, opex
 
 
 class SMR_methanol_finance:
-    '''
+    """
     Create an instance of a Steam Methane Reforming plant cost model.
-    '''
+    """
+
     def __init__(
         self,
         capex,
@@ -80,10 +86,10 @@ class SMR_methanol_finance:
             capex (float): capex in USD
             opex (float): opex in USD/yr
             kgph (array): methanol production in kg/hr
-            
+
         Returns:
             lcom (float): Levelized cost of methanol in USD/kg
         """
-        lcom = (capex*.07+opex)/np.sum(kgph)
+        lcom = (capex * 0.07 + opex) / np.sum(kgph)
 
         return lcom
