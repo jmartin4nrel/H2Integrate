@@ -1,4 +1,5 @@
 from attrs import field, define
+import numpy as np
 
 from h2integrate.core.utilities import (
     BaseConfig,
@@ -46,11 +47,11 @@ class MethanolPerformanceModel(MethanolPerformanceBaseClass):
     def compute(self, inputs, outputs):
         
         # Run the SMR methanol model using the input lng signal
-        methanol_production_kgpy = self.methanol.run_performance_model(
+        methanol_production_kgph = self.methanol.run_performance_model(
             inputs["lng"],
             inputs["lng_consumption"],
         )
-        outputs["methanol"] = methanol_production_kgpy
+        outputs["methanol_production"] = np.ones(8760)*methanol_production_kgph
 
 
 @define
@@ -115,6 +116,6 @@ class MethanolFinanceModel(MethanolFinanceBaseClass):
     def compute(self, inputs, outputs):
         CAPEX = inputs["CapEx"]
         OPEX = inputs["OpEx"]
-        kgpy = inputs["methanol"]
+        kgph = inputs["methanol_production"]
         finance_model = self.finance_model
-        outputs["LCOM"] = finance_model.run_finance_model(CAPEX,OPEX,kgpy)
+        outputs["LCOM"] = finance_model.run_finance_model(CAPEX,OPEX,kgph)

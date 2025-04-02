@@ -228,7 +228,7 @@ class H2IntegrateModel:
                 commodity_type = "hydrogen"
             elif "methanol" in tech_configs:
                 commodity_type = "methanol"
-                from greenheart.converters.methanol.smr_methanol import MethanolFinanceModel
+                from h2integrate.converters.methanol.smr_methanol import MethanolFinanceModel
             else:
                 commodity_type = "electricity"
 

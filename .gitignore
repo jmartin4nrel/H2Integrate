@@ -129,4 +129,6 @@ tests/h2integrate/test_hydrogen/output/
 
 output*
 snopt_history.txt
-reports/*
+
+# Ignore auto-generated .html reports
+*reports/*.html

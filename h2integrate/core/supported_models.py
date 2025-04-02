@@ -33,7 +33,7 @@ from h2integrate.converters.hydrogen.eco_tools_pem_electrolyzer import (
     ECOElectrolyzerCostModel,
     ECOElectrolyzerPerformanceModel,
 )
-from greenheart.converters.methanol.smr_methanol import (
+from h2integrate.converters.methanol.smr_methanol import (
     MethanolPerformanceModel,
     MethanolCostModel,
     MethanolFinanceModel,

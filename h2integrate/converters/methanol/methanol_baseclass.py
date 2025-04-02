@@ -1,4 +1,6 @@
 import openmdao.api as om
+import numpy as np
+import pandas as pd
 
 
 class MethanolPerformanceBaseClass(om.ExplicitComponent):
@@ -13,15 +15,29 @@ class MethanolPerformanceBaseClass(om.ExplicitComponent):
 
     def setup(self):
         
-        self.add_input(
-            "electricity", val=0.0, shape_by_conn=False, units="kW"
-        )
-        self.add_input(
-            "hydrogen", val=0.0, shape_by_conn=False, units="kg/year"
-            )
-        self.add_output(
-            "methanol", val=0.0, shape_by_conn=False, units="kg/year"
-        )
+        dec_table = [
+            [   'type', 'len',  'conn', 'unit',     'name'],
+            [   'in',   1,      False,  'kg/year',  'plant_capacity'],
+            [   'in',   1,      False,  None,       'capacity_factor'],
+            [   'in',   8760,   False,  'kW',       'electricity'],   
+            [   'in',   8760,   False,  'kg/h',     'hydrogen'],   
+            [   'in',   8760,   False,  'kg/h',     'carbon_dioxide'],  
+            [   'out',  8760,   False,  'kg/h',     'methanol_production'],   
+            [   'out',  1,      False,  'kg/year',  'co2e_emissions'],    
+            [   'out',  1,      False,  'kg/year',  'h2o_consumption'],    
+        ]
+        declarations = pd.DataFrame(dec_table[1:], columns=dec_table[0])
+        
+        for dec in declarations.itertuples():
+            if dec.len == 1:
+                value = 0.0
+            else:
+                value = np.zeros(dec.len)
+
+            if dec.type == 'in':
+                self.add_input(dec.name, val=value, shape_by_conn=dec.conn, units=dec.unit)
+            elif dec.type == 'out':
+                self.add_output(dec.name, val=value, shape_by_conn=dec.conn, units=dec.unit)
 
     def compute(self, inputs, outputs):
         """
@@ -70,7 +86,7 @@ class MethanolFinanceBaseClass(om.ExplicitComponent):
     def setup(self):
         self.add_input("CapEx", val=0.0, units="USD")
         self.add_input("OpEx", val=0.0, units="USD/year")
-        self.add_input("methanol", val=0.0, units="kg/year")
+        self.add_input("methanol_production", val=np.zeros(8760), units="kg/h")
         self.add_output("LCOM", val=0.0, units="USD/kg", desc="Levelized cost of methanol")
 
     def compute(self, inputs, outputs):

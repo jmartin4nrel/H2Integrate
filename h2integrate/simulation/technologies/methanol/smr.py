@@ -1,4 +1,5 @@
 from __future__ import annotations
+import numpy as np
 
 
 class SMR_methanol:
@@ -20,11 +21,11 @@ class SMR_methanol:
             lng_meoh_ratio (float): The mass ratio of LNG in to methanol out.
 
         Returns:
-            float: The calculated annual ammonia production in kilograms per year.
+            float: The calculated annual ammonia production in kilograms per hour.
         """
-        methanol_production_kgpy = lng / lng_consumption
+        methanol_production_kgph = lng / lng_consumption / 8760
 
-        return methanol_production_kgpy
+        return methanol_production_kgph
 
 
 class SMR_methanol_cost:
@@ -71,18 +72,18 @@ class SMR_methanol_finance:
         self.capex = capex
         self.opex = opex
 
-    def run_finance_model(self, capex: float, opex: float, kgpy: float):
+    def run_finance_model(self, capex: float, opex: float, kgph: float):
         """
         Simple financial model of an SMR methanol plant.
 
         Args:
             capex (float): capex in USD
             opex (float): opex in USD/yr
-            kgpy (float): methanol production in kg/yr
+            kgph (array): methanol production in kg/hr
             
         Returns:
             lcom (float): Levelized cost of methanol in USD/kg
         """
-        lcom = (capex*.07+opex)/kgpy
+        lcom = (capex*.07+opex)/np.sum(kgph)
 
         return lcom
