@@ -1,10 +1,10 @@
-from greenheart.core.greenheart_model import GreenHEARTModel
+from h2integrate.core.h2integrate_model import H2IntegrateModel
 
 
 # Create a GreenHEART model
-gh = GreenHEARTModel("0X_methanol.yaml")
+h2i = H2IntegrateModel("0X_methanol.yaml")
 
 # Run the model
-gh.run()
+h2i.run()
 
-gh.post_process()
+h2i.post_process()

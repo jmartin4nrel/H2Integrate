@@ -54,6 +54,7 @@ dependencies = [
     "openmdao[all]",
     "ProFAST",
     "CoolProp",
+    "ruamel.yaml",
 ]
 keywords = [
     "python3",
