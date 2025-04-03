@@ -422,6 +422,37 @@ class H2IntegrateSimulationOutput:
 
 
 def setup_simulation(config: H2IntegrateSimulationConfig):
+    """
+    Sets up the simulation for H2Integrate.
+
+    Configures various parameters for wind, PV, and battery technologies.
+    This function ensures consistency between different configuration files,
+    updates parameters as needed, and initializes the HOPP model.
+
+    Args:
+        config (H2IntegrateSimulationConfig): A configuration object containing
+            all necessary parameters for the simulation, including design scenarios,
+            ORBIT configurations, HOPP configurations, and H2Integrate-specific settings.
+
+    Returns:
+        tuple: A tuple containing:
+            - config (H2IntegrateSimulationConfig): The updated configuration object.
+            - hi: The initialized HOPP model.
+            - wind_cost_results: Results from the wind cost model, or None if not applicable.
+
+    Raises:
+        UserWarning: Issues warnings when configuration mismatches are detected
+        and corrected, or when default values are set for missing parameters.
+
+    Notes:
+        - For offshore wind scenarios, this function ensures consistency between
+          ORBIT and H2Integrate configurations for parameters such as the number
+          of turbines, site depth, turbine spacing, and row spacing.
+        - Updates operation and maintenance (O&M) costs for wind, PV, and battery
+          technologies based on the `cost_info` section of the HOPP configuration.
+        - Initializes the HOPP model using the provided configurations and optionally
+          saves physics results if specified in the configuration.
+    """
     # run orbit for wind plant construction and other costs
     ## TODO get correct weather (wind, wave) inputs for ORBIT input (possibly via ERA5)
     if config.design_scenario["wind_location"] == "offshore":
@@ -718,6 +749,26 @@ def setup_simulation(config: H2IntegrateSimulationConfig):
 
 
 def setup_simulation_for_iron(config: H2IntegrateSimulationConfig):
+    """
+    Sets up the simulation configuration for the iron model in the H2Integrate simulation.
+
+    This function handles the initialization and configuration of the iron-related components
+    in the simulation. Depending on whether the `iron_modular` flag is set, it either loads
+    modular configurations for different stages of the iron model or a single configuration
+    for the entire iron model. Additionally, it loads the physics setup for H2Integrate and
+    ensures the `run_full_simulation` flag is reset to `False`. Useful for running only the
+    iron model after saving off physics results from an earlier run.
+
+    Args:
+        config (H2IntegrateSimulationConfig): The simulation configuration object containing
+            all necessary parameters and settings for the H2Integrate simulation.
+
+    Returns:
+        tuple: A tuple containing:
+            - config (H2IntegrateSimulationConfig): The updated simulation configuration object.
+            - hi (None): Placeholder for the HOPP Interface, which is not used in this function.
+            - wind_cost_results: Results from the wind cost calculations during the physics setup.
+    """
     # Only do the full setup (other than initialization) if running all of H2Integrate
     # If only running iron model, just load after initializing
     # Preserve iron from new instance of config
@@ -749,6 +800,58 @@ def setup_simulation_for_iron(config: H2IntegrateSimulationConfig):
 
 
 def run_physics(config: H2IntegrateSimulationConfig, hi, wind_cost_results):
+    """
+    Executes the physics and financial models for the H2Integrate simulation.
+
+    This function integrates various components of the H2Integrate simulation, including
+    renewable energy generation, electrolyzer physics and cost modeling, desalination,
+    hydrogen storage, transportation, and platform equipment. It also calculates the
+    CapEx and OpEx for the system.
+
+    Args:
+        config (H2IntegrateSimulationConfig): Configuration object containing simulation
+            parameters, design scenarios, and model configurations.
+        hi: Hybrid interface object containing site-specific wind resource data and
+            system configurations.
+        wind_cost_results: Results from the wind cost model, used for financial calculations.
+
+    Returns:
+        tuple: A tuple containing the following results:
+            - hopp_results (dict): Results from the HOPP model, including energy production data.
+            - wind_annual_energy_kwh (float): Annual energy production from wind (kWh).
+            - solar_pv_annual_energy_kwh (float): Annual energy production from solar PV (kWh).
+            - wind_cost_results (dict): Results from the wind cost model.
+            - electrolyzer_physics_results (dict): Results from the electrolyzer physics model.
+            - electrolyzer_cost_results (dict): Results from the electrolyzer cost model.
+            - desal_results (dict): Results from the desalination model.
+            - h2_pipe_array_results (dict): Results from the hydrogen pipe array model.
+            - h2_transport_compressor: Transport compressor object for hydrogen.
+            - h2_transport_compressor_results (dict): Results from the hydrogen transport
+                compressor model.
+            - h2_transport_pipe_results (dict): Results from the hydrogen transport pipeline model.
+            - pipe_storage: Storage object for hydrogen.
+            - h2_storage_results (dict): Results from the hydrogen storage model.
+            - total_accessory_power_renewable_kw (numpy.ndarray): Power consumption of accessory
+                components powered by renewable energy (kW).
+            - total_accessory_power_grid_kw (numpy.ndarray): Power consumption of accessory
+                components powered by the grid (kW).
+            - remaining_power_profile (numpy.ndarray): Remaining power profile available for
+                electrolysis (kW).
+            - capex (float): Total capital expenditure for the system.
+            - capex_breakdown (dict): Breakdown of capital expenditure by component.
+            - opex_annual (float): Annual operational expenditure for the system.
+            - opex_breakdown_total (dict): Breakdown of operational expenditure
+                (fixed and variable).
+            - platform_results (dict): Results from the platform equipment model.
+            - solver_results (tuple): Results from the energy solver for accessory components.
+
+    Notes:
+        - The function uses an internal solver to determine the energy availability for hydrogen
+          production by accounting for non-electrolyzer energy consumption.
+        - The function supports both onshore and offshore wind scenarios,
+            with different configurations for hydrogen transportation and storage.
+        - Plots of energy profiles can be generated and saved based on the configuration settings.
+    """
     # run HOPP model
     hopp_results = he_hopp.run_hopp(
         hi,
@@ -776,8 +879,6 @@ def run_physics(config: H2IntegrateSimulationConfig, hi, wind_cost_results):
             wind_cost_inputs=wind_config, verbose=config.verbose
         )
 
-    # this portion of the system is inside a function so we can use a solver to determine the
-    # correct energy availability for h2 production
     def energy_internals(
         hopp_results=hopp_results,
         wind_cost_results=wind_cost_results,
@@ -795,6 +896,68 @@ def run_physics(config: H2IntegrateSimulationConfig, hi, wind_cost_results):
         power_for_peripherals_kw_in=0.0,
         breakdown=False,
     ):
+        """
+        Simulates the energy flow and cost analysis for a hybrid energy system.
+
+        This portion of the system is inside a function so we can use a solver to determine the
+        correct energy availability for h2 production.
+
+        Args:
+            hopp_results (dict): Results from the HOPP simulation, including power production data.
+            wind_cost_results (dict): Cost results related to wind energy systems.
+            design_scenario (dict): Configuration for the design scenario, including wind location
+                and transportation type.
+            orbit_config (dict): Configuration for ORBIT offshore wind modeling.
+            hopp_config (dict): Configuration for HOPP simulation.
+            h2integrate_config (dict): Configuration for the H2Integrate model.
+            turbine_config (dict): Configuration for wind turbine parameters.
+            wind_resource (object): Wind resource data for the site.
+            verbose (bool): If True, prints detailed logs and results.
+            show_plots (bool): If True, displays plots of energy profiles.
+            save_plots (bool): If True, saves plots of energy profiles to the output directory.
+            output_dir (str): Directory path to save output files and plots.
+            solver (bool): If True, returns results for optimization solvers.
+            power_for_peripherals_kw_in (float): Power allocated for peripheral systems in kW.
+            breakdown (bool): If True and solver is True, returns a detailed breakdown of
+                power usage.
+
+        Returns:
+            tuple or np.ndarray:
+                - If `solver` is True and `breakdown` is True, returns a tuple containing:
+                    - total_accessory_power_renewable_kw (np.ndarray): Renewable power used by
+                        accessories.
+                    - total_accessory_power_grid_kw (np.ndarray): Grid power used by accessories.
+                    - desal_power_kw (np.ndarray): Power used for desalination in kW.
+                    - h2_transport_compressor_power_kw (np.ndarray): Power used by the hydrogen
+                        transport compressor in kW.
+                    - h2_storage_power_kw (np.ndarray): Power used for hydrogen storage in kW.
+                    - electrolyzer_energy_consumption_bop_kw (np.ndarray): Power used by
+                        electrolyzer balance of plant in kW.
+                    - remaining_power_profile (np.ndarray): Power available for electrolysis
+                        after accessory usage.
+                - If `solver` is True and `breakdown` is False, returns:
+                    - total_accessory_power_renewable_kw (np.ndarray): Renewable power used
+                        by accessories.
+                - If `solver` is False, returns a tuple containing:
+                    - electrolyzer_physics_results (dict): Results from the electrolyzer
+                        physics model.
+                    - electrolyzer_cost_results (dict): Results from the electrolyzer cost model.
+                    - desal_results (dict): Results from the desalination model.
+                    - h2_pipe_array_results (dict): Results from the hydrogen pipe array model.
+                    - h2_transport_compressor (object): Hydrogen transport compressor object.
+                    - h2_transport_compressor_results (dict): Results from the hydrogen
+                        transport compressor model.
+                    - h2_transport_pipe_results (dict): Results from the hydrogen transport
+                        pipeline model.
+                    - pipe_storage (object): Hydrogen storage pipe object.
+                    - h2_storage_results (dict): Results from the hydrogen storage model.
+                    - total_accessory_power_renewable_kw (np.ndarray): Renewable power used
+                        by accessories.
+                    - total_accessory_power_grid_kw (np.ndarray): Grid power used
+                        by accessories.
+                    - remaining_power_profile (np.ndarray): Power available for
+                        electrolysis after accessory usage.
+        """
         hopp_results_internal = dict(hopp_results)
 
         # set energy input profile
@@ -1166,8 +1329,6 @@ def run_physics(config: H2IntegrateSimulationConfig, hi, wind_cost_results):
         opex_breakdown_total,
         platform_results,
         solver_results,
-        wind_annual_energy_kwh,
-        solar_pv_annual_energy_kwh,
     )
 
 
@@ -1183,6 +1344,46 @@ def run_financials(
     wind_annual_energy_kwh,
     solar_pv_annual_energy_kwh,
 ):
+    """
+    Runs financial analysis for the H2Integrate simulation.
+
+    This financial analysis includes calculations for LCOE and LCOH
+    under various scenarios.
+
+    Args:
+        config (object): Configuration object containing simulation parameters,
+            financial settings, and output options.
+        hopp_results (dict): Results from the HOPP simulation, including energy
+            production and system performance metrics.
+        wind_cost_results (dict): Cost breakdown for the wind energy system.
+        electrolyzer_physics_results (dict): Results from the electrolyzer physics
+            simulation, including hydrogen production and power consumption.
+        capex_breakdown (dict): Capital expenditure breakdown for the project.
+        opex_breakdown_total (dict): Total operational expenditure breakdown, including
+            fixed and variable costs.
+        total_accessory_power_renewable_kw (float): Total accessory power consumption
+            supplied by renewable energy sources in kilowatts.
+        total_accessory_power_grid_kw (float): Total accessory power consumption
+            supplied by the grid in kilowatts.
+        wind_annual_energy_kwh (float): Annual energy production from wind in kilowatt-hours.
+        solar_pv_annual_energy_kwh (float): Annual energy production from solar PV in
+            kilowatt-hours.
+
+    Returns:
+        tuple: A tuple containing the following:
+            - lcoe (float): Levelized Cost of Energy for the system.
+            - pf_lcoe (float): ProFAST LCOE results.
+            - sol_lcoe (float): Solved LCOE results.
+            - lcoh (float): Levelized Cost of Hydrogen for the full plant model.
+            - pf_lcoh (float): ProFAST LCOH results.
+            - sol_lcoh (float): Solved LCOH results.
+            - lcoh_grid_only (float): LCOH for grid-only operation.
+            - pf_grid_only (float): ProFAST grid-only results.
+            - sol_grid_only (float): Solved grid-only results.
+            - hydrogen_annual_energy_kwh (float): Annual energy consumption for hydrogen
+              production in kilowatt-hours.
+            - hydrogen_amount_kgpy (float): Annual hydrogen production in kilograms per year.
+    """
     opex_breakdown_annual = opex_breakdown_total["fixed_om"]
     lcoe, pf_lcoe, sol_lcoe = he_fin.run_profast_lcoe(
         config.h2integrate_config,
@@ -1270,6 +1471,60 @@ def run_financials(
 
 
 def run_simulation(config: H2IntegrateSimulationConfig):
+    """
+    Executes the H2Integrate simulation based on the provided configuration.
+
+    This function performs simulations to model the integration of
+    renewable energy sources, hydrogen production, and
+    downstream applications such as steel, iron, and ammonia production. It
+    supports multiple levels of output detail and can optionally perform
+    post-processing and life cycle analysis (LCA).
+
+    Args:
+        config (H2IntegrateSimulationConfig): Configuration object containing
+            all necessary parameters for the simulation, including user inputs,
+            simulation settings, and output preferences.
+
+    Returns:
+        Union[int, float, tuple, H2IntegrateSimulationOutput, list]:
+            The output depends on the `config.output_level`:
+            - 0: Returns 0.
+            - 1: Returns the levelized cost of hydrogen (LCOH).
+            - 2: Returns a tuple containing LCOH, levelized cost of energy (LCOE),
+              CAPEX breakdown, annual OPEX breakdown, profast LCOH, and electrolyzer
+              physics results.
+            - 3: Returns a tuple containing LCOH, LCOE, CAPEX breakdown, annual
+              OPEX breakdown, profast LCOH, electrolyzer physics results, profast
+              LCOE, and annual energy breakdown.
+            - 4: Returns a tuple containing LCOE, LCOH, and LCOH with grid-only
+              energy.
+            - 5: Returns a tuple containing LCOE, LCOH, LCOH with grid-only energy,
+              and HOPP results.
+            - 6: Returns a tuple containing HOPP results, electrolyzer physics
+              results, and the remaining power profile.
+            - 7: Returns a tuple containing LCOE, LCOH, and financial results for
+              iron and ammonia (or steel and ammonia if iron is not configured).
+            - 8: Returns an `H2IntegrateSimulationOutput` object containing detailed
+              simulation results.
+            - 9: Returns a list containing LCOE, LCOH, iron finance, and iron post
+              finance.
+
+    Raises:
+        NotImplementedError: If the capacity denominator for the iron model is
+            set to "steel" without a suitable configuration.
+        ValueError: If invalid product selections are provided for the iron or
+            ammonia modules.
+
+    Notes:
+        - The function supports modular configurations for iron production,
+          allowing separate modeling of ore, pre-reduction, reduction, and
+          post-reduction stages.
+        - If `config.use_profast` is enabled, financial analysis is performed
+          using the ProFAST tool.
+        - Post-processing and LCA calculations are optional and can be enabled
+          via the configuration.
+        - Outputs can be saved to files if specified in the configuration.
+    """
     if config.user_lcoe is not None and config.user_lcoh is not None:
         lcoe = float(config.user_lcoe)
         lcoh = float(config.user_lcoh)
@@ -1312,8 +1567,6 @@ def run_simulation(config: H2IntegrateSimulationConfig):
             opex_breakdown_total,
             platform_results,
             solver_results,
-            wind_annual_energy_kwh,
-            solar_pv_annual_energy_kwh,
         ) = physics_results
         opex_breakdown_annual = opex_breakdown_total["fixed_om"]
 
@@ -1706,6 +1959,44 @@ def run_sweeps(
     use_profast=True,
     output_dir="output/",
 ):
+    """
+    Executes simulation sweeps and optionally generates plots for analyzing
+    LCOH as a function of electrolyzer and wind plant ratings under various
+    storage configurations.
+
+    Args:
+        simulate (bool, optional):
+            If True, runs simulations and saves results to files.
+            Disables verbose output and plotting. Defaults to False.
+        verbose (bool, optional):
+            If True, enables detailed output during simulations.
+            Ignored if `simulate` is True. Defaults to True.
+        show_plots (bool, optional):
+            If True, generates and displays plots of LCOH vs.
+            electrolyzer/wind plant rating ratio. Defaults to True.
+        use_profast (bool, optional):
+            If True, uses the PROFast tool for cost analysis during
+            simulations. Defaults to True.
+        output_dir (str, optional):
+            Directory where simulation results and plots are saved.
+            Defaults to "output/".
+
+    Notes:
+        - When `simulate` is True, the function performs simulations for
+          different wind plant ratings and storage types, saving the
+          results to text files in the specified `output_dir`.
+        - When `show_plots` is True, the function reads precomputed data
+          files and generates plots comparing LCOH for different storage
+          configurations and wind plant ratings.
+        - The plots include annotations for the optimal electrolyzer/wind
+          plant rating ratio that minimizes LCOH.
+
+    Example:
+        To run simulations and save results:
+        >>> run_sweeps(simulate=True, output_dir="results/")
+        To generate plots from precomputed data:
+        >>> run_sweeps(show_plots=True, output_dir="results/")
+    """
     if simulate:
         verbose = False
         show_plots = False
@@ -1809,8 +2100,6 @@ def run_sweeps(
         plt.savefig(output_dir + "lcoh_vs_rating_ratio.pdf", transparent=True)
         plt.show()
 
-    return 0
-
 
 def run_policy_options_storage_types(
     verbose=True,
@@ -1819,6 +2108,28 @@ def run_policy_options_storage_types(
     use_profast=True,
     output_dir="output/",
 ):
+    """
+    Runs simulations for various storage types and policy options, calculates
+    LCOH, and saves the results to a file.
+
+    Args:
+        verbose (bool, optional): If True, enables verbose output during simulations.
+            Defaults to True.
+        show_plots (bool, optional): If True, displays plots during simulations.
+            Defaults to False.
+        save_plots (bool, optional): If True, saves plots generated during simulations.
+            Defaults to False.
+        use_profast (bool, optional): If True, uses the PROFast tool for calculations.
+            Defaults to True.
+        output_dir (str, optional): Directory where the results will be saved.
+            Defaults to "output/".
+
+    Notes:
+        - The function iterates over a predefined list of storage types and policy
+          options to compute the LCOH for each combination.
+        - Results are saved in a text file named "lcoh-with-policy.txt" in the
+          specified output directory.
+    """
     storage_types = ["pressure_vessel", "pipe", "salt_cavern", "none"]
     policy_options = [1, 2, 3, 4, 5, 6, 7]
 
@@ -1844,8 +2155,6 @@ def run_policy_options_storage_types(
         fmt="%.2f",
     )
 
-    return 0
-
 
 def run_policy_storage_design_options(
     verbose=False,
@@ -1854,6 +2163,30 @@ def run_policy_storage_design_options(
     use_profast=True,
     output_dir="output/",
 ):
+    """
+    Simulates and evaluates various combinations of plant design scenarios,
+    policy options, and storage types for hydrogen production.
+
+    Args:
+        verbose (bool, optional): If True, enables verbose output during the
+            simulation. Defaults to False.
+        show_plots (bool, optional): If True, displays plots during the
+            simulation. Defaults to False.
+        save_plots (bool, optional): If True, saves plots generated during
+            the simulation. Defaults to False.
+        use_profast (bool, optional): If True, uses the ProFAST tool for
+            financial analysis. Defaults to True.
+        output_dir (str, optional): Directory where output data and results
+            will be saved. Defaults to "output/".
+
+    Returns:
+        None: The function saves the simulation results to CSV files in the
+        specified output directory. The files include:
+            - "design-storage-policy-lcoh.csv": Contains design, storage,
+              policy, LCOH, LCOE, and electrolyzer capacity factor data.
+            - "annual_energy_breakdown.csv": Contains annual energy
+              breakdown data for each simulation scenario.
+    """
     design_scenarios = [1, 2, 3, 4, 5, 6, 7]
     policy_options = [1, 2, 3, 4, 5, 6, 7]
     storage_types = ["pressure_vessel", "pipe", "salt_cavern", "none"]
@@ -1935,7 +2268,6 @@ def run_policy_storage_design_options(
 
     df_energy = pd.DataFrame.from_dict(annual_energy_breakdown_series)
     df_energy.to_csv(savepath + "annual_energy_breakdown.csv")
-    return 0
 
 
 def run_design_options(
@@ -1945,6 +2277,31 @@ def run_design_options(
     incentive_option=1,
     output_dir="output/",
 ):
+    """
+    Runs simulations for multiple plant design scenarios and aggregates results.
+
+    This function iterates through a range of plant design scenarios, runs simulations
+    for each design, and collects key performance metrics. The results
+    are then saved as CSV files in the specified output directory.
+
+    Args:
+        verbose (bool, optional): If True, enables verbose logging during simulations.
+            Defaults to False.
+        show_plots (bool, optional): If True, displays plots during simulations.
+            Defaults to False.
+        save_plots (bool, optional): If True, saves plots generated during simulations.
+            Defaults to False.
+        incentive_option (int, optional): Specifies the incentive option to use in the
+            simulation. Defaults to 1.
+        output_dir (str, optional): Directory where the output CSV files will be saved.
+            Defaults to "output/".
+
+    Outputs:
+        Three CSV files are saved in the `output_dir/combined_results/` directory:
+        - `metrics.csv`: Contains aggregated metrics such as LCOH and LCOE for each design.
+        - `capex.csv`: Contains CAPEX breakdown for each design.
+        - `opex.csv`: Contains OPEX breakdown for each design.
+    """
     design_options = range(1, 8)  # 8
     scenario_lcoh = []
     scenario_lcoe = []
@@ -1998,10 +2355,21 @@ def run_design_options(
     df_aggregate.to_csv(results_path + "metrics.csv")
     df_capex.to_csv(results_path + "capex.csv")
     df_opex.to_csv(results_path + "opex.csv")
-    return 0
 
 
 def run_storage_options(output_dir="output/"):
+    """
+    Runs simulations for various hydrogen storage options and saves the results to a CSV file.
+
+    Args:
+        output_dir (str): Directory where the output CSV file will be saved. Defaults to "output/".
+    Notes:
+        - The storage types evaluated are "pressure_vessel", "pipe", "salt_cavern", and "none".
+        - The results include LCOE, LCOH, LCOH with grid connection, and LCOH for
+            grid-only scenarios.
+        - The output CSV file is saved in a subdirectory named "data/" within the specified
+            output directory.
+    """
     storage_types = ["pressure_vessel", "pipe", "salt_cavern", "none"]
     lcoe_list = []
     lcoh_list = []
@@ -2052,4 +2420,3 @@ def run_storage_options(output_dir="output/"):
     if not savepath.exists():
         savepath.mkdir(parents=True)
     df.to_csv(savepath + "storage-types-and-matrics.csv")
-    return 0
