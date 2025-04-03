@@ -135,10 +135,14 @@ class H2IntegrateSimulationConfig:
         plant_design_scenario (int): plant design scenario
         output_level (int): output level
         grid_connection (Optional[bool]): flag for grid connection
-        run_full_simulation (bool): flag for whether to run any of H2Integrate besides the
-                                iron model or just load pickles of everything else
-        run_full_simulation_fn (Optional[str]): filename for where to save the above pickles
+        run_full_simulation (bool): flag for whether to run the physics simulation (True) or load
+            previous results from pickles (False). Only used when running iron simulation
+        save_physics_results (bool): flag for whether save the results of physics simulations to
+            file for future use
+        run_full_simulation_fn (Optional[str]): filename for where to save the physics simulation
         iron_out_fn (Optional[str]): filename for where to save final results
+        iron_modular (bool) : flag for whether to run a multi-module iron simulation (True) or
+            single-module (False)
     """
 
     filename_hopp_config: str
@@ -288,9 +292,9 @@ class H2IntegrateSimulationOutput:
         steel_capacity (Optional[SteelCapacityModelOutputs]): steel capacity information
         steel_costs (Optional[SteelCostModelOutputs]): steel cost information
         steel_finance (Optional[SteelFinanceModelOutputs]): steel financial information
-        steel_capacity (Optional[SteelCapacityModelOutputs]): steel capacity information
-        steel_costs (Optional[SteelCostModelOutputs]): steel cost information
-        steel_finance (Optional[SteelFinanceModelOutputs]): steel financial information
+        iron_capacity (Optional[IronCapacityModelOutputs]): iron capacity information
+        iron_costs (Optional[IronCostModelOutputs]): iron cost information
+        iron_finance (Optional[IronFinanceModelOutputs]): iron financial information
         ammonia_capacity (Optional[AmmoniaCapacityModelOutputs]): ammonia capacity information
         ammonia_costs (Optional[AmmoniaCostModelOutputs]): ammonia cost information
         ammonia_finance (Optional[AmmoniaFinanceModelOutputs]): ammonia finance information
@@ -1087,14 +1091,7 @@ def run_physics(config: H2IntegrateSimulationConfig, hi, wind_cost_results):
         verbose=config.verbose,
     )
 
-    ################# OSW intermediate calculations" aka final financial calculations
-    # does LCOE even make sense if we are only selling the H2? I think in this case LCOE
-    # should not be used, rather LCOH should be used. Or, we could use LCOE based on the
-    # electricity actually used for h2. I think LCOE is just being used to estimate the cost
-    # of the electricity used, but in this case we should just use the cost of the electricity
-    # generating plant since we are not selling to the grid. We could build in a grid
-    # connection later such that we use LCOE for any purchased electricity and sell any excess
-    # electricity after H2 production. Actually, I think this is what OSW is doing for LCOH
+    ################# OSW intermediate calculations aka final financial calculations
 
     # TODO double check full-system CAPEX
     capex, capex_breakdown = he_fin.run_capex(
