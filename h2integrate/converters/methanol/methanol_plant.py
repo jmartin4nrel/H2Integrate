@@ -1,15 +1,13 @@
+import importlib
+
 import numpy as np
 from attrs import field, define
 
 from h2integrate.core.utilities import (
     BaseConfig,
     merge_shared_cost_inputs,
+    merge_shared_finance_inputs,
     merge_shared_performance_inputs,
-)
-from h2integrate.simulation.technologies.methanol.smr import (
-    SMR_methanol,
-    SMR_methanol_cost,
-    SMR_methanol_finance,
 )
 from h2integrate.converters.methanol.methanol_baseclass import (
     MethanolCostBaseClass,
@@ -20,13 +18,15 @@ from h2integrate.converters.methanol.methanol_baseclass import (
 
 @define
 class MethanolPerformanceConfig(BaseConfig):
+    conversion_tech: str = field()
+    conversion_model: str = field()
     lng: float = field()
     lng_consumption: float = field()
 
 
 class MethanolPerformanceModel(MethanolPerformanceBaseClass):
     """
-    An OpenMDAO component that wraps the steam methane reforming (SMR) methanol model.
+    An OpenMDAO component that wraps various methanol models.
     Takes lng input and outputs methanol generation rates.
     """
 
@@ -35,11 +35,17 @@ class MethanolPerformanceModel(MethanolPerformanceBaseClass):
         self.config = MethanolPerformanceConfig.from_dict(
             merge_shared_performance_inputs(self.options["tech_config"]["model_inputs"])
         )
-        self.methanol = SMR_methanol()
-        self.add_input("lng", val=self.config.lng, shape_by_conn=False, units="kg/year")
-        self.add_input(
-            "lng_consumption", val=self.config.lng_consumption, shape_by_conn=False, units="kg/year"
-        )
+
+        # Import performance model for specified tech and model
+        tech = self.config.conversion_tech
+        import_path = "h2integrate.simulation.technologies.methanol." + tech
+        Performance = importlib.import_module(import_path).Performance
+        self.methanol = Performance()
+
+        # Declare inputs and outputs - combination of values from config and model
+        values = self.config.as_dict()
+        dec_table = self.methanol.perf_dec_table
+        self.declare_from_table(dec_table, values)
 
     def compute(self, inputs, outputs):
         # Run the SMR methanol model using the input lng signal
@@ -52,6 +58,8 @@ class MethanolPerformanceModel(MethanolPerformanceBaseClass):
 
 @define
 class MethanolCostConfig(BaseConfig):
+    conversion_tech: str = field()
+    conversion_model: str = field()
     plant_capacity_kgpy: float = field()
     capex_factor: float = field()
     lng: float = field()
@@ -68,7 +76,12 @@ class MethanolCostModel(MethanolCostBaseClass):
         self.config = MethanolCostConfig.from_dict(
             merge_shared_cost_inputs(self.options["tech_config"]["model_inputs"])
         )
-        self.cost_model = SMR_methanol_cost(self.config.plant_capacity_kgpy)
+        # Import cost model for specified tech and model
+        tech = self.config.conversion_tech
+        import_path = "h2integrate.simulation.technologies.methanol." + tech
+        Cost = importlib.import_module(import_path).Cost
+        self.cost_model = Cost()
+
         self.add_input(
             "plant_capacity_kgpy",
             val=self.config.plant_capacity_kgpy,
@@ -96,6 +109,13 @@ class MethanolCostModel(MethanolCostBaseClass):
         outputs["OpEx"] = opex
 
 
+@define
+class MethanolFinanceConfig(BaseConfig):
+    conversion_tech: str = field()
+    conversion_model: str = field()
+    discount_rate: float = field()
+
+
 class MethanolFinanceModel(MethanolFinanceBaseClass):
     """
     An OpenMDAO component that computes the financials of an SMR methanol plant.
@@ -103,7 +123,14 @@ class MethanolFinanceModel(MethanolFinanceBaseClass):
 
     def setup(self):
         super().setup()
-        self.finance_model = SMR_methanol_finance(0, 0)
+        self.config = MethanolFinanceConfig.from_dict(
+            merge_shared_finance_inputs(self.options["tech_config"]["model_inputs"])
+        )
+        # Import finance model for specified tech and model
+        tech = self.config.conversion_tech
+        import_path = "h2integrate.simulation.technologies.methanol." + tech
+        Finance = importlib.import_module(import_path).Finance
+        self.finance_model = Finance()
 
     def compute(self, inputs, outputs):
         CAPEX = inputs["CapEx"]

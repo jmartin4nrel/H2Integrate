@@ -228,7 +228,7 @@ class H2IntegrateModel:
                 commodity_type = "hydrogen"
             elif "methanol" in tech_configs:
                 commodity_type = "methanol"
-                from h2integrate.converters.methanol.smr_methanol import MethanolFinanceModel
+                from h2integrate.converters.methanol.methanol_plant import MethanolFinanceModel
             else:
                 commodity_type = "electricity"
 
@@ -248,7 +248,10 @@ class H2IntegrateModel:
 
             # Add profast component
             if commodity_type == "methanol":
-                profast_comp = MethanolFinanceModel()
+                profast_comp = MethanolFinanceModel(
+                    tech_config=tech_configs["methanol"],
+                    plant_config=self.plant_config,
+                )
             else:
                 profast_comp = ProFastComp(
                     tech_config=tech_configs,
@@ -342,6 +345,8 @@ class H2IntegrateModel:
             for group_id, tech_configs in self.financial_groups.items():
                 # Skip steel financials; it provides its own financials
                 if "steel" in tech_configs:
+                    continue
+                if "methanol" in tech_configs:
                     continue
 
                 for tech_name in tech_configs.keys():

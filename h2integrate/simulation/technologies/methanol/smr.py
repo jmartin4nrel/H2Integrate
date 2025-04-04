@@ -1,17 +1,35 @@
 from __future__ import annotations
 
 import numpy as np
+from attrs import field, define
+
+from h2integrate.core.utilities import BaseConfig
 
 
-class SMR_methanol:
+@define
+class Performance(BaseConfig):
     """
     Create an instance of a Steam Methane Reforming plant.
     """
 
+    perf_dec_table: list = field()
+    cost_dec_table: list = field()
+    fin_dec_table: list = field()
+
     def __init__(
         self,
     ):
-        pass
+        self.perf_dec_table = [
+            ["type", "len", "conn", "unit", "name"],
+            ["in", 1, False, "kg/year", "lng"],
+            ["in", 1, False, "kg/year", "lng_consumption"],
+        ]
+
+        self.cost_dec_table = [
+            ["type", "len", "conn", "unit", "name"],
+            ["in", 1, False, "kg/year", "lng"],
+            ["in", 1, False, "kg/year", "lng_consumption"],
+        ]
 
     def run_performance_model(self, lng: float, lng_consumption: float) -> float:
         """
@@ -30,16 +48,15 @@ class SMR_methanol:
         return methanol_production_kgph
 
 
-class SMR_methanol_cost:
+class Cost(BaseConfig):
     """
     Create an instance of a Steam Methane Reforming plant cost model.
     """
 
     def __init__(
         self,
-        plant_capacity_kgpy,
     ):
-        self.plant_capacity_kgpy = plant_capacity_kgpy
+        pass
 
     def run_cost_model(
         self, plant_capacity_kgpy: float, capex_factor: float, lng: float, lng_cost: float
@@ -65,18 +82,15 @@ class SMR_methanol_cost:
         return capex, opex
 
 
-class SMR_methanol_finance:
+class Finance(BaseConfig):
     """
     Create an instance of a Steam Methane Reforming plant cost model.
     """
 
     def __init__(
         self,
-        capex,
-        opex,
     ):
-        self.capex = capex
-        self.opex = opex
+        pass
 
     def run_finance_model(self, capex: float, opex: float, kgph: float):
         """
