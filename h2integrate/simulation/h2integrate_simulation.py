@@ -143,6 +143,13 @@ class H2IntegrateSimulationConfig:
         iron_out_fn (Optional[str]): filename for where to save final results
         iron_modular (bool) : flag for whether to run a multi-module iron simulation (True) or
             single-module (False)
+        user_lcoh (float): a user-supplied LCOH value [$/kg-H2] to bypass H2 calculations
+        user_lcoe (float): a user-supplied LCOE value [$/kWh] to bypass HOPP calculations
+        user_annual_wind_kwh_prod (float): user-supplied annual wind kWh produciton to bypass HOPP
+        user_annual_pv_kwh_prod (float): user-supplied annual solar PV kWh produciton to bypass HOPP
+        user_life_annual_h2_kwh (float): user-supplied annual H2 kWh consumption to bypass H2 calcs
+        user_life_annual_h2_prod (float): user-supplied annual H2 kg production to bypass H2 calcs
+        save_h2integrate_output (bool): flag for whether to save the final H2I outputs
     """
 
     filename_hopp_config: str
