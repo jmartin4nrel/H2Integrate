@@ -28,8 +28,8 @@ authors = [
   {name = "Jennifer King"},
 ]
 maintainers = [
-  {name = "John Jasa", email = "john.jasa@nrel.gov"}
-  {name = "Christopher Bay", email = "christopher.bay@nrel.gov"}
+  {name = "John Jasa", email = "john.jasa@nrel.gov"},
+  {name = "Christopher Bay", email = "christopher.bay@nrel.gov"},
 ]
 readme = {file = "README.md", content-type = "text/markdown"}
 description = "Holistic Hybrids Optimization and Design Tool"
