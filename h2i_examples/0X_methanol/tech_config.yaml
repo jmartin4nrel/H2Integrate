@@ -4,11 +4,11 @@ description: "This hybrid plant produces steel"
 technologies:
   methanol:
     performance_model:
-      model: "methanol_performance"
+      model: "methanol_plant_performance"
     cost_model:
-      model: "methanol_cost"
+      model: "methanol_plant_cost"
     financial_model:
-      model: "methanol"
+      model: "methanol_plant_financial"
     model_inputs:
       shared_parameters:
         conversion_tech: "smr"

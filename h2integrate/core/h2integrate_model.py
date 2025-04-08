@@ -228,7 +228,7 @@ class H2IntegrateModel:
                 commodity_type = "hydrogen"
             elif "methanol" in tech_configs:
                 commodity_type = "methanol"
-                from h2integrate.converters.methanol.methanol_plant import MethanolFinanceModel
+                from h2integrate.converters.methanol.methanol_plant import MethanolPlantFinanceModel
             else:
                 commodity_type = "electricity"
 
@@ -248,7 +248,7 @@ class H2IntegrateModel:
 
             # Add profast component
             if commodity_type == "methanol":
-                profast_comp = MethanolFinanceModel(
+                profast_comp = MethanolPlantFinanceModel(
                     tech_config=tech_configs["methanol"],
                     plant_config=self.plant_config,
                 )

@@ -24,7 +24,7 @@ class MethanolPerformanceConfig(BaseConfig):
     lng_consumption: float = field()
 
 
-class MethanolPerformanceModel(MethanolPerformanceBaseClass):
+class MethanolPlantPerformanceModel(MethanolPerformanceBaseClass):
     """
     An OpenMDAO component that wraps various methanol models.
     Takes lng input and outputs methanol generation rates.
@@ -66,7 +66,7 @@ class MethanolCostConfig(BaseConfig):
     lng_cost: float = field()
 
 
-class MethanolCostModel(MethanolCostBaseClass):
+class MethanolPlantCostModel(MethanolCostBaseClass):
     """
     An OpenMDAO component that computes the cost of an SMR methanol plant.
     """
@@ -116,7 +116,7 @@ class MethanolFinanceConfig(BaseConfig):
     discount_rate: float = field()
 
 
-class MethanolFinanceModel(MethanolFinanceBaseClass):
+class MethanolPlantFinanceModel(MethanolFinanceBaseClass):
     """
     An OpenMDAO component that computes the financials of an SMR methanol plant.
     """
