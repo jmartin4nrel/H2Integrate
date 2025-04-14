@@ -13,6 +13,7 @@
 - Removed defunct conda build and upload scripts
 - Return full solution dictionary from ProFAST, allowing access to CRF and WACC
 - Renamed code from GreenHEART to H2Integrate
+- Added example standalone methanol module with just steam methane reforming (SMR)
 
 ## v0.1.4 [4 February 2025]
 

@@ -18,16 +18,14 @@ from h2integrate.converters.methanol.methanol_baseclass import (
 @define
 class MethanolPerformanceConfig(BaseConfig):
     conversion_tech: str = field()
-    conversion_model: str = field()
     plant_capacity_kgpy: float = field()
     capacity_factor: float = field()
 
 
 class MethanolPlantPerformanceModel(MethanolPerformanceBaseClass):
     """
-    An OpenMDAO component that wraps various methanol models.
-    Takes in conversion tech/model and plant capacity inputs,
-    puts out plant flows.
+    An OpenMDAO component that wraps various methanol performance models.
+    Takes in conversion technology and plant capacity from config and computes the plant's flows.
     """
 
     def setup(self):
@@ -36,7 +34,7 @@ class MethanolPlantPerformanceModel(MethanolPerformanceBaseClass):
             merge_shared_performance_inputs(self.options["tech_config"]["model_inputs"])
         )
 
-        # Import performance model for specified tech and model
+        # Import performance model for specified tech
         tech = self.config.conversion_tech
         import_path = "h2integrate.simulation.technologies.methanol." + tech
         Performance = importlib.import_module(import_path).Performance
@@ -65,13 +63,13 @@ class MethanolPlantPerformanceModel(MethanolPerformanceBaseClass):
 @define
 class MethanolCostConfig(BaseConfig):
     conversion_tech: str = field()
-    conversion_model: str = field()
     plant_capacity_kgpy: float = field()
 
 
 class MethanolPlantCostModel(MethanolCostBaseClass):
     """
-    An OpenMDAO component that computes the cost of an SMR methanol plant.
+    An OpenMDAO component that wraps various methanol cost models.
+    Takes in conversion technology and plant capacity from config and computes the plant's costs.
     """
 
     def setup(self):
@@ -109,7 +107,6 @@ class MethanolPlantCostModel(MethanolCostBaseClass):
 @define
 class MethanolFinanceConfig(BaseConfig):
     conversion_tech: str = field()
-    conversion_model: str = field()
     plant_capacity_kgpy: float = field()
     discount_rate: float = field()
     tasc_toc_multiplier: float = field()
@@ -117,7 +114,9 @@ class MethanolFinanceConfig(BaseConfig):
 
 class MethanolPlantFinanceModel(MethanolFinanceBaseClass):
     """
-    An OpenMDAO component that computes the financials of an SMR methanol plant.
+    An OpenMDAO component that wraps various methanol finance models.
+    Takes in conversion technology, plant capacity, and financial constants from config and
+    computes the plant's finances.
     """
 
     def setup(self):

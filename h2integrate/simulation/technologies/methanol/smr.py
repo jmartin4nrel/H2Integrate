@@ -8,6 +8,21 @@ from h2integrate.core.utilities import BaseConfig
 
 @define
 class SMRMethanolBaseClass(BaseConfig):
+    """
+    A base class used to further define Performance, Cost, and Finacnce classes for a
+    Steam Methane Reforming (SMR) methanol plant. Builds on converters.methanol.methanol_baseclass
+
+    Attributes:
+        - dec_table_inputs (list of lists):
+            Formatted table of inputs/outputs to declare using the "declare_from_table" method
+            See examples below - first row is column headers, following rows are inputs/outputs
+        - values (dict): key-value pairs to go with dec_table_inputs, in which
+            keys: Names of variables to assign values to
+            values: Values to assign
+            Values do not have to be given for every input/output in dec_table_inputs,
+            they will be assigned a value of zero if they are not included in values
+    """
+
     dec_table_inputs: list = field()
     values: dict
 
@@ -15,7 +30,15 @@ class SMRMethanolBaseClass(BaseConfig):
 @define
 class Performance(SMRMethanolBaseClass):
     """
-    Create an instance of a Steam Methane Reforming plant.
+    Defines computation and adds additional inputs/outputs onto MethanolPerformanceBaseClass
+    Uses the same XXX_<produce/consume/emit>_ratio and XXX_<production/consumption/emissions>
+    structure as MethanolPerformanceBaseClass
+
+    New flows:
+        meoh_syn_cat: methanol synthesis catalyst
+        meoh_atr_cat: natural gas autothermal reformer catalyst
+        lng: liquified natural gas (feedstock)
+        elec: electricity (co-product)
     """
 
     def __init__(
@@ -36,11 +59,11 @@ class Performance(SMRMethanolBaseClass):
         # Values to assign for SMR
         self.values = {
             # Already declared in baseclass
-            "co2_emit_ratio": 1.13442,
+            "co2e_emit_ratio": 1.13442,
             "h2o_consume_ratio": 2.669877132,
             "h2_consume_ratio": 0.0,
             "co2_consume_ratio": 0.0,
-            "elec_consume_ratio": 0.0,
+            "elec_consume_ratio": 0.1,
             # tech-specific
             "meoh_syn_cat_consume_ratio": 0.00000036322492251,
             "meoh_atr_cat_consume_ratio": 0.0000013078433938,
@@ -50,15 +73,7 @@ class Performance(SMRMethanolBaseClass):
 
     def run_performance_model(self, inputs: dict):
         """
-        Calculates the annual methanol production in kilograms based on the lng input and the
-        lng:methanol ratio
-
-        Args:
-            lng (float): The LNG supply to the plant in kg/y.
-            lng_meoh_ratio (float): The mass ratio of LNG in to methanol out.
-
-        Returns:
-            float: The calculated annual ammonia production in kilograms per hour.
+        Calculates flows based off of capacity factor and production/consumption/emission ratios
         """
 
         # Get plant sizing from config
@@ -97,7 +112,15 @@ class Performance(SMRMethanolBaseClass):
 
 class Cost(SMRMethanolBaseClass):
     """
-    Create an instance of a Steam Methane Reforming plant cost model.
+    Defines computation and adds additional inputs/outputs onto MethanolCostBaseClass
+    Uses the same XXX_<production/consumption/price> and XXX_<cost/revenue> structure as
+    MethanolCostBaseClass
+
+    New flows:
+        meoh_syn_cat: methanol synthesis catalyst
+        meoh_atr_cat: natural gas autothermal reformer catalyst
+        lng: liquified natural gas (feedstock)
+        elec: electricity (co-product)
     """
 
     def __init__(
@@ -132,19 +155,7 @@ class Cost(SMRMethanolBaseClass):
 
     def run_cost_model(self, inputs: dict):
         """
-        Calculates the various costs associated with methanol production, including
-        capital expenditures (CapEx), operating expenditures (OpEx), and credits from
-        byproducts, based on the provided configuration settings.
-
-        Args:
-            plant_capacity_kgpy (float): The maximum output capacity of methanol in kg/yr.
-            capex_factor (float): The linear scaling of capex to plant capacity.
-            lng (float): The LNG supply to the plant in kg/yr.
-            lng_cost (float): The cost of LNG in USD/kg.
-
-        Returns:
-            capex (float): The capital expenses of methanol production in USD.
-            opex (float): Operating expenses of methanol production in USD/yr.
+        Calculates costs based off of cost slopes, prices and production/consumption rates
         """
 
         MMBTU_per_GJ = 1.055
@@ -188,7 +199,11 @@ class Cost(SMRMethanolBaseClass):
 
 class Finance(SMRMethanolBaseClass):
     """
-    Create an instance of a Steam Methane Reforming plant cost model.
+    Defines computation and adds additional inputs/outputs onto MethanolCostBaseClass
+    Uses the same <component>_<cost/revenue> LCOM_<component> structure as MethanolCostBaseClass
+
+    meoh_syn_cat are considered part of the methanol plant and included in its lcom_meoh.
+    lng and elec are not.
     """
 
     def __init__(
@@ -211,24 +226,20 @@ class Finance(SMRMethanolBaseClass):
         """
         Simple financial model of an SMR methanol plant.
 
-        Args:
-            capex (float): capex in USD
-            opex (float): opex in USD/yr
-            kgph (array): methanol production in kg/hr
+        Uses NETL power plant quality guidelines' fixed charge rate method.
+        NETL-PUB-22580 doi.org/10.2172/1567736
 
-        Returns:
-            lcom (float): Levelized cost of methanol in USD/kg
         """
         toc = inputs["CapEx"]
         fopex = inputs["Fixed_OpEx"]
         vopex = inputs["Variable_OpEx"]
-        disc_rate = inputs["discount_rate"]
+        fcr = inputs["fixed_charge_rate"]
         tasc_toc = inputs["tasc_toc_multiplier"]
         kgph = inputs["methanol_production"]
 
         outputs = {}
 
-        lcom_capex = toc * disc_rate * tasc_toc / np.sum(kgph)
+        lcom_capex = toc * fcr * tasc_toc / np.sum(kgph)
         lcom_fopex = fopex / np.sum(kgph)
         lcom_vopex = vopex / np.sum(kgph)
         outputs["LCOM_meoh_capex"] = lcom_capex
