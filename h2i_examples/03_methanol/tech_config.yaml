@@ -1,5 +1,5 @@
 name: "technology_config"
-description: "This hybrid plant produces steel"
+description: "This hybrid plant produces methanol"
 
 technologies:
   methanol:

@@ -1,7 +1,7 @@
 from h2integrate.core.h2integrate_model import H2IntegrateModel
 
 
-# Create a GreenHEART model
+# Create an H2I model
 h2i = H2IntegrateModel("03_methanol.yaml")
 
 # Run the model

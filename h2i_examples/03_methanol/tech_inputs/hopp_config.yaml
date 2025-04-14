@@ -1,7 +1,7 @@
 site: #!include flatirons_site.yaml
   data:
-    lat: 47.5
-    lon: -93.0
+    lat: 32.34
+    lon: -98.27
     elev: 440
     year: 2013
     tz: -6
@@ -16,8 +16,8 @@ site: #!include flatirons_site.yaml
         - [0.0, 25000]
         - [25000, 25000]
         - [25000, 0.0]
-  solar_resource_file: "weather/solar/47.5_-93.0_psmv3_60_2013.csv"
-  wind_resource_file: "weather/wind/47.5_-93.0_windtoolkit_2013_60min_100m_120m.srw"
+  solar_resource_file: "weather/solar/32.34_-98.27_psmv3_60_2013.csv"
+  wind_resource_file: "weather/wind/32.34_-98.27_windtoolkit_2013_60min_100m_120m.srw"
   wave_resource_file: ""
   grid_resource_file: ""
   hub_height: 115.0
