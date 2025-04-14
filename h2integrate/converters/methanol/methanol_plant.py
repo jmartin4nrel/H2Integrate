@@ -1,6 +1,5 @@
 import importlib
 
-import numpy as np
 from attrs import field, define
 
 from h2integrate.core.utilities import (
@@ -20,14 +19,15 @@ from h2integrate.converters.methanol.methanol_baseclass import (
 class MethanolPerformanceConfig(BaseConfig):
     conversion_tech: str = field()
     conversion_model: str = field()
-    lng: float = field()
-    lng_consumption: float = field()
+    plant_capacity_kgpy: float = field()
+    capacity_factor: float = field()
 
 
 class MethanolPlantPerformanceModel(MethanolPerformanceBaseClass):
     """
     An OpenMDAO component that wraps various methanol models.
-    Takes lng input and outputs methanol generation rates.
+    Takes in conversion tech/model and plant capacity inputs,
+    puts out plant flows.
     """
 
     def setup(self):
@@ -43,17 +43,23 @@ class MethanolPlantPerformanceModel(MethanolPerformanceBaseClass):
         self.methanol = Performance()
 
         # Declare inputs and outputs - combination of values from config and model
-        values = self.config.as_dict()
-        dec_table = self.methanol.perf_dec_table
-        self.declare_from_table(dec_table, values)
+        config_values = self.config.as_dict()
+        # Config values overwrite any defaults from baseclass
+        values = self.values
+        if config_values:
+            for key, value in config_values.items():
+                values[key] = value
+            self.values = values
+        # Add in tech-specific variables and values
+        tech_dec_table_inputs = self.methanol.dec_table_inputs
+        tech_values = self.methanol.values
+        self.declare_from_table(tech_dec_table_inputs, tech_values)
 
     def compute(self, inputs, outputs):
-        # Run the SMR methanol model using the input lng signal
-        methanol_production_kgph = self.methanol.run_performance_model(
-            inputs["lng"],
-            inputs["lng_consumption"],
-        )
-        outputs["methanol_production"] = np.ones(8760) * methanol_production_kgph
+        # Run the methanol plant model using the input signals
+        performances = self.methanol.run_performance_model(inputs)
+        for key, performance in performances.items():
+            outputs[key] = performance
 
 
 @define
@@ -61,9 +67,6 @@ class MethanolCostConfig(BaseConfig):
     conversion_tech: str = field()
     conversion_model: str = field()
     plant_capacity_kgpy: float = field()
-    capex_factor: float = field()
-    lng: float = field()
-    lng_cost: float = field()
 
 
 class MethanolPlantCostModel(MethanolCostBaseClass):
@@ -82,38 +85,34 @@ class MethanolPlantCostModel(MethanolCostBaseClass):
         Cost = importlib.import_module(import_path).Cost
         self.cost_model = Cost()
 
-        self.add_input(
-            "plant_capacity_kgpy",
-            val=self.config.plant_capacity_kgpy,
-            shape_by_conn=False,
-            units="kg/year",
-        )
-        self.add_input(
-            "capex_factor", val=self.config.capex_factor, shape_by_conn=False, units="USD/kg/year"
-        )
-        self.add_input("lng", val=self.config.lng, shape_by_conn=False, units="kg/year")
-        self.add_input("lng_cost", val=self.config.lng_cost, shape_by_conn=False, units="USD/kg")
+        # Declare inputs and outputs - combination of values from config and model
+        config_values = self.config.as_dict()
+        # Config values overwrite any defaults from baseclass
+        values = self.values
+        if config_values:
+            for key, value in config_values.items():
+                values[key] = value
+            self.values = values
+        # Add in tech-specific variables and values
+        tech_dec_table_inputs = self.cost_model.dec_table_inputs
+        tech_values = self.cost_model.values
+        self.declare_from_table(tech_dec_table_inputs, tech_values)
 
     def compute(self, inputs, outputs):
         # Call the cost model to compute costs
         cost_model = self.cost_model
-        costs = cost_model.run_cost_model(
-            inputs["plant_capacity_kgpy"],
-            inputs["capex_factor"],
-            inputs["lng"],
-            inputs["lng_cost"],
-        )
-        (capex, opex) = costs
-
-        outputs["CapEx"] = capex
-        outputs["OpEx"] = opex
+        costs = cost_model.run_cost_model(inputs)
+        for key, cost in costs.items():
+            outputs[key] = cost
 
 
 @define
 class MethanolFinanceConfig(BaseConfig):
     conversion_tech: str = field()
     conversion_model: str = field()
+    plant_capacity_kgpy: float = field()
     discount_rate: float = field()
+    tasc_toc_multiplier: float = field()
 
 
 class MethanolPlantFinanceModel(MethanolFinanceBaseClass):
@@ -132,9 +131,22 @@ class MethanolPlantFinanceModel(MethanolFinanceBaseClass):
         Finance = importlib.import_module(import_path).Finance
         self.finance_model = Finance()
 
+        # Declare inputs and outputs - combination of values from config and model
+        config_values = self.config.as_dict()
+        # Config values overwrite any defaults from baseclass
+        values = self.values
+        if config_values:
+            for key, value in config_values.items():
+                values[key] = value
+            self.values = values
+        # Add in tech-specific variables and values
+        tech_dec_table_inputs = self.finance_model.dec_table_inputs
+        tech_values = self.finance_model.values
+        self.declare_from_table(tech_dec_table_inputs, tech_values)
+
     def compute(self, inputs, outputs):
-        CAPEX = inputs["CapEx"]
-        OPEX = inputs["OpEx"]
-        kgph = inputs["methanol_production"]
+        # Call the finance model to compute finances
         finance_model = self.finance_model
-        outputs["LCOM"] = finance_model.run_finance_model(CAPEX, OPEX, kgph)
+        finances = finance_model.run_finance_model(inputs)
+        for key, finance in finances.items():
+            outputs[key] = finance

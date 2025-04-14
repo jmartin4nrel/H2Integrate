@@ -8,18 +8,14 @@ technologies:
     cost_model:
       model: "methanol_plant_cost"
     financial_model:
-      model: "methanol_plant_financial"
+      model: "methanol_plant"
     model_inputs:
       shared_parameters:
         conversion_tech: "smr"
         conversion_model: "netl"
+        plant_capacity_kgpy: 127893196.8
       performance_parameters:
-        lng: 10000000
-        lng_consumption: 0.4
-      cost_parameters:
-        lng: 10000000
-        capex_factor: 100
-        plant_capacity_kgpy: 25000000
-        lng_cost: 2.0
+        capacity_factor: 0.9
       finance_parameters:
-        discount_rate: 0.7
+        discount_rate: 0.0707
+        tasc_toc_multiplier: 1.093

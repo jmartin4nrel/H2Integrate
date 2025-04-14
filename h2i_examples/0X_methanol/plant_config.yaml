@@ -2,10 +2,10 @@ name: "plant_config"
 description: "This plant is located in MN, USA..."
 
 site:
-  latitude: 47.5233
-  longitude: -92.5366
-  elevation_m: 439.0
-  time_zone: -5
+  latitude: 32.34
+  longitude: -98.27
+  elevation_m: 440.0
+  time_zone: -6
 
   # array of polygons defining boundaries with x/y coords
   boundaries: [
