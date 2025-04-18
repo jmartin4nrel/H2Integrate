@@ -9,7 +9,7 @@ from h2integrate.core.utilities import BaseConfig
 @define
 class SMRMethanolBaseClass(BaseConfig):
     """
-    A base class used to further define Performance, Cost, and Finacnce classes for a
+    A base class used to further define Performance, Cost, and Finance classes for a
     Steam Methane Reforming (SMR) methanol plant. Builds on converters.methanol.methanol_baseclass
 
     Attributes:
@@ -37,7 +37,7 @@ class Performance(SMRMethanolBaseClass):
     New flows:
         meoh_syn_cat: methanol synthesis catalyst
         meoh_atr_cat: natural gas autothermal reformer catalyst
-        lng: liquified natural gas (feedstock)
+        lng: liquefied natural gas (feedstock)
         elec: electricity (co-product)
     """
 
@@ -76,36 +76,21 @@ class Performance(SMRMethanolBaseClass):
         Calculates flows based off of capacity factor and production/consumption/emission ratios
         """
 
-        # Get plant sizing from config
-        cap = inputs["plant_capacity_kgpy"]
-        cap_fac = inputs["capacity_factor"]
-
-        # Calculate methanol prodution #TODO get shape from output shape
-        meoh_kgph = cap * cap_fac / 8760 * np.ones(shape=(8760,))
-
-        # Calculate other flows
-        co2e_emit = meoh_kgph * inputs["co2e_emit_ratio"]
-        h2o_cons = meoh_kgph * inputs["h2o_consume_ratio"]
-        h2_cons = meoh_kgph * inputs["h2_consume_ratio"]
-        co2_cons = meoh_kgph * inputs["co2_consume_ratio"]
-        elec_cons = meoh_kgph * inputs["elec_consume_ratio"]
-        meoh_atr_cat_cons = np.sum(meoh_kgph) * inputs["meoh_atr_cat_consume_ratio"]
-        meoh_syn_cat_cons = np.sum(meoh_kgph) * inputs["meoh_syn_cat_consume_ratio"]
-        lng_cons = meoh_kgph * inputs["lng_consume_ratio"]
-        elec_prod = meoh_kgph * inputs["elec_produce_ratio"]
+        # Calculate methanol production #TODO get shape from output shape
+        meoh_kgph = inputs["plant_capacity_kgpy"] * inputs["capacity_factor"] / 8760 * np.ones(shape=(8760,))
 
         # Parse outputs
         outputs = {}
         outputs["methanol_production"] = meoh_kgph
-        outputs["co2_consumption"] = co2_cons
-        outputs["h2o_consumption"] = h2o_cons
-        outputs["h2_consumption"] = h2_cons
-        outputs["co2e_emissions"] = co2e_emit
-        outputs["elec_consumption"] = elec_cons
-        outputs["meoh_atr_cat_consumption"] = meoh_atr_cat_cons
-        outputs["meoh_syn_cat_consumption"] = meoh_syn_cat_cons
-        outputs["lng_consumption"] = lng_cons
-        outputs["elec_production"] = elec_prod
+        outputs["co2_consumption"] = meoh_kgph * inputs["co2_consume_ratio"]
+        outputs["h2o_consumption"] = meoh_kgph * inputs["h2o_consume_ratio"]
+        outputs["h2_consumption"] = meoh_kgph * inputs["h2_consume_ratio"]
+        outputs["co2e_emissions"] = meoh_kgph * inputs["co2e_emit_ratio"]
+        outputs["elec_consumption"] = meoh_kgph * inputs["elec_consume_ratio"]
+        outputs["meoh_atr_cat_consumption"] = np.sum(meoh_kgph) * inputs["meoh_atr_cat_consume_ratio"]
+        outputs["meoh_syn_cat_consumption"] = np.sum(meoh_kgph) * inputs["meoh_syn_cat_consume_ratio"]
+        outputs["lng_consumption"] = meoh_kgph * inputs["lng_consume_ratio"]
+        outputs["elec_production"] = meoh_kgph * inputs["elec_produce_ratio"]
 
         return outputs
 
@@ -119,7 +104,7 @@ class Cost(SMRMethanolBaseClass):
     New flows:
         meoh_syn_cat: methanol synthesis catalyst
         meoh_atr_cat: natural gas autothermal reformer catalyst
-        lng: liquified natural gas (feedstock)
+        lng: liquefied natural gas (feedstock)
         elec: electricity (co-product)
     """
 
@@ -161,27 +146,9 @@ class Cost(SMRMethanolBaseClass):
         MMBTU_per_GJ = 1.055
         LHV = 0.0201  # GJ/kg
 
-        cap = inputs["plant_capacity_kgpy"]
-        meoh_kgph = inputs["methanol_production"]
-
-        meoh_syn_cat_price = inputs["meoh_syn_cat_price"]
-        meoh_atr_cat_price = inputs["meoh_atr_cat_price"]
-        lng_price = inputs["lng_price"]
-        elec_sales_price = inputs["elec_sales_price"]
-
-        meoh_atr_cat_cfpy = inputs["meoh_atr_cat_consumption"]
-        meoh_syn_cat_cfpy = inputs["meoh_syn_cat_consumption"]
-        lng_kgph = inputs["lng_consumption"]
-        elec_kwhph = inputs["elec_production"]
-
-        toc_usd = cap * inputs["toc_kg_y"]
-        foc_usd_y = cap * inputs["foc_kg_y^2"]
-        voc_usd_y = np.sum(meoh_kgph) * inputs["voc_kg"]
-
-        meoh_syn_cat_cost = meoh_syn_cat_cfpy * meoh_syn_cat_price
-        meoh_atr_cat_cost = meoh_atr_cat_cfpy * meoh_atr_cat_price
-        lng_cost = np.sum(lng_kgph) * MMBTU_per_GJ * LHV * lng_price
-        elec_rev = np.sum(elec_kwhph) * elec_sales_price
+        toc_usd = inputs["plant_capacity_kgpy"] * inputs["toc_kg_y"]
+        foc_usd_y = inputs["plant_capacity_kgpy"] * inputs["foc_kg_y^2"]
+        voc_usd_y = np.sum(inputs["methanol_production"]) * inputs["voc_kg"]
 
         outputs = {}
 
@@ -189,10 +156,10 @@ class Cost(SMRMethanolBaseClass):
         outputs["OpEx"] = foc_usd_y + voc_usd_y
         outputs["Fixed_OpEx"] = foc_usd_y
         outputs["Variable_OpEx"] = voc_usd_y
-        outputs["meoh_syn_cat_cost"] = meoh_syn_cat_cost
-        outputs["meoh_atr_cat_cost"] = meoh_atr_cat_cost
-        outputs["lng_cost"] = lng_cost
-        outputs["elec_revenue"] = elec_rev
+        outputs["meoh_syn_cat_cost"] = inputs["meoh_syn_cat_consumption"] * inputs["meoh_syn_cat_price"]
+        outputs["meoh_atr_cat_cost"] = inputs["meoh_atr_cat_consumption"] * inputs["meoh_atr_cat_price"]
+        outputs["lng_cost"] = np.sum(inputs["lng_consumption"]) * MMBTU_per_GJ * LHV * inputs["lng_price"]
+        outputs["elec_revenue"] = np.sum(inputs["elec_production"]) * inputs["elec_sales_price"]
 
         return outputs
 
@@ -230,18 +197,13 @@ class Finance(SMRMethanolBaseClass):
         NETL-PUB-22580 doi.org/10.2172/1567736
 
         """
-        toc = inputs["CapEx"]
-        fopex = inputs["Fixed_OpEx"]
-        vopex = inputs["Variable_OpEx"]
-        fcr = inputs["fixed_charge_rate"]
-        tasc_toc = inputs["tasc_toc_multiplier"]
         kgph = inputs["methanol_production"]
 
         outputs = {}
 
-        lcom_capex = toc * fcr * tasc_toc / np.sum(kgph)
-        lcom_fopex = fopex / np.sum(kgph)
-        lcom_vopex = vopex / np.sum(kgph)
+        lcom_capex = inputs["CapEx"] * inputs["fixed_charge_rate"] * inputs["tasc_toc_multiplier"] / np.sum(kgph)
+        lcom_fopex = inputs["Fixed_OpEx"] / np.sum(kgph)
+        lcom_vopex = inputs["Variable_OpEx"] / np.sum(kgph)
         outputs["LCOM_meoh_capex"] = lcom_capex
         outputs["LCOM_meoh_fopex"] = lcom_fopex
 
