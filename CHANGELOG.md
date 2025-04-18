@@ -1,6 +1,10 @@
 # CHANGELOG
 
-## Unreleased
+## Unreleased [TBD]
+
+- Added example standalone methanol module with just steam methane reforming (SMR)
+
+## 0.2 [7 April 2025]
 
 - Allow users to save the H2IntegrateOutput class as a yaml file and read that yaml to an instance of the output class
 - Include new plotting capabilities: (1) hydrogen storage, production, and dispatch; (2) electricity and hydrogen dispatch
@@ -13,7 +17,6 @@
 - Removed defunct conda build and upload scripts
 - Return full solution dictionary from ProFAST, allowing access to CRF and WACC
 - Renamed code from GreenHEART to H2Integrate
-- Added example standalone methanol module with just steam methane reforming (SMR)
 
 ## v0.1.4 [4 February 2025]
 
