@@ -6,7 +6,7 @@ import openmdao.api as om
 class MethanolBaseClass(om.ExplicitComponent):
     """
     An OpenMDAO component for modeling a methanol plant.
-    A base class used to further define Performance, Cost, and Finacnce components.
+    A base class used to further define Performance, Cost, and Finance components.
 
     Attributes:
         - dec_table_inputs (list of lists):
@@ -76,7 +76,7 @@ class MethanolPerformanceBaseClass(MethanolBaseClass):
     based on plant capacity and capacity factor.
 
     Inputs:
-        - plant_capacity_kgpy: methanol produciton capacity in kg/year
+        - plant_capacity_kgpy: methanol production capacity in kg/year
         - capacity_factor: fractional factor of full production capacity that is realized
         - XXX_produce_ratio: ratio of XXX produced to kg methanol produced
         - XXX_consume_ratio: ratio of XXX consumed to kg methanol produced

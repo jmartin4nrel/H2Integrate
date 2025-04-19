@@ -10,6 +10,7 @@ from h2integrate.core.feedstocks import FeedstockComponent
 from h2integrate.core.supported_models import supported_models
 from h2integrate.core.inputs.validation import load_tech_yaml, load_plant_yaml, load_driver_yaml
 from h2integrate.core.pose_optimization import PoseOptimization
+from h2integrate.converters.methanol.methanol_plant import MethanolPlantFinanceModel
 
 
 try:
@@ -228,8 +229,6 @@ class H2IntegrateModel:
                 commodity_type = "hydrogen"
             elif "methanol" in tech_configs:
                 commodity_type = "methanol"
-                # Note: methanol is the only tech importing is own (non-ProFAST) finance model
-                from h2integrate.converters.methanol.methanol_plant import MethanolPlantFinanceModel
             else:
                 commodity_type = "electricity"
 
@@ -251,6 +250,8 @@ class H2IntegrateModel:
             if commodity_type == "methanol":
                 # Note: this "ProFAST component" returns NaNs - it is just there to prevent errors
                 # TODO integrate methanol model with ProFAST and/or allow non-profast financials
+                # TODO: make this more generalized and remove the import in this file; add the
+                # methanol finance model to the supported_models dict
                 profast_comp = MethanolPlantFinanceModel(
                     tech_config=tech_configs["methanol"],
                     plant_config=self.plant_config,
