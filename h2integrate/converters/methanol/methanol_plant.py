@@ -27,6 +27,21 @@ class MethanolPlantPerformanceModel(MethanolPerformanceBaseClass):
     """
     An OpenMDAO component that wraps various methanol performance models.
     Takes in conversion technology and plant capacity from config and computes the plant's flows.
+
+    An OpenMDAO component for modeling the performance of a methanol plant.
+    Computes annual methanol and co-product production, feedstock consumption, and emissions
+    based on plant capacity and capacity factor.
+
+    Inputs:
+        - plant_capacity_kgpy: methanol production capacity in kg/year
+        - capacity_factor: fractional factor of full production capacity that is realized
+        - XXX_produce_ratio: ratio of XXX produced to kg methanol produced
+        - XXX_consume_ratio: ratio of XXX consumed to kg methanol produced
+        - XXX_emit_ratio: ratio of XXX emitted to kg methanol produced
+    Outputs:
+        - XXX_production: XXX production
+        - XXX_consumption: XXX consumption
+        - XXX_emission: XXX emission
     """
 
     def setup(self):
@@ -35,36 +50,27 @@ class MethanolPlantPerformanceModel(MethanolPerformanceBaseClass):
             merge_shared_performance_inputs(self.options["tech_config"]["model_inputs"])
         )
 
+        # Define any non-zero default values
+        self.values = {
+            "plant_capacity_kgpy": 100000000.0,
+            "capacity_factor": 0.85,
+        }
+
         tech = self.config.conversion_tech
 
         if tech == "smr":
-            self.values = {
-                # Already declared in baseclass
-                "co2e_emit_ratio": 1.13442,
-                "h2o_consume_ratio": 2.669877132,
-                "h2_consume_ratio": 0.0,
-                "co2_consume_ratio": 0.0,
-                "elec_consume_ratio": 0.1,
-                # tech-specific
-                "meoh_syn_cat_consume_ratio": 0.00000036322492251,
-                "meoh_atr_cat_consume_ratio": 0.0000013078433938,
-                "lng_consume_ratio": 1.61561859,
-                "elec_produce_ratio": 0.338415339,
-            }
-        # Add in tech-specific variables and values
-        if tech == "smr":
-            tech_dec_table_inputs = [
-                ["type", "len", "conn", "unit", "name"],
-                ["in", 1, False, "ft**3/kg", "meoh_syn_cat_consume_ratio"],
-                ["in", 1, False, "ft**3/kg", "meoh_atr_cat_consume_ratio"],
-                ["in", 1, False, "kg/kg", "lng_consume_ratio"],
-                ["in", 1, False, "kW*h/kg", "elec_produce_ratio"],
-                ["out", 1, False, "ft**3/yr", "meoh_syn_cat_consumption"],
-                ["out", 1, False, "ft**3/yr", "meoh_atr_cat_consumption"],
-                ["out", 8760, False, "kg/h", "lng_consumption"],
-                ["out", 8760, False, "kW*h/h", "elec_production"],
-            ]
-        
+            # Already declared in baseclass
+            self.values["co2e_emit_ratio"] = 1.13442,
+            self.values["h2o_consume_ratio"] = 2.669877132,
+            self.values["h2_consume_ratio"] = 0.0,
+            self.values["co2_consume_ratio"] = 0.0,
+            self.values["elec_consume_ratio"] = 0.1,
+            # tech-specific
+            self.values["meoh_syn_cat_consume_ratio"] = 0.00000036322492251,
+            self.values["meoh_atr_cat_consume_ratio"] = 0.0000013078433938,
+            self.values["lng_consume_ratio"] = 1.61561859,
+            self.values["elec_produce_ratio"] = 0.338415339,
+
         # Declare inputs and outputs - combination of values from config and model
         config_values = self.config.as_dict()
         # Config values overwrite any defaults from baseclass
@@ -72,7 +78,32 @@ class MethanolPlantPerformanceModel(MethanolPerformanceBaseClass):
             for key, value in config_values.items():
                 self.values[key] = value
 
-        self.declare_from_table(tech_dec_table_inputs, self.values)
+        self.add_input("plant_capacity_kgpy", units="kg/year", val=self.values.get("plant_capacity_kgpy", 0.0))
+        self.add_input("capacity_factor", units="unitless", val=self.values.get("capacity_factor", 0.0))
+        self.add_input("co2e_emit_ratio", units="kg/kg", val=self.values.get("co2e_emit_ratio", 0.0))
+        self.add_input("h2o_consume_ratio", units="kg/kg", val=self.values.get("h2o_consume_ratio", 0.0))
+        self.add_input("h2_consume_ratio", units="kg/kg", val=self.values.get("h2_consume_ratio", 0.0))
+        self.add_input("co2_consume_ratio", units="kg/kg", val=self.values.get("co2_consume_ratio", 0.0))
+        self.add_input("elec_consume_ratio", units="kW*h/kg", val=self.values.get("elec_consume_ratio", 0.0))
+
+        self.add_output("methanol_production", units="kg/h", shape=(8760,))
+        self.add_output("co2e_emissions", units="kg/h", shape=(8760,))
+        self.add_output("h2o_consumption", units="kg/h", shape=(8760,))
+        self.add_output("h2_consumption", units="kg/h", shape=(8760,))
+        self.add_output("co2_consumption", units="kg/h", shape=(8760,))
+        self.add_output("elec_consumption", units="kW*h/h", shape=(8760,))
+
+        # Add in tech-specific variables and values
+        if tech == "smr":
+            self.add_input("meoh_syn_cat_consume_ratio", units="ft**3/kg", val=self.values.get("meoh_syn_cat_consume_ratio", 0.0))
+            self.add_input("meoh_atr_cat_consume_ratio", units="ft**3/kg", val=self.values.get("meoh_atr_cat_consume_ratio", 0.0))
+            self.add_input("lng_consume_ratio", units="kg/kg", val=self.values.get("lng_consume_ratio", 0.0))
+            self.add_input("elec_produce_ratio", units="kW*h/kg", val=self.values.get("elec_produce_ratio", 0.0))
+
+            self.add_output("meoh_syn_cat_consumption", units="ft**3/yr")
+            self.add_output("meoh_atr_cat_consumption", units="ft**3/yr")
+            self.add_output("lng_consumption", shape=8760, units="kg/h")
+            self.add_output("elec_production", shape=8760, units="kW*h/h")
 
     def compute(self, inputs, outputs):
         if self.config.conversion_tech == "smr":
@@ -100,8 +131,24 @@ class MethanolCostConfig(BaseConfig):
 
 class MethanolPlantCostModel(MethanolCostBaseClass):
     """
-    An OpenMDAO component that wraps various methanol cost models.
-    Takes in conversion technology and plant capacity from config and computes the plant's costs.
+    An OpenMDAO component for modeling the cost of a methanol plant.
+    Includes CapEx, OpEx (fixed and variable), feedstock costs, and co-product credits.
+
+    Uses NETL power plant quality guidelines quantity of "total overnight cost" (TOC) for CapEx
+    NETL-PUB-22580 doi.org/10.2172/1567736
+    Splits OpEx into Fixed and Variable (variable scales with capacity factor, fixed does not)
+
+    Inputs:
+        toc_kg_y: total overnight cost (TOC) slope - multiply by plant_capacity_kgpy to get CapEx
+        foc_kg_y^2: fixed operating cost slope - multiply by plant_capacity_kgpy to get Fixed_OpEx
+        voc_kg: variable operating cost - multiple by methanol_production to get Variable_OpEx
+        plant_capacity_kgpy: shared input, see MethanolPerformanceBaseClass
+        methanol_production: promoted output from MethanolPerformanceBaseClass
+    Outputs:
+        CapEx: all methanol plant capital expenses in the form of total overnight cost (TOC)
+        OpEx: all methanol plant operating expenses (fixed and variable)
+        Fixed_OpEx: all methanol plant fixed operating expenses (do NOT vary with production rate)
+        Variable_OpEx: all methanol plant variable operating expenses (vary with production rate)
     """
 
     def setup(self):
@@ -110,6 +157,11 @@ class MethanolPlantCostModel(MethanolCostBaseClass):
             merge_shared_cost_inputs(self.options["tech_config"]["model_inputs"])
         )
         tech = self.config.conversion_tech
+
+        # Define any non-zero default values
+        self.values = {
+            "plant_capacity_kgpy": 100000000.0,
+        }
 
         if tech == "smr":
             self.values = {
@@ -123,24 +175,7 @@ class MethanolPlantCostModel(MethanolCostBaseClass):
                 "lng_price": 4.0,
                 "elec_sales_price": 0.027498168,
             }
-        # Add in tech-specific variables and values
-        if tech == "smr":
-            tech_dec_table_inputs = [
-                ["type", "len", "conn", "unit", "name"],
-                ["in", 1, False, "ft**3/yr", "meoh_syn_cat_consumption"],
-                ["in", 1, False, "ft**3/yr", "meoh_atr_cat_consumption"],
-                ["in", 8760, False, "kg/h", "lng_consumption"],
-                ["in", 8760, False, "kW*h/h", "elec_production"],
-                ["in", 1, False, "USD/ft**3", "meoh_syn_cat_price"],
-                ["in", 1, False, "USD/ft**3", "meoh_atr_cat_price"],
-                ["in", 1, False, "USD/MBtu", "lng_price"],  # TODO: get OpenMDAO to recognize 'MMBtu'
-                ["in", 1, False, "USD/kW/h", "elec_sales_price"],
-                ["out", 1, False, "USD/year", "meoh_syn_cat_cost"],
-                ["out", 1, False, "USD/year", "meoh_atr_cat_cost"],
-                ["out", 1, False, "USD/year", "lng_cost"],
-                ["out", 1, False, "USD/year", "elec_revenue"],
-            ]
-        
+
         # Declare inputs and outputs - combination of values from config and model
         config_values = self.config.as_dict()
         # Config values overwrite any defaults from baseclass
@@ -148,7 +183,36 @@ class MethanolPlantCostModel(MethanolCostBaseClass):
             for key, value in config_values.items():
                 self.values[key] = value
 
-        self.declare_from_table(tech_dec_table_inputs, self.values)
+        self.add_input("toc_kg_y", units="USD/kg/year", val=self.values.get("toc_kg_y", 0.0))
+        self.add_input("foc_kg_y^2", units="USD/kg/year**2", val=self.values.get("foc_kg_y^2", 0.0))
+        self.add_input("voc_kg", units="USD/kg", val=self.values.get("voc_kg", 0.0))
+        self.add_input("plant_capacity_kgpy", units="kg/year", val=self.values.get("plant_capacity_kgpy", 0.0))
+        self.add_input("electricity_price", units="USD/kW/h", val=self.values.get("electricity_price", 0.0))
+        self.add_input("hydrogen_price", units="USD/kg", val=self.values.get("hydrogen_price", 0.0))
+        self.add_input("electricity_consumption", shape=8760, units="kW*h/h", val=self.values.get("electricity_consumption", 0.0))
+        self.add_input("hydrogen_consumption", shape=8760, units="kg/h", val=self.values.get("hydrogen_consumption", 0.0))
+        self.add_input("methanol_production", shape=8760, units="kg/h", val=self.values.get("methanol_production", 0.0))
+
+        self.add_output("CapEx", units="USD")
+        self.add_output("OpEx", units="USD/year")
+        self.add_output("Fixed_OpEx", units="USD/year")
+        self.add_output("Variable_OpEx", units="USD/year")
+
+        # Add in tech-specific variables and values
+        if tech == "smr":
+            self.add_input("meoh_syn_cat_consumption", units="ft**3/yr", val=self.values.get("meoh_syn_cat_consumption", 0.0))
+            self.add_input("meoh_atr_cat_consumption", units="ft**3/yr", val=self.values.get("meoh_atr_cat_consumption", 0.0))
+            self.add_input("lng_consumption", shape=8760, units="kg/h", val=self.values.get("lng_consumption", 0.0))
+            self.add_input("elec_production", shape=8760, units="kW*h/h", val=self.values.get("elec_production", 0.0))
+            self.add_input("meoh_syn_cat_price", units="USD/ft**3", val=self.values.get("meoh_syn_cat_price", 0.0))
+            self.add_input("meoh_atr_cat_price", units="USD/ft**3", val=self.values.get("meoh_atr_cat_price", 0.0))
+            self.add_input("lng_price", units="USD/MBtu", val=self.values.get("lng_price", 0.))  # TODO: get OpenMDAO to recognize 'MMBtu'
+            self.add_input("elec_sales_price", units="USD/kW/h", val=self.values.get("elec_sales_price", 0.0))
+
+            self.add_output("meoh_syn_cat_cost", units="USD/year")
+            self.add_output("meoh_atr_cat_cost", units="USD/year")
+            self.add_output("lng_cost", units="USD/year")
+            self.add_output("elec_revenue", units="USD/year")
 
     def compute(self, inputs, outputs):
         if self.config.conversion_tech == "smr":
@@ -179,9 +243,27 @@ class MethanolFinanceConfig(BaseConfig):
 
 class MethanolPlantFinanceModel(MethanolFinanceBaseClass):
     """
-    An OpenMDAO component that wraps various methanol finance models.
-    Takes in conversion technology, plant capacity, and financial constants from config and
-    computes the plant's finances.
+    An OpenMDAO component for modeling the financing of a methanol plant.
+    Includes CapEx, OpEx (fixed and variable), feedstock costs, and co-product credits.
+
+    Uses NETL power plant quality guidelines' total as-spent cost (TASC) multiplier for capex
+    Capex expenses are annualized using a fixed charge rate also taken from NETL guidelines
+    NETL-PUB-22580 doi.org/10.2172/1567736
+
+    Inputs:
+        CapEx: promoted output from MethanolCostBaseClass
+        OpEx: promoted output from MethanolCostBaseClass
+        Fixed_OpEx: promoted output from MethanolCostBaseClass
+        Variable_OpEx: promoted output from MethanolCostBaseClass
+        tasc_toc_multiplier: calculates TASC (total as-spent cost) from CapEx
+        fixed_charge_rate: calculates annualized CapEx finance payments from TASC
+        methanol_production: promoted output from MethanolPerformanceBaseClass
+    Outputs:
+        LCOM: levelized cost of methanol
+        LCOM_meoh: portion of the LCOM from the methanol plant itself (no feedstocks)
+        LCOM_meoh_capex: portion of the LCOM_meoh from capital expenses
+        LCOM_meoh_fopex: portion of the LCOM_meoh from fixed operating expenses
+        LCOM_meoh_vopex: portion of the LCOM_meoh from variable operating expenses
     """
 
     def setup(self):
@@ -191,19 +273,12 @@ class MethanolPlantFinanceModel(MethanolFinanceBaseClass):
         )
         tech = self.config.conversion_tech
 
-        if tech == "smr":
-            tech_dec_table_inputs = [
-                ["type", "len", "conn", "unit", "name"],
-                ["in", 1, False, "USD/year", "meoh_syn_cat_cost"],
-                ["in", 1, False, "USD/year", "meoh_atr_cat_cost"],
-                ["in", 1, False, "USD/year", "lng_cost"],
-                ["in", 1, False, "USD/year", "elec_revenue"],
-                ["out", 1, False, "USD/kg", "LCOM_meoh_atr_cat"],
-                ["out", 1, False, "USD/kg", "LCOM_meoh_syn_cat"],
-                ["out", 1, False, "USD/kg", "LCOM_ng"],
-                ["out", 1, False, "USD/kg", "LCOM_elec"],
-            ]
-        
+        # Sources in NETL-PUB-22580: Exhibit 3-5 and Exhibit 3-7
+        self.values = {
+            "fixed_charge_rate": 0.0707,
+            "tasc_toc_multiplier": 1.093,
+        }
+
         # Declare inputs and outputs - combination of values from config and model
         config_values = self.config.as_dict()
         # Config values overwrite any defaults from baseclass
@@ -211,7 +286,30 @@ class MethanolPlantFinanceModel(MethanolFinanceBaseClass):
             for key, value in config_values.items():
                 self.values[key] = value
 
-        self.declare_from_table(tech_dec_table_inputs, self.values)
+        self.add_input("CapEx", units="USD", val=self.values.get("CapEx", 0.0))
+        self.add_input("OpEx", units="USD/year", val=self.values.get("OpEx", 0.0))
+        self.add_input("Fixed_OpEx", units="USD/year", val=self.values.get("Fixed_OpEx", 0.0))
+        self.add_input("Variable_OpEx", units="USD/year", val=self.values.get("Variable_OpEx", 0.0))
+        self.add_input("tasc_toc_multiplier", units=None, val=self.values.get("tasc_toc_multiplier", 0.0))
+        self.add_input("fixed_charge_rate", units=None, val=self.values.get("fixed_charge_rate", 0.0))
+        self.add_input("methanol_production", shape=8760, units="kg/h", val=self.values.get("methanol_production", 0.0))
+
+        self.add_output("LCOM", units="USD/kg")
+        self.add_output("LCOM_meoh", units="USD/kg")
+        self.add_output("LCOM_meoh_capex", units="USD/kg")
+        self.add_output("LCOM_meoh_fopex", units="USD/kg")
+        self.add_output("LCOM_meoh_vopex", units="USD/kg")
+
+        if tech == "smr":
+            self.add_input("meoh_syn_cat_cost", units="USD/year", val=self.values.get("meoh_syn_cat_cost", 0.0))
+            self.add_input("meoh_atr_cat_cost", units="USD/year", val=self.values.get("meoh_atr_cat_cost", 0.0))
+            self.add_input("lng_cost", units="USD/year", val=self.values.get("lng_cost", 0.0))
+            self.add_input("elec_revenue", units="USD/year", val=self.values.get("elec_revenue", 0.0))
+            self.add_output("LCOM_meoh_atr_cat", units="USD/kg")
+            self.add_output("LCOM_meoh_syn_cat", units="USD/kg")
+            self.add_output("LCOM_ng", units="USD/kg")
+            self.add_output("LCOM_elec", units="USD/kg")
+        
 
     def compute(self, inputs, outputs):
         kgph = inputs["methanol_production"]
