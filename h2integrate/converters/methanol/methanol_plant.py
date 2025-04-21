@@ -79,7 +79,7 @@ class MethanolPlantPerformanceModel(MethanolPerformanceBaseClass):
             self.add_output("meoh_syn_cat_consumption", units="ft**3/yr")
             self.add_output("meoh_atr_cat_consumption", units="ft**3/yr")
             self.add_output("lng_consumption", shape=8760, units="kg/h")
-            self.add_output("elec_production", shape=8760, units="kW*h/h")
+            self.add_output("electricity", shape=8760, units="kW*h/h")
 
     def compute(self, inputs, outputs):
         if self.config.conversion_tech == "smr":
@@ -96,7 +96,7 @@ class MethanolPlantPerformanceModel(MethanolPerformanceBaseClass):
             outputs["meoh_atr_cat_consumption"] = np.sum(meoh_kgph) * inputs["meoh_atr_cat_consume_ratio"]
             outputs["meoh_syn_cat_consumption"] = np.sum(meoh_kgph) * inputs["meoh_syn_cat_consume_ratio"]
             outputs["lng_consumption"] = meoh_kgph * inputs["lng_consume_ratio"]
-            outputs["elec_production"] = meoh_kgph * inputs["elec_produce_ratio"]
+            outputs["electricity"] = meoh_kgph * inputs["elec_produce_ratio"]
 
 
 @define
@@ -157,7 +157,7 @@ class MethanolPlantCostModel(MethanolCostBaseClass):
             self.add_input("meoh_syn_cat_consumption", units="ft**3/yr")
             self.add_input("meoh_atr_cat_consumption", units="ft**3/yr")
             self.add_input("lng_consumption", shape=8760, units="kg/h")
-            self.add_input("elec_production", shape=8760, units="kW*h/h")
+            self.add_input("electricity", shape=8760, units="kW*h/h")
             self.add_input("meoh_syn_cat_price", units="USD/ft**3", val=self.config.meoh_syn_cat_price)
             self.add_input("meoh_atr_cat_price", units="USD/ft**3", val=self.config.meoh_atr_cat_price)
             self.add_input("lng_price", units="USD/MBtu", val=self.config.lng_price)  # TODO: get OpenMDAO to recognize 'MMBtu'
@@ -184,7 +184,7 @@ class MethanolPlantCostModel(MethanolCostBaseClass):
             outputs["meoh_syn_cat_cost"] = inputs["meoh_syn_cat_consumption"] * inputs["meoh_syn_cat_price"]
             outputs["meoh_atr_cat_cost"] = inputs["meoh_atr_cat_consumption"] * inputs["meoh_atr_cat_price"]
             outputs["lng_cost"] = np.sum(inputs["lng_consumption"]) * MMBTU_per_GJ * LHV * inputs["lng_price"]
-            outputs["elec_revenue"] = np.sum(inputs["elec_production"]) * inputs["elec_sales_price"]
+            outputs["elec_revenue"] = np.sum(inputs["electricity"]) * inputs["elec_sales_price"]
 
 
 @define
