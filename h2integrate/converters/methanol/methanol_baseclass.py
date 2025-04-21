@@ -11,7 +11,6 @@ class MethanolCostBaseClass(om.ExplicitComponent):
         self.options.declare("plant_config", types=dict)
         self.options.declare("tech_config", types=dict)
 
-
 class MethanolFinanceBaseClass(om.ExplicitComponent):
     def initialize(self):
         self.options.declare("plant_config", types=dict)

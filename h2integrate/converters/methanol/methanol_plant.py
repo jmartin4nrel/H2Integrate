@@ -1,4 +1,3 @@
-import importlib
 import numpy as np
 
 from attrs import field, define
@@ -35,9 +34,6 @@ class MethanolPerformanceConfig(BaseConfig):
 
 class MethanolPlantPerformanceModel(MethanolPerformanceBaseClass):
     """
-    An OpenMDAO component that wraps various methanol performance models.
-    Takes in conversion technology and plant capacity from config and computes the plant's flows.
-
     An OpenMDAO component for modeling the performance of a methanol plant.
     Computes annual methanol and co-product production, feedstock consumption, and emissions
     based on plant capacity and capacity factor.
