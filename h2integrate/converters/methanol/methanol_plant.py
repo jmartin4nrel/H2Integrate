@@ -62,7 +62,7 @@ class MethanolPlantPerformanceModel(MethanolPerformanceBaseClass):
         self.add_input("co2_consume_ratio", units="kg/kg", val=self.config.co2_consume_ratio)
         self.add_input("elec_consume_ratio", units="kW*h/kg", val=self.config.elec_consume_ratio)
 
-        self.add_output("methanol_production", units="kg/h", shape=(8760,))
+        self.add_output("methanol", units="kg/h", shape=(8760,))
         self.add_output("co2e_emissions", units="kg/h", shape=(8760,))
         self.add_output("h2o_consumption", units="kg/h", shape=(8760,))
         self.add_output("h2_consumption", units="kg/h", shape=(8760,))
@@ -87,7 +87,7 @@ class MethanolPlantPerformanceModel(MethanolPerformanceBaseClass):
             meoh_kgph = inputs["plant_capacity_kgpy"] * inputs["capacity_factor"] / 8760 * np.ones(shape=(8760,))
 
             # Parse outputs
-            outputs["methanol_production"] = meoh_kgph
+            outputs["methanol"] = meoh_kgph
             outputs["co2_consumption"] = meoh_kgph * inputs["co2_consume_ratio"]
             outputs["h2o_consumption"] = meoh_kgph * inputs["h2o_consume_ratio"]
             outputs["h2_consumption"] = meoh_kgph * inputs["h2_consume_ratio"]
@@ -124,9 +124,9 @@ class MethanolPlantCostModel(MethanolCostBaseClass):
     Inputs:
         toc_kg_y: total overnight cost (TOC) slope - multiply by plant_capacity_kgpy to get CapEx
         foc_kg_y2: fixed operating cost slope - multiply by plant_capacity_kgpy to get Fixed_OpEx
-        voc_kg: variable operating cost - multiple by methanol_production to get Variable_OpEx
+        voc_kg: variable operating cost - multiply by methanol to get Variable_OpEx
         plant_capacity_kgpy: shared input, see MethanolPerformanceBaseClass
-        methanol_production: promoted output from MethanolPerformanceBaseClass
+        methanol: promoted output from MethanolPerformanceBaseClass
     Outputs:
         CapEx: all methanol plant capital expenses in the form of total overnight cost (TOC)
         OpEx: all methanol plant operating expenses (fixed and variable)
@@ -145,7 +145,7 @@ class MethanolPlantCostModel(MethanolCostBaseClass):
         self.add_input("voc_kg", units="USD/kg", val=self.config.voc_kg)
         self.add_input("plant_capacity_kgpy", units="kg/year", val=self.config.plant_capacity_kgpy)
         self.add_input("electricity_consumption", shape=8760, units="kW*h/h")
-        self.add_input("methanol_production", shape=8760, units="kg/h")
+        self.add_input("methanol", shape=8760, units="kg/h")
 
         self.add_output("CapEx", units="USD")
         self.add_output("OpEx", units="USD/year")
@@ -175,7 +175,7 @@ class MethanolPlantCostModel(MethanolCostBaseClass):
 
             toc_usd = inputs["plant_capacity_kgpy"] * inputs["toc_kg_y"]
             foc_usd_y = inputs["plant_capacity_kgpy"] * inputs["foc_kg_y2"]
-            voc_usd_y = np.sum(inputs["methanol_production"]) * inputs["voc_kg"]
+            voc_usd_y = np.sum(inputs["methanol"]) * inputs["voc_kg"]
 
             outputs["CapEx"] = toc_usd
             outputs["OpEx"] = foc_usd_y + voc_usd_y
@@ -212,7 +212,7 @@ class MethanolPlantFinanceModel(MethanolFinanceBaseClass):
         Variable_OpEx: promoted output from MethanolCostBaseClass
         tasc_toc_multiplier: calculates TASC (total as-spent cost) from CapEx
         fixed_charge_rate: calculates annualized CapEx finance payments from TASC
-        methanol_production: promoted output from MethanolPerformanceBaseClass
+        methanol: promoted output from MethanolPerformanceBaseClass
     Outputs:
         LCOM: levelized cost of methanol
         LCOM_meoh: portion of the LCOM from the methanol plant itself (no feedstocks)
@@ -234,7 +234,7 @@ class MethanolPlantFinanceModel(MethanolFinanceBaseClass):
         self.add_input("Variable_OpEx", units="USD/year", val=1.)
         self.add_input("tasc_toc_multiplier", units=None, val=self.config.tasc_toc_multiplier)
         self.add_input("fixed_charge_rate", units=None, val=self.config.fixed_charge_rate)
-        self.add_input("methanol_production", shape=8760, units="kg/h")
+        self.add_input("methanol", shape=8760, units="kg/h")
 
         self.add_output("LCOM", units="USD/kg")
         self.add_output("LCOM_meoh", units="USD/kg")
@@ -254,7 +254,7 @@ class MethanolPlantFinanceModel(MethanolFinanceBaseClass):
         
 
     def compute(self, inputs, outputs):
-        kgph = inputs["methanol_production"]
+        kgph = inputs["methanol"]
 
         lcom_capex = inputs["CapEx"] * inputs["fixed_charge_rate"] * inputs["tasc_toc_multiplier"] / np.sum(kgph)
         lcom_fopex = inputs["Fixed_OpEx"] / np.sum(kgph)

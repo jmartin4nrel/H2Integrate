@@ -8,7 +8,7 @@ technologies:
     cost_model:
       model: "methanol_plant_cost"
     financial_model:
-      model: "methanol_plant"
+      model: "methanol_plant_financial"
     model_inputs:
       shared_parameters:
         conversion_tech: "smr"
