@@ -2,8 +2,7 @@ from attrs import field, define
 
 from h2integrate.core.utilities import (
     BaseConfig,
-    merge_shared_cost_inputs,
-    merge_shared_performance_inputs,
+    merge_shared_inputs,
 )
 from h2integrate.core.validators import gt_zero, contains
 from h2integrate.tools.eco.utilities import ceildiv
@@ -69,7 +68,7 @@ class ECOElectrolyzerPerformanceModel(ElectrolyzerPerformanceBaseClass):
     def setup(self):
         super().setup()
         self.config = ECOElectrolyzerPerformanceModelConfig.from_dict(
-            merge_shared_performance_inputs(self.options["tech_config"]["model_inputs"])
+            merge_shared_inputs(self.options["tech_config"]["model_inputs"], "performance")
         )
         self.add_output("efficiency", val=0.0, desc="Average efficiency of the electrolyzer")
 
@@ -164,7 +163,7 @@ class ECOElectrolyzerCostModel(ElectrolyzerCostBaseClass):
     def setup(self):
         super().setup()
         self.config = ECOElectrolyzerCostModelConfig.from_dict(
-            merge_shared_cost_inputs(self.options["tech_config"]["model_inputs"])
+            merge_shared_inputs(self.options["tech_config"]["model_inputs"], "cost")
         )
 
     def compute(self, inputs, outputs):

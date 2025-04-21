@@ -4,9 +4,7 @@ from attrs import field, define
 
 from h2integrate.core.utilities import (
     BaseConfig,
-    merge_shared_cost_inputs,
-    merge_shared_finance_inputs,
-    merge_shared_performance_inputs,
+    merge_shared_inputs,
 )
 from h2integrate.converters.methanol.methanol_baseclass import (
     MethanolCostBaseClass,
@@ -53,7 +51,7 @@ class MethanolPlantPerformanceModel(MethanolPerformanceBaseClass):
     def setup(self):
         super().setup()
         self.config = MethanolPerformanceConfig.from_dict(
-            merge_shared_performance_inputs(self.options["tech_config"]["model_inputs"])
+            merge_shared_inputs(self.options["tech_config"]["model_inputs"], "performance")
         )
 
         self.add_input("plant_capacity_kgpy", units="kg/year", val=self.config.plant_capacity_kgpy)
@@ -139,7 +137,7 @@ class MethanolPlantCostModel(MethanolCostBaseClass):
     def setup(self):
         super().setup()
         self.config = MethanolCostConfig.from_dict(
-            merge_shared_cost_inputs(self.options["tech_config"]["model_inputs"])
+            merge_shared_inputs(self.options["tech_config"]["model_inputs"], "cost")
         )
 
         self.add_input("toc_kg_y", units="USD/kg/year", val=self.config.toc_kg_y)
@@ -226,7 +224,7 @@ class MethanolPlantFinanceModel(MethanolFinanceBaseClass):
     def setup(self):
         super().setup()
         self.config = MethanolFinanceConfig.from_dict(
-            merge_shared_finance_inputs(self.options["tech_config"]["model_inputs"])
+            merge_shared_inputs(self.options["tech_config"]["model_inputs"], "finance")
         )
         tech = self.config.conversion_tech
 
