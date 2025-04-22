@@ -2,10 +2,7 @@ from attrs import field, define
 from hopp.simulation.technologies.sites import SiteInfo, flatirons_site
 from hopp.simulation.technologies.wind.wind_plant import WindPlant
 
-from h2integrate.core.utilities import (
-    BaseConfig,
-    merge_shared_inputs,
-)
+from h2integrate.core.utilities import BaseConfig, merge_shared_inputs
 from h2integrate.converters.wind.wind_plant_baseclass import (
     WindCostBaseClass,
     WindPerformanceBaseClass,

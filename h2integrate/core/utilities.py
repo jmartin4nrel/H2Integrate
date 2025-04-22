@@ -57,29 +57,30 @@ def create_xdsm_from_config(config, output_file="connections_xdsm"):
     # Write the diagram to a file
     x.write(output_file, quiet=True)
     print(f"XDSM diagram written to {output_file}.tex")
-    
+
+
 def merge_shared_inputs(config, input_type):
     """
     Merges two dictionaries from a configuration object and resolves potential conflicts.
 
-    This function combines the dictionaries associated with `shared_parameters` and 
+    This function combines the dictionaries associated with `shared_parameters` and
     `performance_parameters`, `cost_parameters`, or `finance_parameters` in the provided
     `config` dictionary. If both dictionaries contain the same keys,
     a ValueError is raised to prevent duplicate parameter definitions.
 
     Parameters:
-        config (dict): A dictionary containing configuration data. It must include keys 
+        config (dict): A dictionary containing configuration data. It must include keys
                        like `shared_parameters` and `{input_type}_parameters`.
-        input_type (str): The type of input parameters to merge. Valid values are 
+        input_type (str): The type of input parameters to merge. Valid values are
                           'performance', 'cost', or 'finance'.
 
     Returns:
-        dict: A merged dictionary containing parameters from both `shared_parameters` 
-              and `{input_type}_parameters`. If one of the dictionaries is missing, 
+        dict: A merged dictionary containing parameters from both `shared_parameters`
+              and `{input_type}_parameters`. If one of the dictionaries is missing,
               the function returns the existing dictionary.
 
     Raises:
-        ValueError: If duplicate keys are found in `shared_parameters` and 
+        ValueError: If duplicate keys are found in `shared_parameters` and
                     `{input_type}_parameters`.
     """
 

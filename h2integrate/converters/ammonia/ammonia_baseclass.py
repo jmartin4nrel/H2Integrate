@@ -1,10 +1,7 @@
 import openmdao.api as om
 from attrs import field, define
 
-from h2integrate.core.utilities import (
-    BaseConfig,
-    merge_shared_inputs,
-)
+from h2integrate.core.utilities import BaseConfig, merge_shared_inputs
 from h2integrate.simulation.technologies.ammonia.ammonia import (
     run_ammonia_model,
     run_ammonia_cost_model,
