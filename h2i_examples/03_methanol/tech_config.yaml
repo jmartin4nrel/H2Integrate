@@ -4,14 +4,13 @@ description: "This hybrid plant produces methanol"
 technologies:
   methanol:
     performance_model:
-      model: "methanol_plant_performance"
+      model: "smr_methanol_plant_performance"
     cost_model:
-      model: "methanol_plant_cost"
+      model: "smr_methanol_plant_cost"
     financial_model:
       model: "methanol_plant_financial"
     model_inputs:
       shared_parameters:
-        conversion_tech: "smr"
         plant_capacity_kgpy: 127893196.8
       performance_parameters:
         capacity_factor: 0.9
@@ -34,6 +33,5 @@ technologies:
         elec_sales_price: 0.027498168
       finance_parameters:
         # Sources in NETL-PUB-22580: Exhibit 3-5 and Exhibit 3-7
-        discount_rate: 0.0707
         tasc_toc_multiplier: 1.093
         fixed_charge_rate: 0.0707
