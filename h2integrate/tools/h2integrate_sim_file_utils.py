@@ -47,7 +47,7 @@ def save_pickle_data_iron_out(output_data_dict, config, pkl_fn):
         output_data_dict (dict): Dictionary where keys are output names and
             values are the data to be pickled.
         config (object): Configuration object that contains the attribute
-            `run_full_simulation_fn` which specifies the base directory for saving files.
+            `iron_out_fn` which specifies the base directory for saving files.
         pkl_fn (str): Filename for the pickle file.
     """
     for output_name, data in output_data_dict.items():
