@@ -22,7 +22,7 @@ def find_run_files(base_dir):
     return run_files
 
 
-BASE_DIRECTORY = Path(__file__).resolve().parent.parent.parent / "h2i_examples/."
+BASE_DIRECTORY = Path(__file__).resolve().parent.parent.parent / "examples/."
 RUN_SCRIPTS = find_run_files(BASE_DIRECTORY)
 
 
