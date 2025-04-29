@@ -10,8 +10,9 @@ if __name__ == "__main__":
     map_path = ROOT / "usgs/cos.csv"
     p_map = np.loadtxt(map_path, skiprows=6, delimiter=",")
     p_map[p_map == -9999] = 0
-    p_map = np.flipud(map)
+    p_map = np.flipud(p_map)
 
     plt.set_cmap("viridis_r")
-    plt.contourf(p_map, levels=256)
+    plt.contourf(p_map, levels=[-0.01, 0, 0.2, 0.4, 0.6, 0.8, 1])
+    plt.axis("equal")
     plt.show()
