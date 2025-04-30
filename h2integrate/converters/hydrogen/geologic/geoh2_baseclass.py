@@ -13,14 +13,16 @@ class GeoH2PerformanceConfig(BaseConfig):
     caprock_depth: float = field()  # meters
     borehole_depth: float = field()  # meters
     inj_prod_distance: float = field()  # meters
+    reaction_zone_width: float = field()  # meters
     site_prospectivity: float = field()  # years
     initial_wellhead_flow: float = field()  # kg/hr
     gas_reservoir_size: float = field()  # tonnes
     iron_II_content: float = field()  # wt_pct
+    bulk_density: float = field()  # kg/m^3
     water_temp: float = field()  # deg C
 
 
-class GeoH2PerformanceBaseClas(om.ExplicitComponent):
+class GeoH2PerformanceBaseClass(om.ExplicitComponent):
     """
     An OpenMDAO component for modeling the performance of a geologic hydrogen plant.
     yada yada yada
@@ -42,12 +44,14 @@ class GeoH2PerformanceBaseClas(om.ExplicitComponent):
         self.add_input("caprock_depth", units="m", val=self.config.caprock_depth)
         self.add_input("borehole_depth", units="m", val=self.config.borehole_depth)
         self.add_input("inj_prod_distance", units="m", val=self.config.inj_prod_distance)
+        self.add_input("reaction_zone_width", units="m", val=self.config.reaction_zone_width)
         self.add_input("site_prospectivity", units=None, val=self.config.site_prospectivity)
         self.add_input(
             "initial_wellhead_flow", units="kg/hour", val=self.config.initial_wellhead_flow
         )
         self.add_input("gas_reservoir_size", units="tonne", val=self.config.gas_reservoir_size)
         self.add_input("iron_II_content", units="pct", val=self.config.iron_II_content)
+        self.add_input("bulk_density", units="kg/m**3", val=self.config.bulk_density)
         self.add_input("water_temp", units="C", val=self.config.water_temp)
 
         self.add_output("wellhead_h2_conc", units="pct", shape=(8760,))
@@ -65,14 +69,13 @@ class GeoH2CostConfig(BaseConfig):
     permit_fees: float = field()  # USD
     acreage: float = field()  # acre
     rights_cost: float = field()  # USD/acre
-    acquisition_cost: float = field()  # USD
     completion_cost: float = field()  # USD
     success_chance: float = field()  # pct
     fixed_opex: float = field()  # USD/year
     variable_opex: float = field()  # USD/kg
 
 
-class GeoH2CostCostBaseClass(om.ExplicitComponent):
+class GeoH2CostBaseClass(om.ExplicitComponent):
     """
     An OpenMDAO component for modeling the cost of a geologic hydrogen plant.
     yada yada yada
@@ -93,7 +96,6 @@ class GeoH2CostCostBaseClass(om.ExplicitComponent):
         self.add_input("permit_fees", units="USD", val=self.config.permit_fees)
         self.add_input("acreage", units="acre", val=self.config.acreage)
         self.add_input("rights_cost", units="USD/acre", val=self.config.rights_cost)
-        self.add_input("acquisition_cost", units="USD", val=self.config.acquisition_cost)
         self.add_input("completion_cost", units="USD", val=self.config.completion_cost)
         self.add_input("success_chance", units="pct", val=self.config.success_chance)
         self.add_input("fixed_opex", units="USD/year", val=self.config.fixed_opex)
@@ -111,7 +113,7 @@ class GeoH2FinanceConfig(BaseConfig):
     well_lifetime: float = field()  # year
 
 
-class GeoH2CostFinanceBaseClass(om.ExplicitComponent):
+class GeoH2FinanceBaseClass(om.ExplicitComponent):
     """
     An OpenMDAO component for modeling the financial aspects of a geologic hydrogen plant.
     yada yada yada
