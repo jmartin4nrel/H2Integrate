@@ -29,6 +29,11 @@ from h2integrate.converters.hydrogen.dummy_electrolyzer import (
     DummyElectrolyzerCostModel,
     DummyElectrolyzerPerformanceModel,
 )
+from h2integrate.converters.methanol.smr_methanol_plant import (
+    SMRMethanolPlantCostModel,
+    SMRMethanolPlantFinanceModel,
+    SMRMethanolPlantPerformanceModel,
+)
 from h2integrate.converters.hydrogen.eco_tools_pem_electrolyzer import (
     ECOElectrolyzerCostModel,
     ECOElectrolyzerPerformanceModel,
@@ -58,6 +63,9 @@ supported_models = {
     "ammonia_cost": AmmoniaCostModel,
     "steel_performance": SteelPerformanceModel,
     "steel_cost": SteelCostAndFinancialModel,
+    "smr_methanol_plant_performance": SMRMethanolPlantPerformanceModel,
+    "smr_methanol_plant_cost": SMRMethanolPlantCostModel,
+    "methanol_plant_financial": SMRMethanolPlantFinanceModel,
     # Transport
     "cable": CablePerformanceModel,
     "pipe": PipePerformanceModel,
