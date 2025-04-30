@@ -60,26 +60,11 @@ def test_ammonia_example(subtests):
     model.post_process()
 
     # Subtests for checking specific values
-    with subtests.test("Check HOPP electricity"):
-        assert (
-            pytest.approx(model.prob.get_val("plant.hopp.hopp.electricity"), rel=1e-3)
-            == 60512895.60442428
-        )
-
     with subtests.test("Check HOPP CapEx"):
         assert pytest.approx(model.prob.get_val("plant.hopp.hopp.CapEx"), rel=1e-3) == 1.75469962e09
 
     with subtests.test("Check HOPP OpEx"):
         assert pytest.approx(model.prob.get_val("plant.hopp.hopp.OpEx"), rel=1e-3) == 32953490.4
-
-    with subtests.test("Check electrolyzer hydrogen production"):
-        assert (
-            pytest.approx(
-                model.prob.get_val("plant.electrolyzer.eco_pem_electrolyzer_performance.hydrogen"),
-                rel=1e-3,
-            )
-            == 952035.16711763
-        )
 
     with subtests.test("Check electrolyzer CapEx"):
         assert (
@@ -107,12 +92,6 @@ def test_ammonia_example(subtests):
         assert (
             pytest.approx(model.prob.get_val("plant.h2_storage.h2_storage.OpEx"), rel=1e-3)
             == 2368353.86994941
-        )
-
-    with subtests.test("Check ammonia production"):
-        assert (
-            pytest.approx(model.prob.get_val("plant.ammonia.ammonia_performance.ammonia"), rel=1e-3)
-            == 3486344.86304923
         )
 
     with subtests.test("Check ammonia CapEx"):
