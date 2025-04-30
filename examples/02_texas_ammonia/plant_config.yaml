@@ -66,6 +66,7 @@ finance_parameters:
     electrolyzer: 2021 # 2020 for singlitico2021, 2016 # for simple h2 cost model in hopp (see https://www.hydrogen.energy.gov/pdfs/19009_h2_production_cost_pem_electrolysis_2019.pdf) ## 2020 # based on IRENA report https://www.irena.org/-/media/Files/IRENA/Agency/Publication/2020/Dec/IRENA_Green_hydrogen_cost_2020.pdf
     steel: 2020
     h2_storage: 2018 # based on Papadias 2021 and HD SAM
+    ammonia: 2021
   wind:
     expected_plant_cost: 'none'
 

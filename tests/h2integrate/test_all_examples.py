@@ -1,48 +1,150 @@
 import os
-import subprocess
 from pathlib import Path
 
 import pytest
 
+from h2integrate.core.h2integrate_model import H2IntegrateModel
 
-# --- Discover run scripts ---
-def find_run_files(base_dir):
-    run_files = []
-    for root, _, files in os.walk(base_dir):
-        run_files.extend(
-            Path(root) / file
-            for file in files
-            if file.startswith("run_") and file.endswith(".py") and "examples" in root
+
+examples_dir = Path(__file__).resolve().parent.parent.parent / "examples/."
+
+
+def test_steel_example(subtests):
+    # Change the current working directory to the example's directory
+    os.chdir(examples_dir / "01_onshore_steel_mn")
+
+    # Create a H2Integrate model
+    model = H2IntegrateModel(Path.cwd() / "01_onshore_steel_mn.yaml")
+
+    # Run the model
+    model.run()
+
+    model.post_process()
+
+    # Subtests for checking specific values
+    with subtests.test("Check LCOH"):
+        assert pytest.approx(model.prob.get_val("financials_group_1.LCOH"), rel=1e-3) == 7.37271359
+
+    with subtests.test("Check LCOS"):
+        assert pytest.approx(model.prob.get_val("steel.LCOS"), rel=1e-3) == 1206.76030669
+
+    with subtests.test("Check total adjusted CapEx"):
+        assert (
+            pytest.approx(model.prob.get_val("financials_group_1.total_capex_adjusted"), rel=1e-3)
+            == 5.1061928e09
         )
 
-    print("Found the following run scripts:")
-    for run_file in run_files:
-        print(run_file)
+    with subtests.test("Check total adjusted OpEx"):
+        assert (
+            pytest.approx(model.prob.get_val("financials_group_1.total_opex_adjusted"), rel=1e-3)
+            == 96272204.67735466
+        )
 
-    return run_files
+    with subtests.test("Check steel CapEx"):
+        assert pytest.approx(model.prob.get_val("steel.CapEx"), rel=1e-3) == 5.78060014e08
+
+    with subtests.test("Check steel OpEx"):
+        assert pytest.approx(model.prob.get_val("steel.OpEx"), rel=1e-3) == 1.0129052e08
 
 
-BASE_DIRECTORY = Path(__file__).resolve().parent.parent.parent / "examples/."
-RUN_SCRIPTS = find_run_files(BASE_DIRECTORY)
+def test_ammonia_example(subtests):
+    # Change the current working directory to the example's directory
+    os.chdir(examples_dir / "02_texas_ammonia")
 
+    # Create a H2Integrate model
+    model = H2IntegrateModel(Path.cwd() / "02_texas_ammonia.yaml")
 
-# --- Test runner ---
-@pytest.mark.parametrize("script_path", RUN_SCRIPTS)
-def test_run_script(script_path):
-    original_cwd = Path.cwd()
-    os.chdir(script_path.parent)
-    try:
-        with Path(os.devnull).open("w") as devnull:
-            proc = subprocess.Popen(
-                ["python", script_path.name], stdout=devnull, stderr=subprocess.PIPE
+    # Run the model
+    model.run()
+
+    model.post_process()
+
+    # Subtests for checking specific values
+    with subtests.test("Check HOPP electricity"):
+        assert (
+            pytest.approx(model.prob.get_val("plant.hopp.hopp.electricity"), rel=1e-3)
+            == 60512895.60442428
+        )
+
+    with subtests.test("Check HOPP CapEx"):
+        assert pytest.approx(model.prob.get_val("plant.hopp.hopp.CapEx"), rel=1e-3) == 1.75469962e09
+
+    with subtests.test("Check HOPP OpEx"):
+        assert pytest.approx(model.prob.get_val("plant.hopp.hopp.OpEx"), rel=1e-3) == 32953490.4
+
+    with subtests.test("Check electrolyzer hydrogen production"):
+        assert (
+            pytest.approx(
+                model.prob.get_val("plant.electrolyzer.eco_pem_electrolyzer_performance.hydrogen"),
+                rel=1e-3,
             )
-            proc.wait(timeout=500)
-            _, stderr = proc.communicate()
-    finally:
-        os.chdir(original_cwd)
+            == 952035.16711763
+        )
 
-    if proc.returncode != 0:
-        if b"ImportError" in stderr:
-            pytest.skip(f"Skipped {script_path.name} due to ImportError")
-        else:
-            raise RuntimeError(f"Error running {script_path.name}:\n{stderr.decode('utf-8')}")
+    with subtests.test("Check electrolyzer CapEx"):
+        assert (
+            pytest.approx(
+                model.prob.get_val("plant.electrolyzer.eco_pem_electrolyzer_cost.CapEx"), rel=1e-3
+            )
+            == 6.00412524e08
+        )
+
+    with subtests.test("Check electrolyzer OpEx"):
+        assert (
+            pytest.approx(
+                model.prob.get_val("plant.electrolyzer.eco_pem_electrolyzer_cost.OpEx"), rel=1e-3
+            )
+            == 14703155.39207595
+        )
+
+    with subtests.test("Check H2 storage CapEx"):
+        assert (
+            pytest.approx(model.prob.get_val("plant.h2_storage.h2_storage.CapEx"), rel=1e-3)
+            == 65645817.61620798
+        )
+
+    with subtests.test("Check H2 storage OpEx"):
+        assert (
+            pytest.approx(model.prob.get_val("plant.h2_storage.h2_storage.OpEx"), rel=1e-3)
+            == 2368353.86994941
+        )
+
+    with subtests.test("Check ammonia production"):
+        assert (
+            pytest.approx(model.prob.get_val("plant.ammonia.ammonia_performance.ammonia"), rel=1e-3)
+            == 3486344.86304923
+        )
+
+    with subtests.test("Check ammonia CapEx"):
+        assert (
+            pytest.approx(model.prob.get_val("plant.ammonia.ammonia_cost.CapEx"), rel=1e-3)
+            == 1.0124126e08
+        )
+
+    with subtests.test("Check ammonia OpEx"):
+        assert (
+            pytest.approx(model.prob.get_val("plant.ammonia.ammonia_cost.OpEx"), rel=1e-3)
+            == 11178036.31197754
+        )
+
+    with subtests.test("Check total adjusted CapEx"):
+        assert (
+            pytest.approx(
+                model.prob.get_val("plant.financials_group_1.total_capex_adjusted"), rel=1e-3
+            )
+            == 2.5775031e09
+        )
+
+    with subtests.test("Check total adjusted OpEx"):
+        assert (
+            pytest.approx(
+                model.prob.get_val("plant.financials_group_1.total_opex_adjusted"), rel=1e-3
+            )
+            == 53172258.6808771
+        )
+
+    with subtests.test("Check LCOH"):
+        assert (
+            pytest.approx(model.prob.get_val("plant.financials_group_1.LCOH"), rel=1e-3)
+            == 4.33286562
+        )
