@@ -1,4 +1,4 @@
-h2integrate.simulation.technologies.offshore.all\_platforms
+﻿h2integrate.simulation.technologies.offshore.all\_platforms
 ===========================================================
 
 .. automodule:: h2integrate.simulation.technologies.offshore.all_platforms
