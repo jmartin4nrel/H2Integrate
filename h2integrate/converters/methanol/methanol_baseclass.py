@@ -1,82 +1,28 @@
-import numpy as np
-import pandas as pd
 import openmdao.api as om
+from attrs import field, define
+
+from h2integrate.core.utilities import BaseConfig
 
 
-class MethanolBaseClass(om.ExplicitComponent):
-    """
-    An OpenMDAO component for modeling a methanol plant.
-    A base class used to further define Performance, Cost, and Finacnce components.
-
-    Attributes:
-        - dec_table_inputs (list of lists):
-            Formatted table of inputs/outputs to declare using the "declare_from_table" method
-            See examples below - first row is column headers, following rows are inputs/outputs
-        - values (dict): key-value pairs to go with dec_table_inputs, in which
-            keys: Names of variables to assign values to
-            values: Values to assign
-            Values do not have to be given for every input/output in dec_table_inputs,
-            they will be assigned a value of zero if they are not included in values
-        - dec_table (pandas DataFrame):
-            Pandas-formatted table of inputs/outputs that have been added to the OpenMDAO component
-    """
-
-    dec_table_inputs: list
-    values: dict
-    dec_table: pd.DataFrame
-
-    def declare_from_table(self, add_dec_table_inputs=None, add_values=None):
-        """
-        Declare inputs/outputs from a table, either initialized with zeros or with values from dict
-
-        Arguments:
-            - add_dec_table_inputs (list of lists):
-                Additional inputs/outputs to assign in addition to self.dec_table_inputs
-            - add_values (dict):
-                Additional values to assign to the inputs/outputs in add_dec_table_inputs
-        """
-
-        # Convert dec_table to dataframe for easy references
-        dec_table = pd.DataFrame(self.dec_table_inputs[1:], columns=self.dec_table_inputs[0])
-        if add_dec_table_inputs:
-            add_dec_table = pd.DataFrame(add_dec_table_inputs[1:], columns=add_dec_table_inputs[0])
-            dec_table = pd.concat([dec_table, add_dec_table])
-        self.dec_table = dec_table
-
-        # Combine any additional values from those already defined
-        values = self.values
-        if add_values:
-            for key, value in add_values.items():
-                values[key] = value
-            self.values = values
-
-        # Add each row of the dec_table as an input or output
-        for dec in self.dec_table.itertuples():
-            # If a value was given for the given input/output name, initialize with that value
-            if dec.name in list(values.keys()):
-                value = self.values[dec.name]
-            # Otherwise initialize as zero(s)
-            else:
-                if dec.len == 1:
-                    value = 0.0
-                else:
-                    value = np.zeros(int(dec.len))
-
-            # Add inputs/outputs to OpenMDAO component
-            if dec.type == "in":
-                self.add_input(dec.name, val=value, shape_by_conn=dec.conn, units=dec.unit)
-            elif dec.type == "out":
-                self.add_output(dec.name, val=value, shape_by_conn=dec.conn, units=dec.unit)
+@define
+class MethanolPerformanceConfig(BaseConfig):
+    plant_capacity_kgpy: float = field()
+    capacity_factor: float = field()
+    co2e_emit_ratio: float = field()
+    h2o_consume_ratio: float = field()
+    h2_consume_ratio: float = field()
+    co2_consume_ratio: float = field()
+    elec_consume_ratio: float = field()
 
 
-class MethanolPerformanceBaseClass(MethanolBaseClass):
+class MethanolPerformanceBaseClass(om.ExplicitComponent):
     """
     An OpenMDAO component for modeling the performance of a methanol plant.
     Computes annual methanol and co-product production, feedstock consumption, and emissions
     based on plant capacity and capacity factor.
 
     Inputs:
-        - plant_capacity_kgpy: methanol produciton capacity in kg/year
+        - plant_capacity_kgpy: methanol production capacity in kg/year
         - capacity_factor: fractional factor of full production capacity that is realized
         - XXX_produce_ratio: ratio of XXX produced to kg methanol produced
         - XXX_consume_ratio: ratio of XXX consumed to kg methanol produced
@@ -92,40 +38,31 @@ class MethanolPerformanceBaseClass(MethanolBaseClass):
         self.options.declare("tech_config", types=dict)
 
     def setup(self):
-        # Make table of all inputs and outputs to declare
-        self.dec_table_inputs = [
-            ["type", "len", "conn", "unit", "name"],
-            ["in", 1, False, "kg/year", "plant_capacity_kgpy"],
-            ["in", 1, False, None, "capacity_factor"],
-            ["in", 1, False, "kg/kg", "co2e_emit_ratio"],
-            ["in", 1, False, "kg/kg", "h2o_consume_ratio"],
-            ["in", 1, False, "kg/kg", "h2_consume_ratio"],
-            ["in", 1, False, "kg/kg", "co2_consume_ratio"],
-            ["in", 1, False, "kW*h/kg", "elec_consume_ratio"],
-            ["out", 8760, False, "kg/h", "methanol_production"],
-            ["out", 8760, False, "kg/h", "co2e_emissions"],
-            ["out", 8760, False, "kg/h", "h2o_consumption"],
-            ["out", 8760, False, "kg/h", "h2_consumption"],
-            ["out", 8760, False, "kg/h", "co2_consumption"],
-            ["out", 8760, False, "kW*h/h", "elec_consumption"],
-        ]
-        # Define any non-zero default values
-        self.values = {
-            "plant_capacity_kgpy": 100000000.0,
-            "capacity_factor": 0.85,
-        }
+        self.add_input("plant_capacity_kgpy", units="kg/year", val=self.config.plant_capacity_kgpy)
+        self.add_input("capacity_factor", units="unitless", val=self.config.capacity_factor)
+        self.add_input("co2e_emit_ratio", units="kg/kg", val=self.config.co2e_emit_ratio)
+        self.add_input("h2o_consume_ratio", units="kg/kg", val=self.config.h2o_consume_ratio)
+        self.add_input("h2_consume_ratio", units="kg/kg", val=self.config.h2_consume_ratio)
+        self.add_input("co2_consume_ratio", units="kg/kg", val=self.config.co2_consume_ratio)
+        self.add_input("elec_consume_ratio", units="kW*h/kg", val=self.config.elec_consume_ratio)
 
-    def compute(self, inputs, outputs):
-        """
-        Computation for the OM component.
-
-        For a template class this is not implemented and raises an error.
-        """
-
-        raise NotImplementedError("This method should be implemented in a subclass.")
+        self.add_output("methanol", units="kg/h", shape=(8760,))
+        self.add_output("co2e_emissions", units="kg/h", shape=(8760,))
+        self.add_output("h2o_consumption", units="kg/h", shape=(8760,))
+        self.add_output("h2_consumption", units="kg/h", shape=(8760,))
+        self.add_output("co2_consumption", units="kg/h", shape=(8760,))
+        self.add_output("elec_consumption", units="kW*h/h", shape=(8760,))
 
 
-class MethanolCostBaseClass(MethanolBaseClass):
+@define
+class MethanolCostConfig(BaseConfig):
+    plant_capacity_kgpy: float = field()
+    toc_kg_y: float = field()
+    foc_kg_y2: float = field()
+    voc_kg: float = field()
+
+
+class MethanolCostBaseClass(om.ExplicitComponent):
     """
     An OpenMDAO component for modeling the cost of a methanol plant.
     Includes CapEx, OpEx (fixed and variable), feedstock costs, and co-product credits.
@@ -136,10 +73,10 @@ class MethanolCostBaseClass(MethanolBaseClass):
 
     Inputs:
         toc_kg_y: total overnight cost (TOC) slope - multiply by plant_capacity_kgpy to get CapEx
-        foc_kg_y^2: fixed operating cost slope - multiply by plant_capacity_kgpy to get Fixed_OpEx
-        voc_kg: variable operating cost - multiple by methanol_production to get Variable_OpEx
+        foc_kg_y2: fixed operating cost slope - multiply by plant_capacity_kgpy to get Fixed_OpEx
+        voc_kg: variable operating cost - multiply by methanol to get Variable_OpEx
         plant_capacity_kgpy: shared input, see MethanolPerformanceBaseClass
-        methanol_production: promoted output from MethanolPerformanceBaseClass
+        methanol: promoted output from MethanolPerformanceBaseClass
     Outputs:
         CapEx: all methanol plant capital expenses in the form of total overnight cost (TOC)
         OpEx: all methanol plant operating expenses (fixed and variable)
@@ -152,61 +89,44 @@ class MethanolCostBaseClass(MethanolBaseClass):
         self.options.declare("tech_config", types=dict)
 
     def setup(self):
-        # Make table of all inputs and outputs to declare
-        self.dec_table_inputs = [
-            ["type", "len", "conn", "unit", "name"],
-            ["in", 1, False, "USD/kg/year", "toc_kg_y"],
-            ["in", 1, False, "USD/kg/year**2", "foc_kg_y^2"],  # fixed operating cost slope
-            ["in", 1, False, "USD/kg", "voc_kg"],  # variable operating cost
-            ["in", 1, False, "kg/year", "plant_capacity_kgpy"],
-            ["in", 1, False, "USD/kW/h", "electricity_price"],
-            ["in", 1, False, "USD/kg", "hydrogen_price"],
-            ["in", 8760, False, "kW*h/h", "electricity_consumption"],
-            ["in", 8760, False, "kg/h", "hydrogen_consumption"],
-            ["in", 8760, False, "kg/h", "methanol_production"],
-            ["out", 1, False, "USD", "CapEx"],
-            ["out", 1, False, "USD/year", "OpEx"],
-            ["out", 1, False, "USD/year", "Fixed_OpEx"],
-            ["out", 1, False, "USD/year", "Variable_OpEx"],
-        ]
-        # Define any non-zero default values
-        self.values = {
-            "plant_capacity_kgpy": 100000000.0,
-        }
+        self.add_input("toc_kg_y", units="USD/kg/year", val=self.config.toc_kg_y)
+        self.add_input("foc_kg_y2", units="USD/kg/year**2", val=self.config.foc_kg_y2)
+        self.add_input("voc_kg", units="USD/kg", val=self.config.voc_kg)
+        self.add_input("plant_capacity_kgpy", units="kg/year", val=self.config.plant_capacity_kgpy)
+        self.add_input("electricity_consumption", shape=8760, units="kW*h/h")
+        self.add_input("methanol", shape=8760, units="kg/h")
 
-    def compute(self, inputs, outputs):
-        """
-        Computation for the OM component.
-
-        For a template class this is not implement and raises an error.
-        """
-
-        raise NotImplementedError("This method should be implemented in a subclass.")
+        self.add_output("CapEx", units="USD")
+        self.add_output("OpEx", units="USD/year")
+        self.add_output("Fixed_OpEx", units="USD/year")
+        self.add_output("Variable_OpEx", units="USD/year")
 
 
-class MethanolFinanceBaseClass(MethanolBaseClass):
+@define
+class MethanolFinanceConfig(BaseConfig):
+    tasc_toc_multiplier: float = field()
+    fixed_charge_rate: float = field()
+    plant_capacity_kgpy: float = field()
+
+
+class MethanolFinanceBaseClass(om.ExplicitComponent):
     """
-    An OpenMDAO component for modeling the financing of a methanol plant.
-    Includes CapEx, OpEx (fixed and variable), feedstock costs, and co-product credits.
-
-    Uses NETL power plant quality guidelines' total as-spent cost (TASC) multiplier for capex
-    Capex expenses are annualized using a fixed charge rate also taken from NETL guidelines
-    NETL-PUB-22580 doi.org/10.2172/1567736
+    An OpenMDAO component for modeling the financial aspects of a methanol plant.
 
     Inputs:
-        CapEx: promoted output from MethanolCostBaseClass
-        OpEx: promoted output from MethanolCostBaseClass
-        Fixed_OpEx: promoted output from MethanolCostBaseClass
-        Variable_OpEx: promoted output from MethanolCostBaseClass
-        tasc_toc_multiplier: calculates TASC (total as-spent cost) from CapEx
-        fixed_charge_rate: calculates annualized CapEx finance payments from TASC
-        methanol_production: promoted output from MethanolPerformanceBaseClass
+        CapEx: total capital expenditure in USD
+        OpEx: total operational expenditure in USD/year
+        Fixed_OpEx: fixed operational expenditure in USD/year
+        Variable_OpEx: variable operational expenditure in USD/year
+        tasc_toc_multiplier: multiplier for total as-spent cost to total overnight cost
+        fixed_charge_rate: fixed charge rate for financial calculations
+        methanol: methanol production rate in kg/h over 8760 hours
     Outputs:
-        LCOM: levelized cost of methanol
-        LCOM_meoh: portion of the LCOM from the methanol plant itself (no feedstocks)
-        LCOM_meoh_capex: portion of the LCOM_meoh from capital expenses
-        LCOM_meoh_fopex: portion of the LCOM_meoh from fixed operating expenses
-        LCOM_meoh_vopex: portion of the LCOM_meoh from variable operating expenses
+        LCOM: levelized cost of methanol in USD/kg
+        LCOM_meoh: levelized cost of methanol including all components in USD/kg
+        LCOM_meoh_capex: levelized cost of methanol attributed to CapEx in USD/kg
+        LCOM_meoh_fopex: levelized cost of methanol attributed to fixed OpEx in USD/kg
+        LCOM_meoh_vopex: levelized cost of methanol attributed to variable OpEx in USD/kg
     """
 
     def initialize(self):
@@ -214,33 +134,59 @@ class MethanolFinanceBaseClass(MethanolBaseClass):
         self.options.declare("tech_config", types=dict)
 
     def setup(self):
-        # Make table of all inputs and outputs to declare
-        self.dec_table_inputs = [
-            ["type", "len", "conn", "unit", "name"],
-            ["in", 1, False, "USD", "CapEx"],
-            ["in", 1, False, "USD/year", "OpEx"],
-            ["in", 1, False, "USD/year", "Fixed_OpEx"],
-            ["in", 1, False, "USD/year", "Variable_OpEx"],
-            ["in", 1, False, None, "tasc_toc_multiplier"],
-            ["in", 1, False, None, "fixed_charge_rate"],
-            ["in", 8760, False, "kg/h", "methanol_production"],
-            ["out", 1, False, "USD/kg", "LCOM"],
-            ["out", 1, False, "USD/kg", "LCOM_meoh"],
-            ["out", 1, False, "USD/kg", "LCOM_meoh_capex"],
-            ["out", 1, False, "USD/kg", "LCOM_meoh_fopex"],
-            ["out", 1, False, "USD/kg", "LCOM_meoh_vopex"],
-        ]
-        # Sources in NETL-PUB-22580: Exhibit 3-5 and Exhibit 3-7
-        self.values = {
-            "fixed_charge_rate": 0.0707,
-            "tasc_toc_multiplier": 1.093,
-        }
+        self.add_input("CapEx", units="USD", val=1.0, desc="Total capital expenditure in USD.")
+        self.add_input(
+            "OpEx", units="USD/year", val=1.0, desc="Total operational expenditure in USD/year."
+        )
+        self.add_input(
+            "Fixed_OpEx",
+            units="USD/year",
+            val=1.0,
+            desc="Fixed operational expenditure in USD/year.",
+        )
+        self.add_input(
+            "Variable_OpEx",
+            units="USD/year",
+            val=1.0,
+            desc="Variable operational expenditure in USD/year.",
+        )
+        self.add_input(
+            "tasc_toc_multiplier",
+            units=None,
+            val=self.config.tasc_toc_multiplier,
+            desc="Multiplier for total as-spent cost to total overnight cost.",
+        )
+        self.add_input(
+            "fixed_charge_rate",
+            units=None,
+            val=self.config.fixed_charge_rate,
+            desc="Fixed charge rate for financial calculations.",
+        )
+        self.add_input(
+            "methanol",
+            shape=8760,
+            units="kg/h",
+            desc="Methanol production rate in kg/h over 8760 hours.",
+        )
 
-    def compute(self, inputs, outputs):
-        """
-        Computation for the OM component.
-
-        For a template class this is not implement and raises an error.
-        """
-
-        raise NotImplementedError("This method should be implemented in a subclass.")
+        self.add_output("LCOM", units="USD/kg", desc="Levelized cost of methanol in USD/kg.")
+        self.add_output(
+            "LCOM_meoh",
+            units="USD/kg",
+            desc="Levelized cost of methanol including all components in USD/kg.",
+        )
+        self.add_output(
+            "LCOM_meoh_capex",
+            units="USD/kg",
+            desc="Levelized cost of methanol attributed to CapEx in USD/kg.",
+        )
+        self.add_output(
+            "LCOM_meoh_fopex",
+            units="USD/kg",
+            desc="Levelized cost of methanol attributed to fixed OpEx in USD/kg.",
+        )
+        self.add_output(
+            "LCOM_meoh_vopex",
+            units="USD/kg",
+            desc="Levelized cost of methanol attributed to variable OpEx in USD/kg.",
+        )
