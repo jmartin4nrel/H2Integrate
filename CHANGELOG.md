@@ -1,5 +1,8 @@
 # CHANGELOG
 
+## 0.X
+- Fixed iron data save issue [PR 122](https://github.com/NREL/H2Integrate/pull/122)
+
 ## 0.2 [7 April 2025]
 
 - Allow users to save the H2IntegrateOutput class as a yaml file and read that yaml to an instance of the output class
