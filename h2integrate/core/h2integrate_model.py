@@ -58,9 +58,11 @@ class H2IntegrateModel:
         self.system_summary = config.get("system_summary")
 
         # Load each config file as yaml and save as dict on this object
-        self.driver_config = load_driver_yaml(config.get("driver_config"))
-        self.technology_config = load_tech_yaml(config.get("technology_config"))
-        self.plant_config = load_plant_yaml(config.get("plant_config"))
+        self.driver_config = load_driver_yaml(config_path.parent / config.get("driver_config"))
+        self.technology_config = load_tech_yaml(
+            config_path.parent / config.get("technology_config")
+        )
+        self.plant_config = load_plant_yaml(config_path.parent / config.get("plant_config"))
 
     def create_site_model(self):
         # Create a site-level component
