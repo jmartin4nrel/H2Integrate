@@ -17,7 +17,7 @@ class CombinedGeoH2PerformanceConfig(GeoH2PerformanceConfig):
     pass
 
 
-class CombinedGeoH2PlantPerformanceModel(GeoH2PerformanceBaseClass):
+class CombinedGeoH2PerformanceModel(GeoH2PerformanceBaseClass):
     """
     An OpenMDAO component for modeling the performance of a geologic hydrogen plant.
     Combines modeling for both natural and stimulated geoH2.
@@ -42,12 +42,12 @@ class CombinedGeoH2PlantPerformanceModel(GeoH2PerformanceBaseClass):
 
         # Calculated average wellhead gas flow over well lifetime
         init_wh_flow = inputs["initial_wellhead_flow"]
-        lifetime = inputs["well_lifetime"]
+        lifetime = int(inputs["well_lifetime"][0])
         res_size = inputs["gas_reservoir_size"]
         avg_wh_flow = min(init_wh_flow, res_size / lifetime * 1000 / 8760)
 
         # Calculate hydrogen flow out from accumulated gas
-        h2_accum = wh_h2_conc * avg_wh_flow
+        h2_accum = wh_h2_conc / 100 * avg_wh_flow
 
         # Calculate serpentinization penetration rate
         grain_size = inputs["grain_size"]
@@ -66,20 +66,23 @@ class CombinedGeoH2PlantPerformanceModel(GeoH2PerformanceBaseClass):
         M_H2 = 1.00
 
         # Model shrinking reactive particle
-        years = np.linspace(1, 21)
+        years = np.linspace(1, lifetime, lifetime)
         sec_elapsed = years * 3600 * 8760
-        core_diameter = max(0, grain_size - 2 * pen_rate * sec_elapsed)
+        core_diameter = np.maximum(
+            np.zeros(len(sec_elapsed)), grain_size - 2 * pen_rate * sec_elapsed
+        )
         reacted_volume = n_grains * (grain_size**3 - core_diameter**3)
-        reacted_mass = reacted_volume * rho * X_Fe
+        reacted_mass = reacted_volume * rho * X_Fe / 100
         h2_produced = reacted_mass * M_H2 / M_Fe
         np.average(h2_produced)
 
         # Parse outputs
         outputs["wellhead_h2_conc"] = wh_h2_conc
         outputs["lifetime_wellhead_flow"] = avg_wh_flow
-        outputs["hydrogen_accumulated"] = h2_accum
-        outputs["hydrogen_produced"] = h2_produced
-        outputs["hydrogen"] = h2_accum + h2_produced
+        outputs["hydrogen_accumulated"] = np.ones(8760) * h2_accum
+        h2_prod_avg = h2_produced[-1] / lifetime / 8760
+        outputs["hydrogen_produced"] = np.ones(8760) * h2_prod_avg
+        outputs["hydrogen"] = np.ones(8760) * (h2_accum + h2_prod_avg)
 
 
 @define
@@ -108,7 +111,7 @@ class CombinedGeoH2CostModel(GeoH2CostBaseClass):
     def compute(self, inputs, outputs):
         # Calculate total capital cost per well (successful or unsuccessful)
         drill = inputs["test_drill_cost"]
-        permit = inputs["well_lifetime"]
+        permit = inputs["permit_fees"]
         acreage = inputs["acreage"]
         rights_acre = inputs["rights_cost"]
         cap_well = drill + permit + acreage * rights_acre
@@ -124,7 +127,8 @@ class CombinedGeoH2CostModel(GeoH2CostBaseClass):
         vopex = inputs["variable_opex"]
         outputs["Fixed_OpEx"] = fopex
         outputs["Variable_OpEx"] = vopex
-        outputs["OpEx"] = fopex + vopex
+        production = np.sum(inputs["hydrogen"])
+        outputs["OpEx"] = fopex + vopex * np.sum(production)
 
         # Apply cost multipliers to bare erected cost via NETL-PUB-22580
         contracting_costs = bare_capex * 0.20
@@ -163,14 +167,14 @@ class CombinedGeoH2FinanceModel(GeoH2FinanceBaseClass):
 
     def compute(self, inputs, outputs):
         # Calculate fixed charge rate via NETL-PUB-22580
-        lifetime = inputs["well_lifetime"]
+        lifetime = int(inputs["well_lifetime"][0])
         etr = 0.2574  # effective tax rate
         atwacc = 0.0473  # after-tax weighted average cost of capital - see NETL Exhibit 3-2
         dep_n = 1 / lifetime  # simplifying the IRS tax depreciation tables to avoid lookup
         crf = (
             atwacc * (1 + atwacc) ** lifetime / ((1 + atwacc) ** lifetime - 1)
         )  # capital recovery factor
-        dep = crf * np.sum(dep_n / np.power(1 + atwacc, np.linspace(1, lifetime + 1)))
+        dep = crf * np.sum(dep_n / np.power(1 + atwacc, np.linspace(1, lifetime, lifetime)))
         fcr = crf / (1 - etr) - etr * dep / (1 - etr)
 
         # Calculate levelized cost of geoH2
