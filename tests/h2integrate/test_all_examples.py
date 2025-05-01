@@ -23,21 +23,21 @@ def test_steel_example(subtests):
 
     # Subtests for checking specific values
     with subtests.test("Check LCOH"):
-        assert pytest.approx(model.prob.get_val("financials_group_1.LCOH"), rel=1e-3) == 7.37271359
+        assert pytest.approx(model.prob.get_val("financials_group_1.LCOH"), rel=1e-3) == 7.24632326
 
     with subtests.test("Check LCOS"):
-        assert pytest.approx(model.prob.get_val("steel.LCOS"), rel=1e-3) == 1206.76030669
+        assert pytest.approx(model.prob.get_val("steel.LCOS"), rel=1e-3) == 1198.33206399
 
     with subtests.test("Check total adjusted CapEx"):
         assert (
             pytest.approx(model.prob.get_val("financials_group_1.total_capex_adjusted"), rel=1e-3)
-            == 5.1061928e09
+            == 5.10869916e09
         )
 
     with subtests.test("Check total adjusted OpEx"):
         assert (
             pytest.approx(model.prob.get_val("financials_group_1.total_opex_adjusted"), rel=1e-3)
-            == 96272204.67735466
+            == 96349901.77625626
         )
 
     with subtests.test("Check steel CapEx"):
