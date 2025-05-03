@@ -7,11 +7,11 @@ IMPORTANT NOTES
 
 2. If all boxes in the PR Checklist cannot be checked, this PR should be marked as a draft.
 
-3. DO NOT DELTE ANYTHING FROM THIS TEMPLATE. If a section does not apply to you, simply write
+3. DO NOT DELETE ANYTHING FROM THIS TEMPLATE. If a section does not apply to you, simply write
    "N/A" in the description.
 
 4. Code snippets to highlight new, modified, or problematic functionality are highly encouraged,
-   though not required. Be sure to use proper code higlighting as demonstrated below.
+   though not required. Be sure to use proper code highlighting as demonstrated below.
 
    ```python
     def a_func():

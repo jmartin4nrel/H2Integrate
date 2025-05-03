@@ -78,7 +78,7 @@ Add your new technology to the dictionary with the appropriate keys depending on
 Here's what the updated `supported_models.py` file looks like with our new solar technology added as the first entry:
 
 ```python
-from new_h2integrate.converters.solar.solar_pysam import PYSAMSolarPlantPerformanceComponent
+from h2integrate.converters.solar.solar_pysam import PYSAMSolarPlantPerformanceComponent
 
 supported_models = {
     'pysam_solar_plant_performance' : PYSAMSolarPlantPerformanceComponent,
