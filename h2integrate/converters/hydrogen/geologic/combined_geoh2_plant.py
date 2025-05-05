@@ -79,10 +79,10 @@ class CombinedGeoH2PerformanceModel(GeoH2PerformanceBaseClass):
         # Parse outputs
         outputs["wellhead_h2_conc"] = wh_h2_conc
         outputs["lifetime_wellhead_flow"] = avg_wh_flow
-        outputs["hydrogen_accumulated"] = np.ones(8760) * h2_accum
+        outputs["hydrogen_accumulated"] = h2_accum
         h2_prod_avg = h2_produced[-1] / lifetime / 8760
-        outputs["hydrogen_produced"] = np.ones(8760) * h2_prod_avg
-        outputs["hydrogen"] = np.ones(8760) * (h2_accum + h2_prod_avg)
+        outputs["hydrogen_produced"] = h2_prod_avg
+        outputs["hydrogen"] = h2_accum + h2_prod_avg
 
 
 @define
