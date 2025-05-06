@@ -62,16 +62,18 @@ class ProFastComp(om.ExplicitComponent):
             self.add_input(f"opex_adjusted_{tech}", val=0.0, units="USD/year")
 
         if self.options["commodity_type"] == "hydrogen":
+            self.add_input("total_hydrogen_produced", val=0.0, units="kg/year")
             self.add_output("LCOH", val=0.0, units="USD/kg")
 
-        if self.options["commodity_type"] == "steel":
-            self.add_output("LCOS", val=0.0, units="USD/ton")
-
         if self.options["commodity_type"] == "electricity":
+            self.add_input("total_electricity_produced", val=0.0, units="kW*h/year")
             self.add_output("LCOE", val=0.0, units="USD/kW/h")
 
+        if self.options["commodity_type"] == "ammonia":
+            self.add_input("total_ammonia_produced", val=0.0, units="kg/year")
+            self.add_output("LCOA", val=0.0, units="USD/kg")
+
         if "electrolyzer" in tech_config:
-            self.add_input("total_hydrogen_produced", val=0.0, units="kg/year")
             self.add_input("time_until_replacement", units="h")
 
     def compute(self, inputs, outputs):
@@ -94,6 +96,35 @@ class ProFastComp(om.ExplicitComponent):
                 "capacity",
                 float(inputs["total_hydrogen_produced"]) / 365.0,
             )  # kg/day
+        elif self.options["commodity_type"] == "ammonia":
+            pf.set_params(
+                "commodity",
+                {
+                    "name": "Ammonia",
+                    "unit": "kg",
+                    "initial price": 100,
+                    "escalation": gen_inflation,
+                },
+            )
+            pf.set_params(
+                "capacity",
+                float(inputs["total_ammonia_produced"]) / 365.0,
+            )
+        elif self.options["commodity_type"] == "electricity":
+            pf.set_params(
+                "commodity",
+                {
+                    "name": "Electricity",
+                    "unit": "kWh",
+                    "initial price": 100,
+                    "escalation": gen_inflation,
+                },
+            )
+            pf.set_params(
+                "capacity",
+                float(inputs["total_electricity_produced"]) / 365.0,
+            )
+
         pf.set_params("maintenance", {"value": 0, "escalation": gen_inflation})
         pf.set_params(
             "analysis start year",
@@ -225,5 +256,10 @@ class ProFastComp(om.ExplicitComponent):
 
         # Only hydrogen supported in the very short term
         if self.options["commodity_type"] == "hydrogen":
-            lcoh = sol["price"]
-            outputs["LCOH"] = lcoh
+            outputs["LCOH"] = sol["price"]
+
+        elif self.options["commodity_type"] == "ammonia":
+            outputs["LCOA"] = sol["price"]
+
+        elif self.options["commodity_type"] == "electricity":
+            outputs["LCOE"] = sol["price"]

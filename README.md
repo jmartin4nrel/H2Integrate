@@ -9,10 +9,9 @@
 [![DOI 10.1088/1742-6596/2767/6/062017](https://img.shields.io/badge/DOI-10.1088%2F1742--6596%2F2767%2F6%2F062017-brightgreen?link=[https://doi.org/10.1088/1742-6596/2767/6/062017](https://doi.org/10.1088/1742-6596/2767/6/062017))](https://iopscience.iop.org/article/10.1088/1742-6596/2767/6/062017/pdf)
 [![DOI 10.21203/rs.3.rs-4326648/v1](https://img.shields.io/badge/DOI-10.21203%2Frs.3.rs--4326648%2Fv1-brightgreen?link=[https://doi.org/10.21203/rs.3.rs-4326648/v1](https://doi.org/10.21203/rs.3.rs-4326648/v1))](https://assets-eu.researchsquare.com/files/rs-4326648/v1_covered_338a5071-b74b-4ecd-9d2a-859e8d988b5c.pdf?c=1716199726)
 
-Hybrid project power-to-x component-level system performance and financial modeling for control and
-design optimization. H2Integrate currently includes renewable energy, hydrogen, ammonia, and steel.
-Other elements such as desalination systems, pipelines, compressors, and storage systems can also be
-included as needed.
+H2Integrate is an open-source Python package for modeling and designing hybrid energy systems producing electricity, hydrogen, ammonia, steel, and other products.
+
+Note: The current version of H2Integrate is under active development and may be missing features that existed previously. H2Integrate v0.2.0 is the last version that uses the prior framework.
 
 ## Publications where H2Integrate has been used
 

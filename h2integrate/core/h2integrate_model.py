@@ -7,7 +7,8 @@ import openmdao.api as om
 from h2integrate.core.finances import ProFastComp, AdjustedCapexOpexComp
 from h2integrate.core.utilities import create_xdsm_from_config
 from h2integrate.core.feedstocks import FeedstockComponent
-from h2integrate.core.supported_models import supported_models
+from h2integrate.core.resource_summer import ElectricitySumComp
+from h2integrate.core.supported_models import supported_models, electricity_producing_techs
 from h2integrate.core.inputs.validation import load_tech_yaml, load_plant_yaml, load_driver_yaml
 from h2integrate.core.pose_optimization import PoseOptimization
 
@@ -46,7 +47,6 @@ class H2IntegrateModel:
 
         # create driver model
         # might be an analysis or optimization
-        # can draw a fair amount from WEIS
         self.create_driver_model()
 
     def load_config(self, config_file):
@@ -58,9 +58,11 @@ class H2IntegrateModel:
         self.system_summary = config.get("system_summary")
 
         # Load each config file as yaml and save as dict on this object
-        self.driver_config = load_driver_yaml(config.get("driver_config"))
-        self.technology_config = load_tech_yaml(config.get("technology_config"))
-        self.plant_config = load_plant_yaml(config.get("plant_config"))
+        self.driver_config = load_driver_yaml(config_path.parent / config.get("driver_config"))
+        self.technology_config = load_tech_yaml(
+            config_path.parent / config.get("technology_config")
+        )
+        self.plant_config = load_plant_yaml(config_path.parent / config.get("plant_config"))
 
     def create_site_model(self):
         # Create a site-level component
@@ -176,10 +178,12 @@ class H2IntegrateModel:
 
                 # Process the financial models
                 if "financial_model" in individual_tech_config:
+                    financial_name = cost_name  # TODO: Should this be a separate name?
                     if "model" in individual_tech_config["financial_model"]:
                         financial_name = individual_tech_config["financial_model"]["model"]
 
-                        financial_object = supported_models[financial_name]
+                    try:  # TODO: migrate to explicit model naming once financial side is figured out
+                        financial_object = supported_models[f"{financial_name}_financial"]
                         tech_group.add_subsystem(
                             f"{tech_name}_financial",
                             financial_object(
@@ -188,6 +192,9 @@ class H2IntegrateModel:
                             promotes=["*"],
                         )
                         self.financial_models.append(financial_object)
+                    except KeyError:
+                        # TODO: Is this currently a bypass until the financial portion is more concrete?
+                        pass
 
     def create_financial_model(self):
         """
@@ -217,26 +224,32 @@ class H2IntegrateModel:
 
         # Add each financial group to the plant
         for group_id, tech_configs in financial_groups.items():
+            commodity_types = ["electricity"]
             if "steel" in tech_configs:
-                commodity_type = "steel"
-            elif "electrolyzer" in tech_configs:
-                commodity_type = "hydrogen"
-            elif "methanol" in tech_configs:
-                commodity_type = "methanol"
-            elif "geoh2" in tech_configs:
-                commodity_type = "geoh2"
-            else:
-                commodity_type = "electricity"
+                commodity_types.append("steel")
+            if "electrolyzer" in tech_configs:
+                commodity_types.append("hydrogen")
+            if "methanol" in tech_configs:
+                commodity_types.append("methanol")
+            if "geoh2" in tech_configs:
+                commodity_types.append("geoh2")
+            if "ammonia" in tech_configs:
+                commodity_types.append("ammonia")
 
-            # Steel provides its own financials
+            # Steel, methanol, geoh2 provides their own financials
             if (
-                commodity_type == "steel"
-                or commodity_type == "methanol"
-                or (commodity_type == "hydrogen" and "geoh2" in tech_configs)
+                ("steel" in commodity_types)
+                or ("methanol" in commodity_types)
+                or ("geoh2" in commodity_types)
             ):
                 continue
 
             financial_group = om.Group()
+
+            # Add the ExecComp to the plant model
+            financial_group.add_subsystem(
+                "electricity_sum", ElectricitySumComp(tech_configs=tech_configs)
+            )
 
             # Add adjusted capex component
             adjusted_capex_opex_comp = AdjustedCapexOpexComp(
@@ -246,13 +259,14 @@ class H2IntegrateModel:
                 "adjusted_capex_opex_comp", adjusted_capex_opex_comp, promotes=["*"]
             )
 
-            # Add profast component
-            profast_comp = ProFastComp(
-                tech_config=tech_configs,
-                plant_config=self.plant_config,
-                commodity_type=commodity_type,
-            )
-            financial_group.add_subsystem("profast_comp", profast_comp, promotes=["*"])
+            # Add profast components
+            for idx, commodity_type in enumerate(commodity_types):
+                profast_comp = ProFastComp(
+                    tech_config=tech_configs,
+                    plant_config=self.plant_config,
+                    commodity_type=commodity_type,
+                )
+                financial_group.add_subsystem(f"profast_comp_{idx}", profast_comp, promotes=["*"])
 
             self.plant.add_subsystem(f"financials_group_{group_id}", financial_group)
 
@@ -341,6 +355,20 @@ class H2IntegrateModel:
                 if "steel" in tech_configs or "methanol" in tech_configs:
                     continue
 
+                # Loop through technologies and connect electricity outputs to the ExecComp
+                for tech_name in self.tech_names:
+                    if tech_name in electricity_producing_techs:
+                        self.plant.connect(
+                            f"{tech_name}.electricity",
+                            f"financials_group_{group_id}.electricity_sum.electricity_{tech_name}",
+                        )
+
+                # Connect total electricity produced to the financial group
+                self.plant.connect(
+                    f"financials_group_{group_id}.electricity_sum.total_electricity_produced",
+                    f"financials_group_{group_id}.total_electricity_produced",
+                )
+
                 for tech_name in tech_configs.keys():
                     self.plant.connect(
                         f"{tech_name}.CapEx", f"financials_group_{group_id}.capex_{tech_name}"
@@ -359,7 +387,23 @@ class H2IntegrateModel:
                             f"financials_group_{group_id}.time_until_replacement",
                         )
 
+                    if "ammonia" in tech_name:
+                        self.plant.connect(
+                            f"{tech_name}.total_ammonia_produced",
+                            f"financials_group_{group_id}.total_ammonia_produced",
+                        )
+
         self.plant.options["auto_order"] = True
+
+        # Check if there are any connections FROM a financial group to ammonia
+        # This handles the case where LCOH is computed in the financial group and passed to ammonia
+        for connection in technology_interconnections:
+            if connection[0].startswith("financials_group_") and connection[1] == "ammonia":
+                # If the connection is from a financial group, set solvers for the
+                # plant to resolve the coupling
+                self.plant.nonlinear_solver = om.NonlinearBlockGS()
+                self.plant.linear_solver = om.DirectSolver()
+                break
 
         if pyxdsm is not None:
             create_xdsm_from_config(self.plant_config)
