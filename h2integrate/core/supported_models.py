@@ -37,11 +37,6 @@ from h2integrate.converters.hydrogen.eco_tools_pem_electrolyzer import (
     ECOElectrolyzerCostModel,
     ECOElectrolyzerPerformanceModel,
 )
-from h2integrate.converters.hydrogen.geologic.combined_geoh2_plant import (
-    CombinedGeoH2CostModel,
-    CombinedGeoH2FinanceModel,
-    CombinedGeoH2PerformanceModel,
-)
 
 
 supported_models = {
@@ -69,9 +64,6 @@ supported_models = {
     "smr_methanol_plant_performance": SMRMethanolPlantPerformanceModel,
     "smr_methanol_plant_cost": SMRMethanolPlantCostModel,
     "methanol_plant_financial": SMRMethanolPlantFinanceModel,
-    "combined_geoh2_performance": CombinedGeoH2PerformanceModel,
-    "combined_geoh2_cost": CombinedGeoH2CostModel,
-    "geoh2_financial": CombinedGeoH2FinanceModel,
     # Transport
     "cable": CablePerformanceModel,
     "pipe": PipePerformanceModel,

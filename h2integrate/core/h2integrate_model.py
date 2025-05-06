@@ -226,8 +226,6 @@ class H2IntegrateModel:
                 commodity_types.append("hydrogen")
             if "methanol" in tech_configs:
                 commodity_types.append("methanol")
-            if "geoh2" in tech_configs:
-                commodity_types.append("geoh2")
             if "ammonia" in tech_configs:
                 commodity_types.append("ammonia")
             for tech in electricity_producing_techs:
@@ -235,12 +233,8 @@ class H2IntegrateModel:
                     commodity_types.append("electricity")
                     continue
 
-            # Steel, methanol, geoh2 provides their own financials
-            if (
-                ("steel" in commodity_types)
-                or ("methanol" in commodity_types)
-                or ("geoh2" in commodity_types)
-            ):
+            # Steel, methanol provides their own financials
+            if ("steel" in commodity_types) or ("methanol" in commodity_types):
                 continue
 
             if commodity_types == []:
