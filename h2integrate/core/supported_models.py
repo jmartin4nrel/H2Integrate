@@ -22,7 +22,6 @@ from h2integrate.converters.desalination.desalination import (
 )
 from h2integrate.converters.hydrogen.pem_electrolyzer import (
     ElectrolyzerCostModel,
-    ElectrolyzerFinanceModel,
     ElectrolyzerPerformanceModel,
 )
 from h2integrate.converters.hydrogen.dummy_electrolyzer import (
@@ -57,7 +56,6 @@ supported_models = {
     "pysam_solar_plant_performance": PYSAMSolarPlantPerformanceModel,
     "pem_electrolyzer_performance": ElectrolyzerPerformanceModel,
     "pem_electrolyzer_cost": ElectrolyzerCostModel,
-    "pem_electrolyzer_financial": ElectrolyzerFinanceModel,
     "eco_pem_electrolyzer_performance": ECOElectrolyzerPerformanceModel,
     "eco_pem_electrolyzer_cost": ECOElectrolyzerCostModel,
     "h2_storage": H2Storage,

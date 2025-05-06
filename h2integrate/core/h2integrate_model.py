@@ -178,19 +178,18 @@ class H2IntegrateModel:
 
                 # Process the financial models
                 if "financial_model" in individual_tech_config:
-                    financial_name = cost_name  # TODO: Should this be a separate name?
                     if "model" in individual_tech_config["financial_model"]:
                         financial_name = individual_tech_config["financial_model"]["model"]
 
-                    financial_object = supported_models[financial_name]
-                    tech_group.add_subsystem(
-                        f"{tech_name}_financial",
-                        financial_object(
-                            plant_config=self.plant_config, tech_config=individual_tech_config
-                        ),
-                        promotes=["*"],
-                    )
-                    self.financial_models.append(financial_object)
+                        financial_object = supported_models[financial_name]
+                        tech_group.add_subsystem(
+                            f"{tech_name}_financial",
+                            financial_object(
+                                plant_config=self.plant_config, tech_config=individual_tech_config
+                            ),
+                            promotes=["*"],
+                        )
+                        self.financial_models.append(financial_object)
 
     def create_financial_model(self):
         """

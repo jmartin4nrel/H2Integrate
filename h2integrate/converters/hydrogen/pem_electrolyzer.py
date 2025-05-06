@@ -3,7 +3,6 @@ from attrs import field, define
 from h2integrate.core.utilities import BaseConfig, merge_shared_inputs
 from h2integrate.converters.hydrogen.electrolyzer_baseclass import (
     ElectrolyzerCostBaseClass,
-    ElectrolyzerFinanceBaseClass,
     ElectrolyzerPerformanceBaseClass,
 )
 from h2integrate.simulation.technologies.hydrogen.electrolysis import (
@@ -96,12 +95,3 @@ class ElectrolyzerCostModel(ElectrolyzerCostBaseClass):
 
         outputs["CapEx"] = capex * 1.0e-6  # Convert to MUSD
         outputs["OpEx"] = opex * 1.0e-6  # Convert to MUSD
-
-
-class ElectrolyzerFinanceModel(ElectrolyzerFinanceBaseClass):
-    """
-    Placeholder for the financial model of the PEM electrolyzer.
-    """
-
-    def compute(self, inputs, outputs):
-        outputs["LCOH"] = 4.11  # Placeholder value
