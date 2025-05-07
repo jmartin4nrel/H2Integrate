@@ -221,18 +221,14 @@ class H2IntegrateModel:
                 commodity_type = "steel"
             elif "electrolyzer" in tech_configs:
                 commodity_type = "hydrogen"
-            elif "methanol" in tech_configs:
-                commodity_type = "methanol"
             elif "geoh2" in tech_configs:
                 commodity_type = "geoh2"
             else:
                 commodity_type = "electricity"
 
             # Steel provides its own financials
-            if (
-                commodity_type == "steel"
-                or commodity_type == "methanol"
-                or (commodity_type == "hydrogen" and "geoh2" in tech_configs)
+            if commodity_type == "steel" or (
+                commodity_type == "hydrogen" and "geoh2" in tech_configs
             ):
                 continue
 
