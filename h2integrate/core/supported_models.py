@@ -74,3 +74,5 @@ supported_models = {
     "hydrogen_tank_performance": HydrogenTankPerformanceModel,
     "hydrogen_tank_cost": HydrogenTankCostModel,
 }
+
+electricity_producing_techs = ["wind", "solar", "hopp"]
