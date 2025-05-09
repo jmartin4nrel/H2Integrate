@@ -52,10 +52,6 @@ class GeoH2PerformanceBaseClass(om.ExplicitComponent):
         self.add_input("bulk_density", units="kg/m**3", val=self.config.bulk_density)
         self.add_input("water_temp", units="C", val=self.config.water_temp)
 
-        self.add_output("wellhead_h2_conc", units="percent")
-        self.add_output("lifetime_wellhead_flow", units="kg/h")
-        self.add_output("hydrogen_accumulated", units="kg/h", shape=(8760,))
-        self.add_output("hydrogen_produced", units="kg/h", shape=(8760,))
         self.add_output("hydrogen", units="kg/h", shape=(8760,))
 
 

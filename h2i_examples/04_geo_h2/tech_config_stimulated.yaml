@@ -4,11 +4,11 @@ description: "This hybrid plant produces geologic hydrogen"
 technologies:
   geoh2:
     performance_model:
-      model: "combined_geoh2_performance"
+      model: "stimulated_geoh2_performance"
     cost_model:
-      model: "combined_geoh2_cost"
+      model: "stimulated_geoh2_cost"
     financial_model:
-      model: "geoh2"
+      model: "stimulated_geoh2"
     model_inputs:
       shared_parameters:
         well_lifetime: 20

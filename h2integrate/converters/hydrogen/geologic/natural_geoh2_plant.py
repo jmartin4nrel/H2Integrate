@@ -13,11 +13,11 @@ from h2integrate.converters.hydrogen.geologic.geoh2_baseclass import (
 
 
 @define
-class CombinedGeoH2PerformanceConfig(GeoH2PerformanceConfig):
+class NaturalGeoH2PerformanceConfig(GeoH2PerformanceConfig):
     pass
 
 
-class CombinedGeoH2PerformanceModel(GeoH2PerformanceBaseClass):
+class NaturalGeoH2PerformanceModel(GeoH2PerformanceBaseClass):
     """
     An OpenMDAO component for modeling the performance of a geologic hydrogen plant.
     Combines modeling for both natural and stimulated geoH2.
@@ -30,14 +30,13 @@ class CombinedGeoH2PerformanceModel(GeoH2PerformanceBaseClass):
     """
 
     def setup(self):
-        self.config = CombinedGeoH2PerformanceConfig.from_dict(
+        self.config = NaturalGeoH2PerformanceConfig.from_dict(
             merge_shared_inputs(self.options["tech_config"]["model_inputs"], "performance")
         )
         super().setup()
         self.add_output("wellhead_h2_conc", units="percent")
         self.add_output("lifetime_wellhead_flow", units="kg/h")
         self.add_output("hydrogen_accumulated", units="kg/h", shape=(8760,))
-        self.add_output("hydrogen_produced", units="kg/h", shape=(8760,))
 
     def compute(self, inputs, outputs):
         # Calculate expected wellhead h2 concentration from prospectivity
@@ -53,48 +52,19 @@ class CombinedGeoH2PerformanceModel(GeoH2PerformanceBaseClass):
         # Calculate hydrogen flow out from accumulated gas
         h2_accum = wh_h2_conc / 100 * avg_wh_flow
 
-        # Calculate serpentinization penetration rate
-        grain_size = inputs["grain_size"]
-        serp_rate = inputs["serp_rate"]
-        pen_rate = grain_size * serp_rate
-
-        # Model rock deposit size
-        height = inputs["borehole_depth"] - inputs["caprock_depth"]
-        length = inputs["inj_prod_distance"]
-        width = inputs["reaction_zone_width"]
-        rock_volume = height * length * width
-        n_grains = rock_volume / grain_size**3
-        rho = inputs["bulk_density"]
-        X_Fe = inputs["iron_II_conc"]
-        M_Fe = 55.8
-        M_H2 = 1.00
-
-        # Model shrinking reactive particle
-        years = np.linspace(1, lifetime, lifetime)
-        sec_elapsed = years * 3600 * 8760
-        core_diameter = np.maximum(
-            np.zeros(len(sec_elapsed)), grain_size - 2 * pen_rate * sec_elapsed
-        )
-        reacted_volume = n_grains * (grain_size**3 - core_diameter**3)
-        reacted_mass = reacted_volume * rho * X_Fe / 100
-        h2_produced = reacted_mass * M_H2 / M_Fe
-        np.average(h2_produced)
-
         # Parse outputs
         outputs["wellhead_h2_conc"] = wh_h2_conc
         outputs["lifetime_wellhead_flow"] = avg_wh_flow
         outputs["hydrogen_accumulated"] = h2_accum
-        h2_prod_avg = h2_produced[-1] / lifetime / 8760
-        outputs["hydrogen_produced"] = h2_prod_avg
-        outputs["hydrogen"] = h2_accum + h2_prod_avg
+        outputs["hydrogen"] = h2_accum
 
 
 @define
-class CombinedGeoH2CostConfig(GeoH2CostConfig):
+class NaturalGeoH2CostConfig(GeoH2CostConfig):
     pass
 
 
-class CombinedGeoH2CostModel(GeoH2CostBaseClass):
+class NaturalGeoH2CostModel(GeoH2CostBaseClass):
     """
     An OpenMDAO component for modeling the cost of a geologic hydrogen plant.
     Combines modeling for both natural and stimulated geoH2.
@@ -107,7 +77,7 @@ class CombinedGeoH2CostModel(GeoH2CostBaseClass):
     """
 
     def setup(self):
-        self.config = CombinedGeoH2CostConfig.from_dict(
+        self.config = NaturalGeoH2CostConfig.from_dict(
             merge_shared_inputs(self.options["tech_config"]["model_inputs"], "cost")
         )
         super().setup()
@@ -147,11 +117,11 @@ class CombinedGeoH2CostModel(GeoH2CostBaseClass):
 
 
 @define
-class CombinedGeoH2FinanceConfig(GeoH2FinanceConfig):
+class NaturalGeoH2FinanceConfig(GeoH2FinanceConfig):
     pass
 
 
-class CombinedGeoH2FinanceModel(GeoH2FinanceBaseClass):
+class NaturalGeoH2FinanceModel(GeoH2FinanceBaseClass):
     """
     An OpenMDAO component for modeling the financing of a geologic hydrogen plant.
     Combines modeling for both natural and stimulated geoH2.
@@ -164,7 +134,7 @@ class CombinedGeoH2FinanceModel(GeoH2FinanceBaseClass):
     """
 
     def setup(self):
-        self.config = CombinedGeoH2FinanceConfig.from_dict(
+        self.config = NaturalGeoH2FinanceConfig.from_dict(
             merge_shared_inputs(self.options["tech_config"]["model_inputs"], "finance")
         )
         super().setup()

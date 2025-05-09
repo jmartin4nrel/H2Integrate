@@ -13,11 +13,11 @@ from h2integrate.converters.hydrogen.geologic.geoh2_baseclass import (
 
 
 @define
-class CombinedGeoH2PerformanceConfig(GeoH2PerformanceConfig):
+class StimulatedGeoH2PerformanceConfig(GeoH2PerformanceConfig):
     pass
 
 
-class CombinedGeoH2PerformanceModel(GeoH2PerformanceBaseClass):
+class StimulatedGeoH2PerformanceModel(GeoH2PerformanceBaseClass):
     """
     An OpenMDAO component for modeling the performance of a geologic hydrogen plant.
     Combines modeling for both natural and stimulated geoH2.
@@ -30,28 +30,14 @@ class CombinedGeoH2PerformanceModel(GeoH2PerformanceBaseClass):
     """
 
     def setup(self):
-        self.config = CombinedGeoH2PerformanceConfig.from_dict(
+        self.config = StimulatedGeoH2PerformanceConfig.from_dict(
             merge_shared_inputs(self.options["tech_config"]["model_inputs"], "performance")
         )
         super().setup()
-        self.add_output("wellhead_h2_conc", units="percent")
-        self.add_output("lifetime_wellhead_flow", units="kg/h")
-        self.add_output("hydrogen_accumulated", units="kg/h", shape=(8760,))
         self.add_output("hydrogen_produced", units="kg/h", shape=(8760,))
 
     def compute(self, inputs, outputs):
-        # Calculate expected wellhead h2 concentration from prospectivity
-        prospectivity = inputs["site_prospectivity"]
-        wh_h2_conc = 58.92981751 * prospectivity**2.460718753  # percent
-
-        # Calculated average wellhead gas flow over well lifetime
-        init_wh_flow = inputs["initial_wellhead_flow"]
         lifetime = int(inputs["well_lifetime"][0])
-        res_size = inputs["gas_reservoir_size"]
-        avg_wh_flow = min(init_wh_flow, res_size / lifetime * 1000 / 8760)
-
-        # Calculate hydrogen flow out from accumulated gas
-        h2_accum = wh_h2_conc / 100 * avg_wh_flow
 
         # Calculate serpentinization penetration rate
         grain_size = inputs["grain_size"]
@@ -81,20 +67,17 @@ class CombinedGeoH2PerformanceModel(GeoH2PerformanceBaseClass):
         np.average(h2_produced)
 
         # Parse outputs
-        outputs["wellhead_h2_conc"] = wh_h2_conc
-        outputs["lifetime_wellhead_flow"] = avg_wh_flow
-        outputs["hydrogen_accumulated"] = h2_accum
         h2_prod_avg = h2_produced[-1] / lifetime / 8760
         outputs["hydrogen_produced"] = h2_prod_avg
-        outputs["hydrogen"] = h2_accum + h2_prod_avg
+        outputs["hydrogen"] = h2_prod_avg
 
 
 @define
-class CombinedGeoH2CostConfig(GeoH2CostConfig):
+class StimulatedGeoH2CostConfig(GeoH2CostConfig):
     pass
 
 
-class CombinedGeoH2CostModel(GeoH2CostBaseClass):
+class StimulatedGeoH2CostModel(GeoH2CostBaseClass):
     """
     An OpenMDAO component for modeling the cost of a geologic hydrogen plant.
     Combines modeling for both natural and stimulated geoH2.
@@ -107,7 +90,7 @@ class CombinedGeoH2CostModel(GeoH2CostBaseClass):
     """
 
     def setup(self):
-        self.config = CombinedGeoH2CostConfig.from_dict(
+        self.config = StimulatedGeoH2CostConfig.from_dict(
             merge_shared_inputs(self.options["tech_config"]["model_inputs"], "cost")
         )
         super().setup()
@@ -147,11 +130,11 @@ class CombinedGeoH2CostModel(GeoH2CostBaseClass):
 
 
 @define
-class CombinedGeoH2FinanceConfig(GeoH2FinanceConfig):
+class StimulatedGeoH2FinanceConfig(GeoH2FinanceConfig):
     pass
 
 
-class CombinedGeoH2FinanceModel(GeoH2FinanceBaseClass):
+class StimulatedGeoH2FinanceModel(GeoH2FinanceBaseClass):
     """
     An OpenMDAO component for modeling the financing of a geologic hydrogen plant.
     Combines modeling for both natural and stimulated geoH2.
@@ -164,7 +147,7 @@ class CombinedGeoH2FinanceModel(GeoH2FinanceBaseClass):
     """
 
     def setup(self):
-        self.config = CombinedGeoH2FinanceConfig.from_dict(
+        self.config = StimulatedGeoH2FinanceConfig.from_dict(
             merge_shared_inputs(self.options["tech_config"]["model_inputs"], "finance")
         )
         super().setup()
