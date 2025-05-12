@@ -24,13 +24,18 @@ class MethanolPerformanceBaseClass(om.ExplicitComponent):
     Inputs:
         - plant_capacity_kgpy: methanol production capacity in kg/year
         - capacity_factor: fractional factor of full production capacity that is realized
-        - XXX_produce_ratio: ratio of XXX produced to kg methanol produced
-        - XXX_consume_ratio: ratio of XXX consumed to kg methanol produced
-        - XXX_emit_ratio: ratio of XXX emitted to kg methanol produced
+        - co2e_emit_ratio: ratio of kg co2e emitted to kg methanol produced
+        - h2o_consume_ratio: ratio of kg h2o consumed to kg methanol produced
+        - h2_consume_ratio: ratio of kg h2 consumed to kg methanol produced
+        - co2_consume_ratio: ratio of kg co2 consumed to kg methanol produced
+        - elec_consume_ratio: ratio of kWh electricity consumed to kg methanol produced
     Outputs:
-        - XXX_production: XXX production
-        - XXX_consumption: XXX consumption
-        - XXX_emission: XXX emission
+        - methanol: methanol production in kg/h
+        - co2e_emissions: co2e emissions in kg/h
+        - h2o_consumption: h2o consumption in kg/h
+        - h2_consumption: h2 consumption in kg/h
+        - co2_consumption: co2 consumption in kg/h
+        - elec_consumption: electricity consumption in kWh/h
     """
 
     def initialize(self):
@@ -73,7 +78,7 @@ class MethanolCostBaseClass(om.ExplicitComponent):
 
     Inputs:
         toc_kg_y: total overnight cost (TOC) slope - multiply by plant_capacity_kgpy to get CapEx
-        foc_kg_y2: fixed operating cost slope - multiply by plant_capacity_kgpy to get Fixed_OpEx
+        foc_kg_y^2: fixed operating cost slope - multiply by plant_capacity_kgpy to get Fixed_OpEx
         voc_kg: variable operating cost - multiply by methanol to get Variable_OpEx
         plant_capacity_kgpy: shared input, see MethanolPerformanceBaseClass
         methanol: promoted output from MethanolPerformanceBaseClass

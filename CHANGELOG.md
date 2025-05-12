@@ -2,9 +2,8 @@
 
 ## 0.3.1, Unreleased, TBD
 
-- Introduced a fully new underlying framework for H2Integrate which uses [OpenMDAO](https://openmdao.org/), allowing for more flexibility and extensibility in the future
-- Expanded introductory documentation
-- Added example standalone methanol module with just steam methane reforming (SMR)
+- Added methanol production base class
+- Added steam methane reforming methanol production technology
 
 ## 0.3.0 [May 2 2025]
 
