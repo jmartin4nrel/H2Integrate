@@ -3,9 +3,9 @@
 We welcome contributions in the form of bug reports, bug fixes, improvements to the documentation,
 ideas for enhancements (or the enhancements themselves!).
 
-You can find a [list of current issues](https://github.com/NREL/GreenHEART/issues) in the project's
+You can find a [list of current issues](https://github.com/NREL/H2Integrate/issues) in the project's
 GitHub repo. Feel free to tackle any existing bugs or enhancement ideas by submitting a
-[pull request](https://github.com/NREL/GreenHEART/pulls).
+[pull request](https://github.com/NREL/H2Integrate/pulls).
 
 ## Bug Reports
 
@@ -21,42 +21,43 @@ GitHub repo. Feel free to tackle any existing bugs or enhancement ideas by submi
 * Docstrings are required and should follow the
   [Google style](https://www.sphinx-doc.org/en/master/usage/extensions/example_google.html).
 * When you start working on a pull request, start by creating a new branch pointing at the latest
-  commit on [main](https://github.com/NREL/GreenHEART).
-* The GreenHEART copyright policy is detailed in the [`LICENSE`](https://github.com/NREL/GreenHEART/blob/main/LICENSE).
+  commit on [main](https://github.com/NREL/H2Integrate).
+* The H2Integrate copyright policy is detailed in the [`LICENSE`](https://github.com/NREL/H2Integrate/blob/main/LICENSE).
 
 ## Documentation
 
 When contributing new features, or fixing existing capabilities, be sure to add and/or update the
 docstrings as needed to ensure the documentation site stays up to date with the latest changes.
 
-To build the documentation locally, the following command can be run in your terminal in the main
-directory of the repository.
+To build the documentation locally, the following command can be run in your terminal in the docs
+directory of the repository:
 
 ```bash
-jupyter-book build docs/
+sh build_book.sh
 ```
 
 In addition to generating the documentation, be sure to check the results by opening the following
-path in your browser: `file:///<path-to-greenheart>/GreenHEART/docs/_build/html/index.html`.
+path in your browser: `file:///<path-to-h2integrate>/H2Integrate/docs/_build/html/index.html`.
 
 ```{note}
-If the browser appears to be out of date from what you expected to built, please try the following:
-1. Reload the page
+If the browser appears to be out of date from what you expected to built, please try the following, roughly in order:
+1. Reload the page a few times
 2. Clear your browser's cache and open the page again.
+3. Delete the `_build` folder and rebuild the docs
 ```
 
 ## Tests
 
-The test suite can be run using `pytest tests/greenheart`. Individual test files can be run by specifying them:
+The test suite can be run using `pytest tests/h2integrate`. Individual test files can be run by specifying them:
 
 ```bash
-pytest tests/greenheart/test_hybrid.py
+pytest tests/h2integrate/test_hybrid.py
 ```
 
 and individual tests can be run within those files
 
 ```bash
-pytest tests/greenheart/test_hybrid.py::test_greenheart_system
+pytest tests/h2integrate/test_hybrid.py::test_h2integrate_system
 ```
 
 When you push to your fork, or open a PR, your tests will be run against the
@@ -85,7 +86,7 @@ met the following steps should be taken to create a new release
     ```
 
 6. Check that the
-   [Test PyPI GitHub Action](https://github.com/NREL/GreenHEART/actions/workflows/publish_to_test_pypi.yml)
+   [Test PyPI GitHub Action](https://github.com/NREL/H2Integrate/actions/workflows/publish_to_test_pypi.yml)
    has run successfully.
    1. If the action failed, identify and fix the issue, then
    2. delete the local and remote tag using the following (replace "v0.1" in all instances just like
@@ -98,13 +99,13 @@ met the following steps should be taken to create a new release
 
    3. Start back at step 1.
 7. When the Test PyPI Action has successfully run,
-   [create a new release](https://github.com/NREL/GreenHEART/releases/new) using the tag created in
+   [create a new release](https://github.com/NREL/H2Integrate/releases/new) using the tag created in
    step 5.
 
 ### Patches
 
-Any pull requests directly into the main branch that alter the GreenHEART model (excludes anything
-in `docs/`, or outside of `greenheart/` and `tests/`), should be sure to follow the instructions
+Any pull requests directly into the main branch that alter the H2Integrate model (excludes anything
+in `docs/`, or outside of `h2integrate/` and `tests/`), should be sure to follow the instructions
 below:
 
 1. All CI tests pass and the patch version has been bumped according to the
