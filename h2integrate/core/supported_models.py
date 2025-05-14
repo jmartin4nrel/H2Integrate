@@ -22,12 +22,16 @@ from h2integrate.converters.desalination.desalination import (
 )
 from h2integrate.converters.hydrogen.pem_electrolyzer import (
     ElectrolyzerCostModel,
-    ElectrolyzerFinanceModel,
     ElectrolyzerPerformanceModel,
 )
 from h2integrate.converters.hydrogen.dummy_electrolyzer import (
     DummyElectrolyzerCostModel,
     DummyElectrolyzerPerformanceModel,
+)
+from h2integrate.converters.methanol.smr_methanol_plant import (
+    SMRMethanolPlantCostModel,
+    SMRMethanolPlantFinanceModel,
+    SMRMethanolPlantPerformanceModel,
 )
 from h2integrate.converters.hydrogen.eco_tools_pem_electrolyzer import (
     ECOElectrolyzerCostModel,
@@ -62,7 +66,6 @@ supported_models = {
     "pysam_solar_plant_performance": PYSAMSolarPlantPerformanceModel,
     "pem_electrolyzer_performance": ElectrolyzerPerformanceModel,
     "pem_electrolyzer_cost": ElectrolyzerCostModel,
-    "pem_electrolyzer_financial": ElectrolyzerFinanceModel,
     "eco_pem_electrolyzer_performance": ECOElectrolyzerPerformanceModel,
     "eco_pem_electrolyzer_cost": ECOElectrolyzerCostModel,
     "h2_storage": H2Storage,
@@ -73,6 +76,9 @@ supported_models = {
     "ammonia_cost": AmmoniaCostModel,
     "steel_performance": SteelPerformanceModel,
     "steel_cost": SteelCostAndFinancialModel,
+    "smr_methanol_plant_performance": SMRMethanolPlantPerformanceModel,
+    "smr_methanol_plant_cost": SMRMethanolPlantCostModel,
+    "methanol_plant_financial": SMRMethanolPlantFinanceModel,
     "combined_geoh2_performance": CombinedGeoH2PerformanceModel,
     "combined_geoh2_cost": CombinedGeoH2CostModel,
     "combined_geoh2_financial": CombinedGeoH2FinanceModel,

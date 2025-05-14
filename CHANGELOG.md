@@ -4,6 +4,11 @@
 
 - Added geologic hydrogen (geoh2) converter and examples [PR 129](https://github.com/NREL/H2Integrate/pull/129)
 
+## 0.3.1, Unreleased, TBD
+
+- Added methanol production base class
+- Added steam methane reforming methanol production technology
+
 ## 0.3.0 [May 2 2025]
 
 - Introduced a fully new underlying framework for H2Integrate which uses [OpenMDAO](https://openmdao.org/), allowing for more flexibility and extensibility in the future
