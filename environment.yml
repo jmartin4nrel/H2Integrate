@@ -1,0 +1,10 @@
+name: h2integrate
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - glpk
+  - pip
+  - pip:
+    - "."

@@ -1,0 +1,39 @@
+# Table of contents
+# Learn more at https://jupyterbook.org/customize/toc.html
+
+format: jb-book
+root: intro
+parts:
+- caption: Getting Started
+  chapters:
+    - file: getting_started/install
+    - file: getting_started/expected_user_knowledge
+
+- caption: User Guide
+  chapters:
+  - file: user_guide/how_to_set_up_an_analysis
+  - file: user_guide/postprocessing_results
+
+- caption: Examples
+  chapters:
+  - file: examples/01-green-hydrogen
+
+- caption: Developer Guide
+  chapters:
+  - file: CONTRIBUTING
+  - file: developer_guide/coding_guidelines
+  - file: developer_guide/why_make_h2integrate
+  - file: developer_guide/adding_a_new_technology
+  - file: developer_guide/features_not_currently_implemented
+  - file: developer_guide/class_structure
+  - file: developer_guide/describing_whats_in_classes
+
+- caption: Miscellaneous Resources
+  chapters:
+    - file: misc_resources/FAQ
+    - file: misc_resources/glossary
+
+- caption: API Reference
+  maxdepth: 3
+  chapters:
+  - file: api
