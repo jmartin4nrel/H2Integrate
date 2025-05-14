@@ -75,7 +75,7 @@ class MethanolCostBaseClass(om.ExplicitComponent):
         toc_kg_y: total overnight cost (TOC) slope - multiply by plant_capacity_kgpy to get CapEx
         foc_kg_y^2: fixed operating cost slope - multiply by plant_capacity_kgpy to get Fixed_OpEx
         voc_kg: variable operating cost - multiply by methanol to get Variable_OpEx
-        plant_capacity_kgpy: shared input, see MethanolPerformanceBaseClass
+        plant_capacity_kgpy: methanol production capacity in kg/year
         methanol: promoted output from MethanolPerformanceBaseClass
     Outputs:
         CapEx: all methanol plant capital expenses in the form of total overnight cost (TOC)
