@@ -10,9 +10,6 @@ class MethanolPerformanceConfig(BaseConfig):
     capacity_factor: float = field()
     co2e_emit_ratio: float = field()
     h2o_consume_ratio: float = field()
-    h2_consume_ratio: float = field()
-    co2_consume_ratio: float = field()
-    elec_consume_ratio: float = field()
 
 
 class MethanolPerformanceBaseClass(om.ExplicitComponent):
@@ -27,14 +24,10 @@ class MethanolPerformanceBaseClass(om.ExplicitComponent):
         - co2e_emit_ratio: ratio of kg co2e emitted to kg methanol produced
         - h2o_consume_ratio: ratio of kg h2o consumed to kg methanol produced
         - h2_consume_ratio: ratio of kg h2 consumed to kg methanol produced
-        - co2_consume_ratio: ratio of kg co2 consumed to kg methanol produced
-        - elec_consume_ratio: ratio of kWh electricity consumed to kg methanol produced
     Outputs:
         - methanol: methanol production in kg/h
         - co2e_emissions: co2e emissions in kg/h
         - h2o_consumption: h2o consumption in kg/h
-        - h2_consumption: h2 consumption in kg/h
-        - co2_consumption: co2 consumption in kg/h
         - elec_consumption: electricity consumption in kWh/h
     """
 
@@ -47,16 +40,10 @@ class MethanolPerformanceBaseClass(om.ExplicitComponent):
         self.add_input("capacity_factor", units="unitless", val=self.config.capacity_factor)
         self.add_input("co2e_emit_ratio", units="kg/kg", val=self.config.co2e_emit_ratio)
         self.add_input("h2o_consume_ratio", units="kg/kg", val=self.config.h2o_consume_ratio)
-        self.add_input("h2_consume_ratio", units="kg/kg", val=self.config.h2_consume_ratio)
-        self.add_input("co2_consume_ratio", units="kg/kg", val=self.config.co2_consume_ratio)
-        self.add_input("elec_consume_ratio", units="kW*h/kg", val=self.config.elec_consume_ratio)
 
         self.add_output("methanol", units="kg/h", shape=(8760,))
         self.add_output("co2e_emissions", units="kg/h", shape=(8760,))
         self.add_output("h2o_consumption", units="kg/h", shape=(8760,))
-        self.add_output("h2_consumption", units="kg/h", shape=(8760,))
-        self.add_output("co2_consumption", units="kg/h", shape=(8760,))
-        self.add_output("elec_consumption", units="kW*h/h", shape=(8760,))
 
 
 @define
@@ -98,7 +85,6 @@ class MethanolCostBaseClass(om.ExplicitComponent):
         self.add_input("foc_kg_y2", units="USD/kg/year**2", val=self.config.foc_kg_y2)
         self.add_input("voc_kg", units="USD/kg", val=self.config.voc_kg)
         self.add_input("plant_capacity_kgpy", units="kg/year", val=self.config.plant_capacity_kgpy)
-        self.add_input("electricity_consumption", shape=8760, units="kW*h/h")
         self.add_input("methanol", shape=8760, units="kg/h")
 
         self.add_output("CapEx", units="USD")
