@@ -25,8 +25,8 @@ site:
 # this will naturally grow as we mature the interconnected tech
 technology_interconnections: [
   ["hopp", "electrolyzer", "electricity", "cable"],
-  ["hopp", "methanol", "electricity", "cable"],
-  ["electrolyzer", "methanol", "hydrogen", "pipe"],
+#   ["hopp", "methanol", "electricity", "cable"],
+#   ["electrolyzer", "methanol", "hydrogen", "pipe"],
   ["financials_group_1", "methanol", "LCOE"],
   ["financials_group_1", "methanol", "LCOH"],
 ]
@@ -60,6 +60,8 @@ finance_parameters:
   depreciation_period: 5 # years - for clean energy facilities as specified by the IRS MACRS schedule https://www.irs.gov/publications/p946#en_US_2020_publink1000107507
   depreciation_period_electrolyzer: 7 # based on PEM Electrolysis H2A Production Case Study Documentation estimate of 7 years. also see https://www.irs.gov/publications/p946#en_US_2020_publink1000107507
   discount_years:
+    hopp: 2019
+    electrolyzer: 2021
     methanol: 2020
   options:
     commodity_type: "methanol"
