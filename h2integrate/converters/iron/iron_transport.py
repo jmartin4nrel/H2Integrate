@@ -17,13 +17,27 @@ from h2integrate.core.model_baseclasses import CostModelBaseClass
 
 @define(kw_only=True)
 class IronTransportPerformanceConfig(BaseConfig):
+    """Configuration class for IronTransportPerformanceComponent.
+
+    Args:
+        find_closest_ship_site (bool): Whether to find the closest shipping site automatically.
+        shipment_site (str): The specific shipping site to use if not finding the closest one.
+            Allowed sites are "None", "Duluth", "Chicago", "Cleveland", and "Buffalo". Defaults
+            to "None".
+        land_circuity_ratio (float): Ratio of land distance to geodesic distance. Defaults to
+            1.68, which is an estimate for rail. See :doc:`/technology_models/iron_transport`
+            for more info.
+
+    Raises:
+        ValueError: Raised if shipment_site is not set to "None" while find_closest_ship_site
+            is True.
+    """
+
     find_closest_ship_site: bool = field()
     shipment_site: str = field(
         converter=(str.lower, str.capitalize),
         validator=validators.in_(["None", "Duluth", "Chicago", "Cleveland", "Buffalo"]),
     )
-    origin: str = field()
-    destination: str = field()
     land_circuity_ratio: float = field(default=1.68)  # ratio of land distance to geodesic distance
 
     #
@@ -34,6 +48,10 @@ class IronTransportPerformanceConfig(BaseConfig):
 
 
 class IronTransportPerformanceComponent(om.ExplicitComponent):
+    """Component to calculate iron ore pellet transportation distances considering both
+    land and water routes.
+    """
+
     _time_step_bounds = (
         3600,
         3600,
@@ -51,26 +69,30 @@ class IronTransportPerformanceComponent(om.ExplicitComponent):
             additional_cls_name=self.__class__.__name__,
         )
 
-        # Look up origin and destination from config
-        origin = self.options["tech_config"]["model_inputs"]["performance_parameters"].get("origin")
-        destination = self.options["tech_config"]["model_inputs"]["performance_parameters"].get(
-            "destination"
-        )
-        orig_lat = self.options["plant_config"]["sites"].get(origin, {}).get("latitude")
-        orig_lon = self.options["plant_config"]["sites"].get(origin, {}).get("longitude")
-        dest_lat = self.options["plant_config"]["sites"].get(destination, {}).get("latitude")
-        dest_lon = self.options["plant_config"]["sites"].get(destination, {}).get("longitude")
-
-        self.add_input("origin_latitude", val=orig_lat, units="deg")
-        self.add_input("origin_longitude", val=orig_lon, units="deg")
-        self.add_input("destination_latitude", val=dest_lat, units="deg")
-        self.add_input("destination_longitude", val=dest_lon, units="deg")
+        # Look up origin and destination from plant_config
+        self.add_input("origin_latitude", shape=1, require_connection=True, units="deg")
+        self.add_input("origin_longitude", shape=1, require_connection=True, units="deg")
+        self.add_input("destination_latitude", shape=1, require_connection=True, units="deg")
+        self.add_input("destination_longitude", shape=1, require_connection=True, units="deg")
 
         self.add_output("land_transport_distance_overland", val=0.0, units="km")
         self.add_output("land_transport_distance_great_lakes", val=0.0, units="km")
         self.add_output("water_transport_distance_great_lakes", val=0.0, units="km")
 
     def calculate_water_distance(self, waypoints, shipping_sites):
+        """Calculates the distance via the great lakes to transport iron ore pellets.
+
+        Args:
+            waypoints (list): List of waypoint identifiers representing the water route.
+            shipping_sites (pandas.DataFrame): DataFrame containing the latitude and longitude
+                of shipping sites.
+
+        Returns:
+            float: Total water transport distance in kilometers.
+
+        Note:
+            The function uses geopy.distance.geodesic() and assumes WGS-84 / EPSG:4326 coordinates.
+        """
         water_transport_distance = 0
         for ii, waypt in enumerate(waypoints):
             if ii == 0:
@@ -95,6 +117,20 @@ class IronTransportPerformanceComponent(om.ExplicitComponent):
         return water_transport_distance
 
     def calculate_land_distance(self, starting_location, ending_location):
+        """calculates the distance via land to transport iron ore pellets.
+
+        Args:
+            starting_location (tuple): Tuple containing the latitude and longitude of the
+                starting location.
+            ending_location (tuple): Tuple containing the latitude and longitude of the
+                ending location.
+
+        Returns:
+            float: Total land transport distance in kilometers, adjusted for circuity.
+
+        Note:
+            The function uses geopy.distance.geodesic() and assumes WGS-84 / EPSG:4326 coordinates.
+        """
         land_transport_distance = distance.geodesic(
             starting_location, ending_location, ellipsoid="WGS-84"
         ).km
@@ -105,6 +141,10 @@ class IronTransportPerformanceComponent(om.ExplicitComponent):
         return land_transport_distance
 
     def compute(self, inputs, outputs):
+        """Computes the land and water transport distances for iron ore pellets based on
+        the provided inputs. The distances are calculated for both overland and
+        Great Lakes shipping routes.
+        """
         # Parse in the origin and destination coordinates
         orig_lat = inputs["origin_latitude"][0]
         orig_lon = inputs["origin_longitude"][0]
@@ -258,20 +298,33 @@ class IronTransportPerformanceComponent(om.ExplicitComponent):
 
             outputs["land_transport_distance_great_lakes"] = land_distance_for_min
             outputs["water_transport_distance_great_lakes"] = water_distance_for_min
-            # print(f"final_dest: {final_dest}")
         else:
             barge_dest = self.config.shipment_site
             barge_lat = barge_waypoint_coords.loc[barge_dest]["Lat"]
             barge_lon = barge_waypoint_coords.loc[barge_dest]["Lon"]
             barge_dest_coords = (barge_lat, barge_lon)
             land_distance_km = self.calculate_land_distance(barge_dest_coords, final_dest_coords)
-            water_distance_km = self.calculate_water_distance(waypoints, barge_waypoint_coords)
+            water_distance_km = self.calculate_water_distance(
+                barge_waypoints[self.config.shipment_site], barge_waypoint_coords
+            )
             outputs["land_transport_distance_great_lakes"] = land_distance_km
             outputs["water_transport_distance_great_lakes"] = water_distance_km
 
 
 @define(kw_only=True)
 class IronTransportCostConfig(BaseConfig):
+    """Configuration for calculating iron ore pellet transportation costs.
+
+    Args:
+        transport_year (int): The year for which transportation costs are calculated.
+        cost_year (int): The year for which cost data is relevant.
+        land_shipping_cost (float): Cost of land shipping in $/ton-mi. Default is 0.0522 $/ton-mi.
+            See :doc:`/technology_models/iron_transport` for more info on the default cost.
+        water_shipping_cost (float): Cost of water shipping in $/ton-mi. Default is 0.0235 $/ton-mi.
+            See :doc:`/technology_models/iron_transport` for more info on the default cost.
+        marginal_cost (float): Marginal cost of transportation. Default is 0.0.
+    """
+
     transport_year: int = field(converter=int, validator=(validators.ge(2022), validators.le(2065)))
     cost_year: int = field(converter=int, validator=(validators.ge(2010), validators.le(2024)))
     land_shipping_cost: float = field(default=0.0522)  # $/ton-mi
@@ -280,6 +333,8 @@ class IronTransportCostConfig(BaseConfig):
 
 
 class IronTransportCostComponent(CostModelBaseClass):
+    """Component for calculating iron ore pellet transportation costs."""
+
     _time_step_bounds = (
         3600,
         3600,
